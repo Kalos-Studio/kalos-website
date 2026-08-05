@@ -1,0 +1,21 @@
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata = {
+  title: "Kalos",
+  description: "Coming soon",
+};
+
+export const viewport = {
+  themeColor: "#000000",
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  );
+}
