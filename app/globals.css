@@ -20,10 +20,12 @@ main {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
 }
 
 h1 {
-  font-size: clamp(3rem, 15vw, 10rem);
+  font-size: clamp(3.5rem, 20vw, 11rem);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -35,4 +37,125 @@ p {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: #888;
+}
+
+/* Entrances are CSS, not JS: if hydration is slow or an animation fails to
+   start, the page still resolves to a readable state on its own. */
+@keyframes spot-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.spot-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.spot-layer.base {
+  animation: spot-in 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.spot-lens,
+.spot-glow {
+  animation: spot-in 2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+/* Dim, but never invisible — the wordmark should read as "there but unlit"
+   rather than as an empty page. */
+.spot-layer.base h1 {
+  color: #3a3a3a;
+}
+
+/* The subtitle stays legible without the light — the page should still say what
+   it is for someone who never moves their cursor. */
+.spot-layer.base p {
+  color: #6f6f6f;
+}
+
+.spot-layer.lit h1 {
+  color: #fff;
+}
+
+.spot-layer.lit p {
+  opacity: 0;
+}
+
+.spot-lens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  will-change: transform;
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 50%,
+    #000 0%,
+    rgba(0, 0, 0, 0.72) 42%,
+    transparent 70%
+  );
+  mask-image: radial-gradient(
+    circle at 50% 50%,
+    #000 0%,
+    rgba(0, 0, 0, 0.72) 42%,
+    transparent 70%
+  );
+}
+
+.spot-lens-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  will-change: transform;
+}
+
+.spot-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 70%
+  );
+}
+
+/* A whisper of film grain — kills the flatness of pure #000 and hides the
+   banding in the glow's falloff. */
+.spot-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* The static fallback lives here rather than in a JS branch, so the server and
+   client always render the same tree. */
+@media (prefers-reduced-motion: reduce) {
+  .spot-grain,
+  .spot-glow,
+  .spot-lens {
+    display: none;
+  }
+
+  .spot-layer.base {
+    animation: none;
+  }
+
+  .spot-layer.base h1 {
+    color: #fff;
+  }
 }
