@@ -5,7 +5,7 @@ export default function WorkNotFound() {
     <div className="work-shell">
       <p className="work-not-found">
         Couldn&apos;t find that case study.{" "}
-        <Link href="/work" className="work-back" style={{ display: "inline" }}>
+        <Link href="/work" className="work-back">
           ← Back to work
         </Link>
       </p>

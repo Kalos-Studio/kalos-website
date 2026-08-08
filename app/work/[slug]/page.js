@@ -2,7 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CoverImage from "../CoverImage";
 import CaseStudyBody from "../CaseStudyBody";
-import { caseStudies } from "../data";
+import { WORK_ROBOTS, caseStudies, workPageTitle } from "../data";
+
+function getCaseStudy(slug) {
+  return caseStudies.find((c) => c.slug === slug);
+}
 
 export function generateStaticParams() {
   return caseStudies.map((cs) => ({ slug: cs.slug }));
@@ -10,26 +14,27 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const cs = caseStudies.find((c) => c.slug === slug);
+  const cs = getCaseStudy(slug);
   if (!cs) return {};
   return {
-    title: `${cs.title} — Kalos`,
+    title: workPageTitle(cs.title),
     description: cs.summary,
-    robots: { index: false, follow: false },
+    robots: WORK_ROBOTS,
   };
 }
 
 export default async function CaseStudyPage({ params }) {
   const { slug } = await params;
-  const cs = caseStudies.find((c) => c.slug === slug);
+  const cs = getCaseStudy(slug);
 
   if (!cs) notFound();
 
   const facts = [
     cs.client && { label: "Client", value: cs.client },
     cs.role && { label: "Role", value: cs.role },
-    cs.year && { label: "Year", value: cs.year },
   ].filter(Boolean);
+
+  const otherCaseStudies = caseStudies.filter((c) => c.slug !== cs.slug);
 
   return (
     <div className="work-shell">
@@ -61,7 +66,32 @@ export default async function CaseStudyPage({ params }) {
         priority
       />
 
-      <CaseStudyBody blocks={cs.body} />
+      <CaseStudyBody blocks={cs.body} columns={cs.bodyLayout === "columns"} />
+
+      <div className="work-more">
+        <div className="work-more-header">
+          <h2 className="work-more-heading">More case studies</h2>
+          <Link href="/work" className="work-more-view-all">
+            View all work →
+          </Link>
+        </div>
+
+        {otherCaseStudies.length > 0 && (
+          <ul className="work-more-grid">
+            {otherCaseStudies.map((other) => (
+              <li key={other.slug}>
+                <Link href={`/work/${other.slug}`} className="work-card work-more-card">
+                  <CoverImage cover={other.cover} className="work-more-cover">
+                    <div className="work-more-overlay">
+                      <span className="work-more-title">{other.title}</span>
+                    </div>
+                  </CoverImage>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

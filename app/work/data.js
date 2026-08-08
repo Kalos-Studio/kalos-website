@@ -8,7 +8,8 @@
 //   summary: "One line describing the project.", // required — shown on the
 //                                                  // listing card and at the
 //                                                  // top of the case study
-//   year: "2026",              // optional — shown on the card and case study
+//   year: "2026",              // optional — not currently displayed anywhere,
+//                               // kept for reference/future use
 //   client: "Client name",     // optional — shown as a fact on the case study
 //   role: "What we did",       // optional — shown as a fact on the case study
 //   cover: {                   // optional — omit to show a placeholder
@@ -21,28 +22,41 @@
 //                               // bar) may need to anchor lower to avoid
 //                               // slicing through it. Card crop is unaffected.
 //   },
+//   bodyLayout: "columns",     // optional — lays the body out as label +
+//                               // content rows (each heading pinned to the
+//                               // left of the paragraphs/images that follow
+//                               // it) instead of one full-width column.
+//                               // Images inside a row still span full width.
 //   body: [                    // optional — the content blocks on the case
 //                               // study page, rendered top to bottom
 //     { type: "paragraph", text: "..." },
-//     { type: "heading", text: "..." },
+//     { type: "heading", text: "..." },       // a single standalone heading
+//     { type: "section", kicker: "...", heading: "..." }, // a small-caps label
+//                               // above a bolder headline — use this instead
+//                               // of two "heading" blocks in a row, which
+//                               // render identically and read as flat
 //     { type: "image", src: "/work/kebab-case-id/detail-1.jpg", alt: "...", caption: "..." },
 //     { type: "list", items: ["...", "..."] },
-//     { type: "link", href: "https://example.com", text: "See more case studies" },
 //   ],
 // }
 
-// Shared destination for "see more case studies" links — used both inline in
-// individual case study bodies and at the bottom of the /work listing page.
-export const MORE_CASE_STUDIES_URL = "https://saadmirza.framer.website/works";
+// Shared metadata bits — every /work page is noindex'd and follows the same
+// "<title> — Kalos" convention, so this stays in one place instead of being
+// re-typed at each page's export const metadata / generateMetadata.
+export const WORK_ROBOTS = { index: false, follow: false };
+
+export function workPageTitle(title) {
+  return `${title} — Kalos`;
+}
 
 export const caseStudies = [
   {
     slug: "shell-tapup",
     title: "Shell TapUp",
     summary: "Native iOS and Android app design for Shell's global refueling service.",
-    year: "2022",
     client: "Shell",
     role: "Mobile App Design & Development",
+    bodyLayout: "columns",
     cover: {
       src: "/work/shell-tapup/cover.jpg",
       alt: "A Shell TapUp driver app screenshot, showing tank levels and fueling controls, composited over a photo of the Shell pecten logo at a refueling station",
@@ -58,19 +72,11 @@ export const caseStudies = [
       },
       {
         type: "heading",
-        text: "Product Definition",
-      },
-      {
-        type: "heading",
         text: "Driven by Understanding",
       },
       {
         type: "paragraph",
         text: "Through driver interviews, working sessions, and on-site visits, we developed a deep understanding of Shell's fuel delivery ecosystem.",
-      },
-      {
-        type: "heading",
-        text: "Product Design",
       },
       {
         type: "heading",
@@ -103,7 +109,6 @@ export const caseStudies = [
     slug: "allganize-website-redesign",
     title: "Allganize Website Redesign",
     summary: "Pushing the future of workforce AI further.",
-    year: "2024",
     client: "Allganize",
     role: "Development, Web Design",
     cover: {
@@ -129,18 +134,12 @@ export const caseStudies = [
         type: "paragraph",
         text: "Giving Allganize a fresh new look going into 2024.",
       },
-      {
-        type: "link",
-        href: MORE_CASE_STUDIES_URL,
-        text: "See more case studies",
-      },
     ],
   },
   {
-    slug: "visual-systems-and-scaling",
-    title: "Visual Systems and Scaling",
+    slug: "mara-partner-brand-kits",
+    title: "MARA Partner Brand Kits",
     summary: "Catered brand kits for many... brands.",
-    year: "2024-26",
     client: "MARA",
     role: "Brand Strategy, Brand Identity, Brand Guidelines, Art Direction",
     cover: {
@@ -178,10 +177,90 @@ export const caseStudies = [
         alt: "The closing slide of the 2PIC by MARA brand kit",
         caption: "2PIC by MARA",
       },
+    ],
+  },
+  {
+    slug: "echocare",
+    title: "EchoCare",
+    summary:
+      "B2B SaaS dispatch platform for emergency medical services and non-emergent medical transport operations.",
+    client: "EchoCare",
+    role: "Head of Design",
+    bodyLayout: "columns",
+    cover: {
+      src: "/work/echocare/cover.jpg",
+      alt: "The EchoCare login screen, \"The help you need, when you need it,\" with an animated network of service icons",
+    },
+    body: [
       {
-        type: "link",
-        href: MORE_CASE_STUDIES_URL,
-        text: "See more case studies",
+        type: "heading",
+        text: "The Work",
+      },
+      {
+        type: "paragraph",
+        text: "Led product design across the core dispatch platform — scheduling, fleet and unit management, trip lifecycle flows, and billing and insurance workflows.",
+      },
+      {
+        type: "paragraph",
+        text: "Designed complex operational interfaces for time-sensitive decision-making, including dispatch board interactions, conflict resolution, and multi-path state changes.",
+      },
+      {
+        type: "image",
+        src: "/work/echocare/dispatch-board.jpg",
+        alt: "The EchoCare dispatch board, showing a live timeline of units, trips, and delay states across a service area",
+        caption: "The dispatch board — live scheduling across every unit and trip.",
+      },
+      {
+        type: "image",
+        src: "/work/echocare/trip-tracking.jpg",
+        alt: "An EchoCare trip detail view with live GPS tracking, route, and a dispatch tracking timeline",
+        caption: "Live GPS tracking and trip lifecycle detail.",
+      },
+      {
+        type: "heading",
+        text: "Delivering Scalability",
+      },
+      {
+        type: "paragraph",
+        text: "Built and maintained the product design system in Figma, extending it into documented standards for engineering handoff.",
+      },
+      {
+        type: "paragraph",
+        text: "Partnered with product and engineering to translate operational requirements into shippable interface patterns, and to validate marketing and product claims against what the platform actually delivers.",
+      },
+    ],
+  },
+  {
+    slug: "priority-ambulance-transfer",
+    title: "Priority Ambulance Transfer",
+    summary:
+      "Texas-based medical transport company providing ambulance and wheelchair transport across the greater Houston area and beyond.",
+    client: "Priority Ambulance Transfer",
+    role: "Head of Design",
+    cover: {
+      src: "/work/priority-ambulance-transfer/cover.jpg",
+      alt: "The Priority Ambulance Transfer homepage hero, \"When every minute matters, we're already moving.\"",
+    },
+    body: [
+      {
+        type: "heading",
+        text: "The Work",
+      },
+      {
+        type: "list",
+        items: [
+          "Created the company's entire brand identity from the ground up — logo and wordmark, color system, typography, and the visual language applied consistently across every touchpoint.",
+          "Designed the vehicle wraps for the ambulance fleet, translating the identity onto the company's most visible physical asset.",
+          "Authored the brand and content strategy, defining positioning pillars, target verticals, audience segmentation, and a phased rollout plan.",
+          "Designed and built the marketing website end to end in Next.js and Tailwind, including responsive architecture, technical SEO, and production deployment.",
+          "Produced the full print and digital collateral suite — employee credentialing, facility-facing sales materials, service overviews, and branded stationery.",
+        ],
+      },
+      {
+        type: "image",
+        src: "/work/priority-ambulance-transfer/services-page.jpg",
+        alt: "The Priority Ambulance Transfer services page, showing the ambulance transport hero and a carousel of service types with photography of EMTs and patients",
+        caption: "The services page — priorityat.com/services/ambulance.",
       },
     ],
   },

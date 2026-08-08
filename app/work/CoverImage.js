@@ -8,11 +8,13 @@ export default function CoverImage({
   sizes,
   priority,
   objectPosition,
+  children,
 }) {
   if (!cover?.src) {
     return (
       <div className={className}>
         <div className="work-card-placeholder">Cover image coming soon</div>
+        {children}
       </div>
     );
   }
@@ -33,6 +35,10 @@ export default function CoverImage({
         unoptimized
         style={objectPosition ? { objectPosition } : undefined}
       />
+      {/* Optional overlay content (e.g. a caption) — rendered inside the
+          same position:relative box as the image so it can be positioned
+          with a plain `inset: 0` instead of needing its own wrapper. */}
+      {children}
     </div>
   );
 }
