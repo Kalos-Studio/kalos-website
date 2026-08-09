@@ -75,12 +75,12 @@
 }
 
 .work-wordmark span {
-  color: #6f6f6f;
+  color: #9a9a9a;
   font-weight: 400;
 }
 
 .work-intro {
-  color: #999;
+  color: #b8b8b8;
   font-size: 1rem;
   line-height: 1.6;
   max-width: 34rem;
@@ -90,11 +90,14 @@
 /* --- Case study list -------------------------------------------------- */
 
 .work-construction-note {
-  color: #999;
-  font-size: 0.85rem;
-  border: 1px solid #2a2a2a;
+  color: #ffcc66;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+  background: rgba(255, 204, 102, 0.08);
+  border: 1px solid rgba(255, 204, 102, 0.4);
   border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.1rem;
   margin-bottom: 2.5rem;
 }
 
@@ -184,7 +187,7 @@
 }
 
 .work-card-summary {
-  color: #999;
+  color: #b8b8b8;
   font-size: 0.95rem;
   line-height: 1.5;
   margin-top: 0.4rem;
@@ -204,7 +207,7 @@
 }
 
 .work-empty {
-  color: #666;
+  color: #9a9a9a;
   font-size: 0.95rem;
   border: 1px dashed #2a2a2a;
   border-radius: 0.75rem;
@@ -217,7 +220,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: #999;
+  color: #b8b8b8;
   text-decoration: none;
   font-size: 0.9rem;
   margin-bottom: 2.5rem;
@@ -244,7 +247,7 @@
 .work-case-eyebrow,
 .work-case-fact dt,
 .work-login-eyebrow {
-  color: #666;
+  color: #9a9a9a;
   text-transform: uppercase;
 }
 
@@ -463,7 +466,7 @@
 }
 
 .work-case-body figcaption {
-  color: #666;
+  color: #9a9a9a;
   font-size: 0.85rem;
   margin-top: 0.6rem;
 }
@@ -476,7 +479,7 @@
 }
 
 .work-not-found {
-  color: #999;
+  color: #b8b8b8;
 }
 
 /* --- More case studies (bottom of a case study page) ------------------- */
@@ -501,7 +504,7 @@
 }
 
 .work-more-view-all {
-  color: #999;
+  color: #b8b8b8;
   text-decoration: none;
   font-size: 0.9rem;
   flex-shrink: 0;

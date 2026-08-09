@@ -6,7 +6,8 @@ export default function WorkIndexPage() {
   return (
     <div className="work-shell work-shell--wide">
       <p className="work-construction-note">
-        This site is still under construction — more case studies coming soon.
+        This is a temporary repository as we build out our website. More
+        case studies are coming soon.
       </p>
 
       <header className="work-header">
@@ -25,6 +26,7 @@ export default function WorkIndexPage() {
                 <CoverImage
                   cover={cs.cover}
                   className="work-card-cover"
+                  objectPosition={cs.cover?.cardPosition}
                   priority={i === 0}
                 />
                 <h2 className="work-card-title">{cs.title}</h2>
