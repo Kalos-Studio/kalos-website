@@ -81,7 +81,11 @@ export default async function CaseStudyPage({ params }) {
             {otherCaseStudies.map((other) => (
               <li key={other.slug}>
                 <Link href={`/work/${other.slug}`} className="work-card work-more-card">
-                  <CoverImage cover={other.cover} className="work-more-cover">
+                  <CoverImage
+                    cover={other.cover}
+                    className="work-more-cover"
+                    objectPosition={other.cover?.cardPosition}
+                  >
                     <div className="work-more-overlay">
                       <span className="work-more-title">{other.title}</span>
                     </div>
