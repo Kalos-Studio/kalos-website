@@ -19,11 +19,13 @@ const MARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 139">
 // a 30° camera at z=8 frames it with room to breathe above the wordmark.
 export const MARK_SCALE = 0.016;
 
-// The lockup sits above centre to leave the lower third for the wordmark.
-export const MARK_LIFT = 0.55;
+// The 3D mark sits dead centre of the viewport. The lockup underneath is small
+// enough now to live in the lower margin without pushing the object off-centre.
+export const MARK_LIFT = 0;
 
-// Width of the lockup in geometry units, bevel included.
+// Size of the lockup in geometry units, bevel included.
 const MARK_WIDTH = 155;
+const MARK_HEIGHT = 145;
 
 /**
  * Fits the mark to the viewport.
@@ -41,11 +43,22 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
 
   return useMemo(() => {
     const portrait = width < height;
-    const natural = MARK_WIDTH * baseScale;
-    const allowed = width * (portrait ? 0.66 : 0.42);
-    const scale = natural > allowed ? baseScale * (allowed / natural) : baseScale;
 
-    return { scale, lift: portrait ? lift + 0.45 : lift, portrait };
+    // Constrained on both axes, and the tighter one wins. Width alone isn't
+    // enough: on a wide desktop window nothing clips horizontally, but a
+    // centred mark grows tall enough to run straight through the wordmark
+    // underneath it. Height is what actually binds in landscape.
+    const widthFit = (width * (portrait ? 0.66 : 0.44)) / (MARK_WIDTH * baseScale);
+    // 0.42 left the mark's lower point crowding the lockup underneath it. The
+    // gap between the object and the signature is part of the composition, so
+    // the mark gives up a little size to protect it.
+    const heightFit = (height * 0.38) / (MARK_HEIGHT * baseScale);
+
+    // Only ever scale down — baseScale is the intended size, not a target to
+    // grow into on a big screen.
+    const scale = baseScale * Math.min(1, widthFit, heightFit);
+
+    return { scale, lift, portrait };
   }, [width, height, baseScale, lift]);
 }
 

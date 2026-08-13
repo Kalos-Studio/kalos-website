@@ -70,7 +70,11 @@ export default function Lab() {
   const [index, setIndex] = useState(0);
   const [chrome, setChrome] = useState(true);
   const [webgl, setWebgl] = useState(true);
-  const [askTilt, setAskTilt] = useState(false);
+  const [coarse, setCoarse] = useState(false);
+  // The switcher is lab furniture. On a phone it eats a chunk of a small screen,
+  // so it starts collapsed behind a caret and the hero gets the room.
+  const [expanded, setExpanded] = useState(true);
+  const [hintTilt, setHintTilt] = useState(false);
 
   const active = VARIANTS[index];
   const Active = active.Component;
@@ -94,12 +98,34 @@ export default function Lab() {
     setIndex(supported || !VARIANTS[target].webgl ? target : FALLBACK);
     if (params.get("chrome") === "0") setChrome(false);
 
-    // Gyroscope input, phones only. Android hands over the sensor as soon as we
-    // listen; iOS 13+ requires a grant that must come from a real tap, so there
-    // we have to surface a button and wait for one.
+    // ?hint=1 forces the motion prompt on any browser. It only ever mounts on
+    // iOS otherwise, which makes it impossible to art-direct from a desktop —
+    // Chrome's mobile emulation isn't iOS and doesn't expose requestPermission.
+    if (params.get("hint") === "1") setHintTilt(true);
+
+    // Gyroscope input, phones only.
     if (!isCoarsePointer()) return;
-    if (needsMotionPermission()) setAskTilt(true);
-    else startDeviceTilt();
+    setCoarse(true);
+    setExpanded(false);
+
+    // Android hands over the sensor as soon as we listen. iOS 13+ needs a grant
+    // that must originate from a user gesture — but that gesture doesn't have to
+    // be a button about permissions. Piggybacking on the first touch anywhere
+    // gets the same result without putting a pill over the hero.
+    if (!needsMotionPermission()) {
+      startDeviceTilt();
+      return;
+    }
+    // A hint rather than a button — small, dim, and gone the moment it's served
+    // its purpose. Without something the tap is undiscoverable; as a pill it sat
+    // on top of the hero.
+    setHintTilt(true);
+    const onFirstTouch = () => {
+      setHintTilt(false);
+      requestDeviceTilt();
+    };
+    window.addEventListener("pointerdown", onFirstTouch, { once: true });
+    return () => window.removeEventListener("pointerdown", onFirstTouch);
   }, []);
 
   useEffect(() => {
@@ -127,21 +153,34 @@ export default function Lab() {
           <Lockup className="lab-lockup" />
         </h1>
         <p>coming soon</p>
+        {hintTilt && <span className="lab-tilt-hint">tap to enable gyroscope</span>}
       </div>
-
-      {askTilt && active.webgl && (
-        <button
-          className="lab-tilt"
-          onClick={async () => {
-            if (await requestDeviceTilt()) setAskTilt(false);
-          }}
-        >
-          Tilt to move
-        </button>
-      )}
 
       {chrome && (
         <nav className="lab-switch" aria-label="Hero variants">
+          {/* Shown everywhere, not just on touch: on desktop the only way to
+              dismiss this panel used to be knowing about the `h` shortcut, which
+              isn't a close button by any reasonable definition. */}
+          <button
+            className={`lab-caret ${expanded ? "open" : ""}`}
+            onClick={() => setExpanded((e) => !e)}
+            aria-expanded={expanded}
+            aria-label={expanded ? "Hide variants" : "Show variants"}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden focusable="false">
+              <path
+                d="M6 15l6-6 6 6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          {expanded && (
+            <>
           <div className="lab-tabs">
             {VARIANTS.map((variant, i) => {
               const blocked = variant.webgl && !webgl;
@@ -164,9 +203,15 @@ export default function Lab() {
             <span className="blurb">{active.blurb}</span>
             <span className="cost">{active.cost}</span>
           </div>
-          <div className="lab-hint">
-            {webgl ? "1–3 to switch · h to hide" : "WebGL unavailable — showing fallback"}
-          </div>
+          {!coarse && (
+            <div className="lab-hint">
+              {webgl
+                ? "1–3 to switch · h to hide"
+                : "WebGL unavailable — showing fallback"}
+            </div>
+          )}
+            </>
+          )}
         </nav>
       )}
     </main>

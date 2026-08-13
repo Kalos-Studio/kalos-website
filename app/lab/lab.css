@@ -5,6 +5,13 @@
   overflow: hidden;
   background: #060505;
   display: block;
+  /* No zoom, no scroll, no long-press selection callout. The page is a single
+     fixed viewport, so any of those are accidents rather than intent. */
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* A warm radial sitting under everything. The Figma renders aren't on pure black
@@ -48,10 +55,9 @@
 .lab-stage {
   position: absolute;
   inset: 0;
-  /* Lets a one-finger drag reach us as pointermove instead of being swallowed by
-     scroll / pull-to-refresh, while still allowing pinch-zoom so the page isn't
-     locked away from anyone who needs to magnify it. */
-  touch-action: pinch-zoom;
+  /* Every touch here is meant for the mark — none of it should scroll, bounce
+     or pinch the page. */
+  touch-action: none;
 }
 
 .lab-stage canvas {
@@ -69,17 +75,15 @@
   position: absolute;
   left: 0;
   right: 0;
-  /* Clears the switcher stack below. `.bare` reclaims the space when the lab
-     furniture is hidden, which is what a real hero would use. */
-  bottom: clamp(7.5rem, 19vh, 11rem);
+  /* Fixed, and deliberately NOT dependent on whether the switcher is open.
+     Anchoring it to the switcher meant toggling the menu moved the lockup and
+     changed its distance from the 3D mark above — the spacing between those two
+     is a composition decision, not a side effect of lab furniture. */
+  bottom: 8.5rem;
   text-align: center;
   pointer-events: none;
   z-index: 3;
   animation: lab-rise 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
-}
-
-.lab-hero.bare {
-  bottom: clamp(3rem, 10vh, 6rem);
 }
 
 /* The lockup is real artwork now, not type, so the inherited h1 sizing from
@@ -94,8 +98,10 @@
 .lab-lockup {
   display: block;
   margin: 0 auto;
-  width: clamp(180px, 22vw, 320px);
+  width: clamp(124px, 13vw, 190px);
   height: auto;
+  /* Held back deliberately: the 3D mark is the subject, this is the signature. */
+  opacity: 0.88;
 }
 
 .lab-hero p {
@@ -269,26 +275,71 @@
   opacity: 0.75;
 }
 
-/* iOS gyroscope grant. Sits above the hero copy rather than in the switcher, so
-   it survives ?chrome=0 — it's product UI, not lab furniture. */
-.lab-tilt {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: max(1.25rem, env(safe-area-inset-top));
-  z-index: 6;
-  padding: 0.55rem 1.1rem;
+/* Barely-there prompt for the iOS motion grant. Fades in late, so it reads as an
+   afterthought rather than a gate, and disappears on first touch. */
+.lab-tilt-hint {
+  display: block;
+  margin-top: 1.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  /* Brighter than "coming soon", not dimmer. The first pass sat at #4c4132,
+     which put the one line that's actually an instruction below the ambient
+     copy and made it effectively invisible on an OLED phone. */
+  color: #d6c199;
+  animation: lab-hint-in 1s ease 1.6s both, lab-hint-pulse 2.6s ease-in-out 2.6s infinite;
+}
+
+@keyframes lab-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A slow breath, so the eye catches it without it becoming a button. Shallow on
+   purpose — dipping to 0.5 meant half the cycle was spent at a brightness that
+   defeated the point of the hint existing. */
+@keyframes lab-hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+/* Collapsed-switcher toggle, mobile only. `order` puts it visually last so it
+   stays pinned at the bottom edge whether or not the panel above it is open. */
+.lab-caret {
+  order: 2;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
   border-radius: 999px;
-  border: 1px solid rgba(203, 167, 95, 0.28);
-  background: rgba(20, 16, 10, 0.72);
+  border: 1px solid rgba(203, 167, 95, 0.18);
+  background: rgba(20, 16, 10, 0.66);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  color: #e6d3aa;
-  font: inherit;
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
+  color: #b39c6f;
   cursor: pointer;
-  animation: lab-rise 1s cubic-bezier(0.22, 1, 0.36, 1) 1.2s both;
+  padding: 0;
+}
+
+.lab-caret svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lab-caret.open svg {
+  transform: rotate(180deg);
 }
 
 .lab-tabs button:disabled {
@@ -306,15 +357,11 @@
   /* Portrait phones give the mark a much taller frame than a desktop window, so
      the copy moves down and gets more air beneath the object. */
   .lab-hero {
-    bottom: clamp(8.5rem, 22vh, 13rem);
-  }
-
-  .lab-hero.bare {
-    bottom: clamp(3.5rem, 12vh, 7rem);
+    bottom: clamp(5rem, 13vh, 6.5rem);
   }
 
   .lab-lockup {
-    width: clamp(190px, 60vw, 290px);
+    width: clamp(132px, 40vw, 180px);
   }
 
   .lab-hero p {

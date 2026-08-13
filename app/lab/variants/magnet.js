@@ -87,6 +87,11 @@ function Lockup({ still }) {
         : null;
     const p = source ?? pointer.current;
     const live = Boolean(source) && !still;
+    // Gyro input needs more gain and a tighter response than a cursor, or the
+    // mark reads as barely reacting to the phone moving.
+    const gyro = live && !pointerLive(pointer.current);
+    const gain = gyro ? 1.7 : 1;
+    const snap = gyro ? 1.8 : 1;
 
     // Entrance: the shapes start flung out along their own axis and converge.
     spread.current = damp(spread.current, 0, 1.6, delta);
@@ -98,25 +103,25 @@ function Lockup({ still }) {
       // -1 for the triangle (left of centre), +1 for the diamond.
       const dir = Math.sign(offsets[i].x) || 1;
 
-      const drift = live ? p.x * DRIFT : Math.sin(t * 0.4) * 2;
+      const drift = live ? p.x * DRIFT * gain : Math.sin(t * 0.4) * 2;
       // Idle breathing is allowed to go slightly negative, but only by a couple
       // of units against a 14-unit gap, so the shapes still never touch.
       const stretch = live
-        ? Math.abs(p.x) * STRETCH + Math.abs(p.y) * 5
+        ? (Math.abs(p.x) * STRETCH + Math.abs(p.y) * 5) * gain
         : Math.sin(t * (0.3 + i * 0.11)) * 2.5;
 
       const targetX = drift + dir * (stretch + spread.current);
       const targetY = live
-        ? -p.y * 6 * reach[i]
+        ? -p.y * 6 * reach[i] * gain
         : Math.sin(t * (0.45 + i * 0.13)) * 3;
 
-      mesh.position.x = damp(mesh.position.x, still ? 0 : targetX, inertia[i], delta);
-      mesh.position.y = damp(mesh.position.y, still ? 0 : targetY, inertia[i], delta);
+      mesh.position.x = damp(mesh.position.x, still ? 0 : targetX, inertia[i] * snap, delta);
+      mesh.position.y = damp(mesh.position.y, still ? 0 : targetY, inertia[i] * snap, delta);
 
       const targetSpin = live ? p.x * 0.42 * reach[i] : Math.sin(t * 0.3) * 0.22;
       const targetTilt = live ? -p.y * 0.3 * reach[i] : Math.sin(t * 0.24) * 0.12;
-      mesh.rotation.y = damp(mesh.rotation.y, still ? 0 : targetSpin, inertia[i], delta);
-      mesh.rotation.x = damp(mesh.rotation.x, still ? 0 : targetTilt, inertia[i], delta);
+      mesh.rotation.y = damp(mesh.rotation.y, still ? 0 : targetSpin, inertia[i] * snap, delta);
+      mesh.rotation.x = damp(mesh.rotation.x, still ? 0 : targetTilt, inertia[i] * snap, delta);
     }
   });
 

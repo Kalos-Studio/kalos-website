@@ -81,9 +81,13 @@ const tilt = { x: 0, y: 0, active: false };
 let baseline = null;
 let listening = false;
 
-// How far you have to tilt, in degrees, to reach full deflection. Deliberately
-// small: nobody wants to rotate their phone 90° to see the other side of a logo.
-const TILT_RANGE = 26;
+// How far you have to tilt, in degrees, to reach full deflection.
+//
+// 26° was too much: combined with the rotation amplitude it worked out to very
+// nearly 1:1 — tilt the handset 26° and the mark turned 26° — which reads as the
+// thing barely responding. 14° means a normal wrist movement covers the full
+// range, and the mark moves noticeably further than the phone does.
+const TILT_RANGE = 14;
 
 function clamp(v) {
   return Math.min(1, Math.max(-1, v));
