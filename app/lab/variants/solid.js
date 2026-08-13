@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMarkFit, useMarkGeometries } from "../kalos-mark";
@@ -15,7 +15,7 @@ import {
 // Dynamic so phones never download the postprocessing chunk — see post.js.
 const Post = dynamic(() => import("../post"), { ssr: false });
 
-function Lockup({ still }) {
+function Lockup({ still, started }) {
   const geometries = useMarkGeometries();
   const { scale, lift } = useMarkFit();
   const group = useRef();
@@ -24,6 +24,17 @@ function Lockup({ still }) {
   useFrame((state, delta) => {
     const g = group.current;
     if (!g) return;
+
+    // Hold the entrance pose until the canvas is actually on screen.
+    //
+    // The swing out of this pose is the page's only cue that the mark responds
+    // to being moved, so none of it can be spent behind the reveal fade. Frame
+    // count alone doesn't guarantee that: shader compilation and the cubemap
+    // bake land on the first frames, which measured as a ~1.8s stall with
+    // nothing composited — long enough for the swing to be most of the way over
+    // before anything appeared. Gating on the reveal makes it play in view on
+    // any device, however slow that first frame turns out to be.
+    if (!started) return;
 
     const t = state.clock.elapsedTime;
     const p = pointer.current;
@@ -69,15 +80,50 @@ function Lockup({ still }) {
   );
 }
 
-export default function Solid() {
+/**
+ * Fires once, as soon as there's actually something on the canvas.
+ *
+ * The chunk this file lives in lands seconds after the page shell on a phone,
+ * and until it does the stage is empty — so the canvas has to announce itself
+ * rather than blink into existence at full opacity.
+ *
+ * Two frames, not one: useFrame runs before the draw call, so frame 1 hasn't
+ * been painted yet, and drei's Environment bakes its cubemap on first render.
+ * Waiting one more frame means the reveal never uncovers an empty canvas. It
+ * also keeps the reveal at the very start of the mark's entrance swing — that
+ * swing is the page showing you it responds to movement, and it is at its
+ * fastest in the first few hundred milliseconds, so it must not happen behind a
+ * half-transparent canvas.
+ */
+const REVEAL_FRAME = 2;
+
+function RevealOnFirstFrame({ onReveal }) {
+  const frames = useRef(0);
+
+  useFrame(() => {
+    frames.current += 1;
+    if (frames.current === REVEAL_FRAME) onReveal();
+  });
+
+  return null;
+}
+
+export default function Solid({ onReady }) {
   // Read once at mount rather than per frame: neither answer changes while the
   // hero is on screen, and both feed props that shouldn't thrash.
   const [coarse] = useState(isCoarsePointer);
   const [still] = useState(prefersReducedMotion);
+  const [revealed, setRevealed] = useState(false);
   const visible = usePageVisible();
+
+  const reveal = useCallback(() => {
+    setRevealed(true);
+    onReady?.();
+  }, [onReady]);
 
   return (
     <Canvas
+      className={`lab-canvas${revealed ? " is-revealed" : ""}`}
       camera={{ position: [0, 0, 8], fov: 30 }}
       // Phone screens are often 3x. Rendering at native density burns frames for
       // detail nobody can resolve at arm's length.
@@ -91,7 +137,8 @@ export default function Solid() {
       }}
     >
       <GoldEnvironment />
-      <Lockup still={still} />
+      <Lockup still={still} started={revealed} />
+      <RevealOnFirstFrame onReveal={reveal} />
       {!coarse && <Post />}
     </Canvas>
   );

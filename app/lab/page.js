@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Lockup from "./lockup";
 import {
@@ -33,12 +33,32 @@ function hasWebGL() {
   }
 }
 
+// How long to wait for the renderer before showing the motion prompt anyway.
+// It normally arrives with the first rendered frame, but a lost context or a
+// chunk that never downloads would otherwise strand the prompt forever — and
+// without it there's no way to reach the gyroscope at all.
+const STAGE_READY_TIMEOUT_MS = 4000;
+
 export default function Lab() {
   const [webgl, setWebgl] = useState(true);
   const [hintTilt, setHintTilt] = useState(false);
+  // The stage lands seconds after this copy does. The prompt waits for it:
+  // "tap to enable gyroscope" over an empty background is an instruction about
+  // something that isn't on screen yet.
+  const [stageReady, setStageReady] = useState(false);
+  const onStageReady = useCallback(() => setStageReady(true), []);
 
   useEffect(() => {
-    setWebgl(hasWebGL());
+    if (stageReady) return;
+    const id = setTimeout(() => setStageReady(true), STAGE_READY_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [stageReady]);
+
+  useEffect(() => {
+    const supported = hasWebGL();
+    setWebgl(supported);
+    // Nothing to wait for when there's no stage to render.
+    if (!supported) setStageReady(true);
 
     // ?hint=1 forces the motion prompt on any browser. It only ever mounts on
     // iOS otherwise, which makes it impossible to art-direct from a desktop —
@@ -70,7 +90,7 @@ export default function Lab() {
     <main className={`lab ${webgl ? "" : "no-webgl"}`}>
       {webgl && (
         <div className="lab-stage">
-          <Solid />
+          <Solid onReady={onStageReady} />
         </div>
       )}
 
@@ -79,7 +99,9 @@ export default function Lab() {
           <Lockup className="lab-lockup" />
         </h1>
         <p>coming soon</p>
-        {hintTilt && <span className="lab-tilt-hint">tap to enable gyroscope</span>}
+        {hintTilt && stageReady && (
+          <span className="lab-tilt-hint">tap to enable gyroscope</span>
+        )}
       </div>
     </main>
   );

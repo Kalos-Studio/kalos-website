@@ -64,6 +64,23 @@
   display: block;
 }
 
+/* The renderer's chunk is a few hundred KB and only starts downloading once the
+   page is interactive, so on a phone the stage arrives seconds after the copy.
+   It fades up on its first painted frame instead of appearing at full strength.
+
+   Kept short deliberately. The mark's entrance — it swings from an off-target
+   rotation into place — begins on the same frame this fade does, and covers
+   most of its distance early. A longer fade would hide exactly the part that
+   tells you the thing moves. */
+.lab-canvas {
+  opacity: 0;
+  transition: opacity 260ms ease-out;
+}
+
+.lab-canvas.is-revealed {
+  opacity: 1;
+}
+
 .lab-loading {
   position: absolute;
   inset: 0;
@@ -147,8 +164,11 @@
      which put the one line that's actually an instruction below the ambient
      copy and made it effectively invisible on an OLED phone. */
   color: #d6c199;
-  animation: lab-hint-in 1s ease 1.6s both,
-    lab-hint-pulse 2.6s ease-in-out 2.6s infinite;
+  /* Delays are measured from the moment this mounts, which is now the stage's
+     first frame rather than page load. 0.9s lets the mark's entrance swing play
+     and settle first — motion, then the instruction about motion. */
+  animation: lab-hint-in 1s ease 0.9s both,
+    lab-hint-pulse 2.6s ease-in-out 1.9s infinite;
 }
 
 @keyframes lab-hint-in {
@@ -198,6 +218,6 @@
   }
 
   .lab-tilt-hint {
-    animation: lab-hint-in 1s ease 1.6s both;
+    animation: lab-hint-in 1s ease 0.9s both;
   }
 }
