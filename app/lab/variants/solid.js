@@ -34,16 +34,25 @@ function Lockup({ still }) {
     // always override whatever angle the handset happens to be held at.
     const live = pointerLive(p);
     const source = live ? p : tilt.active ? tilt : null;
+    const gyro = Boolean(source) && !live;
 
     // Kept deliberately shallow. Past about 0.3rad the triangle foreshortens far
-    // enough that it stops reading as the logo and starts reading as a kite.
-    const targetY = source ? source.x * 0.46 : Math.sin(t * 0.34) * 0.26;
-    const targetX = source ? -source.y * 0.32 : Math.sin(t * 0.23) * 0.13;
+    // enough that it stops reading as the logo and starts reading as a kite —
+    // though the gyro earns more range, since holding a phone is a much more
+    // direct sort of contact than pushing a cursor around.
+    const swing = gyro ? 0.62 : 0.46;
+    const targetY = source ? source.x * swing : Math.sin(t * 0.34) * 0.26;
+    const targetX = source ? -source.y * swing * 0.7 : Math.sin(t * 0.23) * 0.13;
+
+    // Damping tuned for a mouse feels like treacle on a gyroscope — you move the
+    // phone and the mark arrives a beat later. Tighter when the sensor is
+    // driving, but not so tight that sensor noise becomes visible jitter.
+    const lambda = gyro ? 6 : 3.2;
 
     // The initial rotation is off-target, so this same damp doubles as the
     // entrance: the mark swings into place instead of popping in.
-    g.rotation.y = damp(g.rotation.y, still ? 0 : targetY, 3.2, delta);
-    g.rotation.x = damp(g.rotation.x, still ? 0 : targetX, 3.2, delta);
+    g.rotation.y = damp(g.rotation.y, still ? 0 : targetY, lambda, delta);
+    g.rotation.x = damp(g.rotation.x, still ? 0 : targetX, lambda, delta);
     g.position.y = lift + (still ? 0 : Math.sin(t * 0.55) * 0.05);
   });
 

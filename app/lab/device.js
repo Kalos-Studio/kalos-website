@@ -23,23 +23,6 @@ export function isCoarsePointer() {
 }
 
 /**
- * Whether this connection wants us to go easy on it.
- *
- * The WebGL variants pull ~225KB gz of three.js. On a 3G connection that's
- * several seconds of staring at an empty hero, and Save-Data is an explicit
- * request not to spend someone's allowance. Either way we'd rather serve the
- * 120KB image variant, which is a complete experience in its own right.
- */
-export function prefersLightweight() {
-  if (typeof navigator === "undefined") return false;
-  const connection =
-    navigator.connection ?? navigator.mozConnection ?? navigator.webkitConnection;
-  if (!connection) return false;
-  if (connection.saveData === true) return true;
-  return ["slow-2g", "2g", "3g"].includes(connection.effectiveType);
-}
-
-/**
  * Tracks tab visibility so the render loop can be parked.
  *
  * A hero animates forever by design. Left running in a background tab it keeps
@@ -73,17 +56,21 @@ export function prefersReducedMotion() {
  * tilting the handset turns the mark as though you were holding the object.
  *
  * A module-level singleton rather than a hook, because two very different
- * consumers need it — the R3F scene reads it every frame, and the DOM renders a
- * permission button — and there should only ever be one listener.
+ * consumers need it — the R3F scene reads it every frame, and the DOM renders the
+ * motion prompt — and there should only ever be one listener.
  * ------------------------------------------------------------------------- */
 
 const tilt = { x: 0, y: 0, active: false };
 let baseline = null;
 let listening = false;
 
-// How far you have to tilt, in degrees, to reach full deflection. Deliberately
-// small: nobody wants to rotate their phone 90° to see the other side of a logo.
-const TILT_RANGE = 26;
+// How far you have to tilt, in degrees, to reach full deflection.
+//
+// 26° was too much: combined with the rotation amplitude it worked out to very
+// nearly 1:1 — tilt the handset 26° and the mark turned 26° — which reads as the
+// thing barely responding. 14° means a normal wrist movement covers the full
+// range, and the mark moves noticeably further than the phone does.
+const TILT_RANGE = 14;
 
 function clamp(v) {
   return Math.min(1, Math.max(-1, v));

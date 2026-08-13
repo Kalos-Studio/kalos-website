@@ -9,6 +9,21 @@ export const metadata = {
   robots: { index: false, follow: false, nocache: true },
 };
 
+// The page is one fixed viewport with a drag-driven object in the middle of it,
+// so pinch-zoom and scroll are only ever accidents here.
+//
+// Worth knowing: iOS Safari has ignored user-scalable=no since iOS 10, on
+// purpose — it won't let a page take zoom away from someone who needs it. The
+// thing that actually stops an accidental pinch on iPhone is `touch-action:
+// none` in lab.css. This declaration is what handles Android.
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#060505",
+};
+
 export default function LabLayout({ children }) {
   return children;
 }
