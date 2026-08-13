@@ -129,7 +129,15 @@
 
 /* ---------- iOS motion prompt ---------- */
 
+/* Out of the hero's flow on purpose. The hero is anchored by its bottom edge, so
+   a hint rendered inline made the box taller and lifted the lockup toward the
+   mark — then dropped it again the moment the prompt was tapped away. Hung below
+   the hero instead, it can appear and disappear without moving anything. */
 .lab-tilt-hint {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   display: block;
   margin-top: 1.5rem;
   font-size: 0.72rem;
