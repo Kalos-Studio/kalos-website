@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { Environment, Lightformer } from "@react-three/drei";
-import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 
 export const GOLD = "#cba75f";
 export const BACKDROP = "#060505";
@@ -145,29 +144,6 @@ export function GoldEnvironment({ frames = 1, resolution = 256, children }) {
 
       {children}
     </Environment>
-  );
-}
-
-/**
- * Bloom is what sells the metal, but it has to hug the edge it came from.
- *
- * A wide radius blurs the hot rim so far from the geometry that the glow detaches
- * and reads as a stray grey smudge floating off the shape — which is exactly the
- * "weird gold shadow" this used to produce. Keeping the radius tight and the
- * threshold high confines it to the blown-out specular on the bevel.
- */
-export function Post({ intensity = 0.55, multisampling = 4 }) {
-  return (
-    <EffectComposer multisampling={multisampling}>
-      <Bloom
-        mipmapBlur
-        intensity={intensity}
-        luminanceThreshold={0.95}
-        luminanceSmoothing={0.12}
-        radius={0.4}
-      />
-      <Vignette eskil={false} offset={0.28} darkness={0.7} />
-    </EffectComposer>
   );
 }
 

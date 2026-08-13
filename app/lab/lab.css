@@ -23,6 +23,28 @@
   pointer-events: none;
 }
 
+/* Vignette. This used to be a postprocessing pass, which meant a full extra
+   render target every frame to do something a gradient does for free — and it
+   meant the mood changed on phones, which skip postprocessing entirely. As CSS
+   it costs nothing and looks identical everywhere. Painted after .lab-stage, so
+   it sits over the canvas but under the hero copy. */
+.lab::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* Held well clear of the mark. The first attempt started falling off at 42%,
+     which put the lockup itself inside the darkened zone and turned the gold to
+     bronze — the vignette should frame the object, never touch it. */
+  background: radial-gradient(
+    ellipse 92% 88% at 50% 40%,
+    transparent 58%,
+    rgba(0, 0, 0, 0.26) 84%,
+    rgba(0, 0, 0, 0.58) 100%
+  );
+}
+
 .lab-stage {
   position: absolute;
   inset: 0;
@@ -60,17 +82,19 @@
   bottom: clamp(3rem, 10vh, 6rem);
 }
 
-/* The wordmark is real artwork now, not type, so the inherited h1 sizing from
+/* The lockup is real artwork now, not type, so the inherited h1 sizing from
    globals.css has to be zeroed out or it reserves a line box around the SVG. */
 .lab-hero h1 {
   font-size: 0;
   line-height: 0;
 }
 
-.lab-wordmark {
+/* Wider than the wordmark alone (568:139 vs 369:120), so it needs a smaller
+   share of the viewport to sit at the same optical weight. */
+.lab-lockup {
   display: block;
   margin: 0 auto;
-  width: clamp(148px, 20vw, 288px);
+  width: clamp(180px, 22vw, 320px);
   height: auto;
 }
 
@@ -289,8 +313,8 @@
     bottom: clamp(3.5rem, 12vh, 7rem);
   }
 
-  .lab-wordmark {
-    width: clamp(150px, 46vw, 230px);
+  .lab-lockup {
+    width: clamp(190px, 60vw, 290px);
   }
 
   .lab-hero p {

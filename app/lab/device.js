@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 /**
  * Device capability + gyroscope input.
  *
@@ -18,6 +20,43 @@ export function isCoarsePointer() {
     typeof window !== "undefined" &&
     window.matchMedia?.("(pointer: coarse)").matches === true
   );
+}
+
+/**
+ * Whether this connection wants us to go easy on it.
+ *
+ * The WebGL variants pull ~225KB gz of three.js. On a 3G connection that's
+ * several seconds of staring at an empty hero, and Save-Data is an explicit
+ * request not to spend someone's allowance. Either way we'd rather serve the
+ * 120KB image variant, which is a complete experience in its own right.
+ */
+export function prefersLightweight() {
+  if (typeof navigator === "undefined") return false;
+  const connection =
+    navigator.connection ?? navigator.mozConnection ?? navigator.webkitConnection;
+  if (!connection) return false;
+  if (connection.saveData === true) return true;
+  return ["slow-2g", "2g", "3g"].includes(connection.effectiveType);
+}
+
+/**
+ * Tracks tab visibility so the render loop can be parked.
+ *
+ * A hero animates forever by design. Left running in a background tab it keeps
+ * a phone's GPU awake and eats battery for something nobody is looking at, so
+ * the variants drop the Canvas to frameloop="never" while hidden.
+ */
+export function usePageVisible() {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const onChange = () => setVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onChange);
+    onChange();
+    return () => document.removeEventListener("visibilitychange", onChange);
+  }, []);
+
+  return visible;
 }
 
 export function prefersReducedMotion() {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 import {
   motion,
   useMotionTemplate,
@@ -65,7 +66,20 @@ export default function Parallax() {
         className="px-tilt"
         style={{ rotateX, rotateY, x: driftX, y: driftY }}
       >
-        <img src="/kalos-3d-render.jpg" alt="" draggable={false} />
+        {/* next/image rather than a bare <img>: this is the variant phones fall
+            back to, and it's the one that has to be cheapest on cellular. The
+            optimizer serves AVIF/WebP at the device's actual size, so a phone
+            pulls roughly a third of the 120KB source. `priority` because it's
+            the hero — it must not queue behind anything. */}
+        <Image
+          src="/kalos-3d-render.jpg"
+          alt=""
+          width={1200}
+          height={1200}
+          priority
+          draggable={false}
+          sizes="(max-width: 640px) 80vw, 660px"
+        />
         <motion.div className="px-sheen" style={{ backgroundImage: sheen }} />
       </motion.div>
     </div>

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
@@ -61,7 +61,7 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
  * sits on the origin.
  */
 export function useMarkGeometries({ depth = 20, bevel = 2.6 } = {}) {
-  return useMemo(() => {
+  const geometries = useMemo(() => {
     const paths = new SVGLoader().parse(MARK_SVG).paths;
 
     const geometries = paths.map((path) => {
@@ -94,6 +94,17 @@ export function useMarkGeometries({ depth = 20, bevel = 2.6 } = {}) {
 
     return geometries;
   }, [depth, bevel]);
+
+  // ExtrudeGeometry allocates GPU buffers that React knows nothing about. The
+  // switcher unmounts a whole Canvas each time you change variant, so without
+  // this every switch strands another pair of extrusions in VRAM.
+  useEffect(() => {
+    return () => {
+      for (const geometry of geometries) geometry.dispose();
+    };
+  }, [geometries]);
+
+  return geometries;
 }
 
 // Where each shape sits relative to the lockup centre, in *geometry* units — the

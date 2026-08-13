@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Wordmark from "./wordmark";
+import Lockup from "./lockup";
 import {
   isCoarsePointer,
   needsMotionPermission,
+  prefersLightweight,
   requestDeviceTilt,
   startDeviceTilt,
 } from "./device";
@@ -27,7 +28,7 @@ const VARIANTS = [
     Component: Solid,
     webgl: true,
     blurb: "Real extruded geometry. The mark turns to follow your cursor.",
-    cost: "~225KB gz, lazy",
+    cost: "three.js · ~230KB gz, lazy",
   },
   {
     key: "magnet",
@@ -35,7 +36,7 @@ const VARIANTS = [
     Component: Magnet,
     webgl: true,
     blurb: "The two shapes have different mass. They stretch apart and reassemble.",
-    cost: "~225KB gz, lazy",
+    cost: "three.js · ~230KB gz, lazy",
   },
   {
     key: "parallax",
@@ -43,7 +44,7 @@ const VARIANTS = [
     Component: Parallax,
     webgl: false,
     blurb: "The baked Figma render, tilted. No WebGL — the safe fallback.",
-    cost: "no WebGL · 120KB image",
+    cost: "no WebGL · ~5KB image",
   },
 ];
 
@@ -84,7 +85,11 @@ export default function Lab() {
 
     const params = new URLSearchParams(window.location.search);
     const wanted = VARIANTS.findIndex((v) => v.key === params.get("v"));
-    const target = wanted >= 0 ? wanted : 0;
+
+    // An explicit ?v= is a deliberate choice and always wins — including over the
+    // connection heuristic, so this stays testable. Only the default is downgraded
+    // on a slow or metered connection.
+    const target = wanted >= 0 ? wanted : prefersLightweight() ? FALLBACK : 0;
 
     setIndex(supported || !VARIANTS[target].webgl ? target : FALLBACK);
     if (params.get("chrome") === "0") setChrome(false);
@@ -119,7 +124,7 @@ export default function Lab() {
 
       <div className={`lab-hero ${chrome ? "" : "bare"}`}>
         <h1>
-          <Wordmark className="lab-wordmark" />
+          <Lockup className="lab-lockup" />
         </h1>
         <p>coming soon</p>
       </div>

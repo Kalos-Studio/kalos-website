@@ -1,10 +1,19 @@
 "use client";
 
 import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMarkFit, useMarkGeometries } from "../kalos-mark";
-import { GoldEnvironment, GoldMaterial, Post, damp, pointerLive, usePointer } from "../stage";
-import { getTilt, isCoarsePointer, prefersReducedMotion } from "../device";
+import { GoldEnvironment, GoldMaterial, damp, pointerLive, usePointer } from "../stage";
+import {
+  getTilt,
+  isCoarsePointer,
+  prefersReducedMotion,
+  usePageVisible,
+} from "../device";
+
+// Dynamic so phones never download the postprocessing chunk — see post.js.
+const Post = dynamic(() => import("../post"), { ssr: false });
 
 function Lockup({ still }) {
   const geometries = useMarkGeometries();
@@ -56,18 +65,25 @@ export default function Solid() {
   // hero is on screen, and both feed props that shouldn't thrash.
   const [coarse] = useState(isCoarsePointer);
   const [still] = useState(prefersReducedMotion);
+  const visible = usePageVisible();
 
   return (
     <Canvas
       camera={{ position: [0, 0, 8], fov: 30 }}
-      // Phone screens are often 3x. Rendering a bloom chain at native density
-      // burns frames for detail nobody can resolve at arm's length.
+      // Phone screens are often 3x. Rendering at native density burns frames for
+      // detail nobody can resolve at arm's length.
       dpr={[1, coarse ? 1.75 : 2]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      frameloop={visible ? "always" : "never"}
+      gl={{
+        antialias: true,
+        // "high-performance" asks for the discrete GPU, which on a laptop means
+        // more heat and less battery for a decorative hero.
+        powerPreference: coarse ? "default" : "high-performance",
+      }}
     >
       <GoldEnvironment />
       <Lockup still={still} />
-      <Post multisampling={coarse ? 0 : 4} />
+      {!coarse && <Post />}
     </Canvas>
   );
 }

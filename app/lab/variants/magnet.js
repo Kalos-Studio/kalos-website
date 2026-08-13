@@ -1,10 +1,19 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { shapeOffsets, useMarkFit, useMarkGeometries } from "../kalos-mark";
-import { GoldEnvironment, GoldMaterial, Post, damp, pointerLive, usePointer } from "../stage";
-import { getTilt, isCoarsePointer, prefersReducedMotion } from "../device";
+import { GoldEnvironment, GoldMaterial, damp, pointerLive, usePointer } from "../stage";
+import {
+  getTilt,
+  isCoarsePointer,
+  prefersReducedMotion,
+  usePageVisible,
+} from "../device";
+
+// Dynamic so phones never download the postprocessing chunk — see post.js.
+const Post = dynamic(() => import("../post"), { ssr: false });
 
 // Geometry-space units (the mark is ~150 wide), so these read as a fraction of
 // the lockup rather than as absolute distances.
@@ -35,6 +44,29 @@ const STRETCH = 11;
 function Lockup({ still }) {
   const geometries = useMarkGeometries();
   const offsets = useMemo(() => shapeOffsets(geometries), [geometries]);
+
+  // Each shape spins about its own centre, so the geometry is shifted onto the
+  // origin and the offset is re-applied on the parent — rotating around the
+  // shared lockup centre would swing the diamond in an arc instead.
+  //
+  // Memoised, not cloned inline in the JSX: doing it in the render body forged a
+  // fresh pair of GPU buffers on every re-render (every viewport resize) and
+  // orphaned the previous pair.
+  const centred = useMemo(
+    () =>
+      geometries.map((geometry, i) => {
+        const clone = geometry.clone();
+        clone.translate(-offsets[i].x, -offsets[i].y, -offsets[i].z);
+        return clone;
+      }),
+    [geometries, offsets]
+  );
+
+  useEffect(() => {
+    return () => {
+      for (const geometry of centred) geometry.dispose();
+    };
+  }, [centred]);
   const { scale, lift } = useMarkFit();
   const meshes = useRef([]);
   const pointer = usePointer();
@@ -90,13 +122,7 @@ function Lockup({ still }) {
 
   return (
     <group position={[0, lift, 0]} scale={[scale, -scale, scale]}>
-      {geometries.map((geometry, i) => {
-        // Each mesh spins about its own centre, so the geometry is shifted onto
-        // the origin and the offset is re-applied on the parent. Rotating around
-        // the shared lockup centre instead would swing the diamond in an arc.
-        const centred = geometry.clone();
-        centred.translate(-offsets[i].x, -offsets[i].y, -offsets[i].z);
-
+      {centred.map((geometry, i) => {
         // Sit the two shapes on slightly different planes. Belt-and-braces
         // against interpenetration once they're tilting independently, and it
         // gives the lockup a bit of depth as a bonus.
@@ -105,7 +131,7 @@ function Lockup({ still }) {
 
         return (
           <group key={i} position={[offsets[i].x, offsets[i].y, z]}>
-            <mesh ref={(el) => (meshes.current[i] = el)} geometry={centred}>
+            <mesh ref={(el) => (meshes.current[i] = el)} geometry={geometry}>
               <GoldMaterial />
             </mesh>
           </group>
@@ -118,16 +144,21 @@ function Lockup({ still }) {
 export default function Magnet() {
   const [coarse] = useState(isCoarsePointer);
   const [still] = useState(prefersReducedMotion);
+  const visible = usePageVisible();
 
   return (
     <Canvas
       camera={{ position: [0, 0, 8], fov: 30 }}
       dpr={[1, coarse ? 1.75 : 2]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      frameloop={visible ? "always" : "never"}
+      gl={{
+        antialias: true,
+        powerPreference: coarse ? "default" : "high-performance",
+      }}
     >
       <GoldEnvironment />
       <Lockup still={still} />
-      <Post multisampling={coarse ? 0 : 4} />
+      {!coarse && <Post />}
     </Canvas>
   );
 }
