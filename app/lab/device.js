@@ -23,23 +23,6 @@ export function isCoarsePointer() {
 }
 
 /**
- * Whether this connection wants us to go easy on it.
- *
- * The WebGL variants pull ~225KB gz of three.js. On a 3G connection that's
- * several seconds of staring at an empty hero, and Save-Data is an explicit
- * request not to spend someone's allowance. Either way we'd rather serve the
- * 120KB image variant, which is a complete experience in its own right.
- */
-export function prefersLightweight() {
-  if (typeof navigator === "undefined") return false;
-  const connection =
-    navigator.connection ?? navigator.mozConnection ?? navigator.webkitConnection;
-  if (!connection) return false;
-  if (connection.saveData === true) return true;
-  return ["slow-2g", "2g", "3g"].includes(connection.effectiveType);
-}
-
-/**
  * Tracks tab visibility so the render loop can be parked.
  *
  * A hero animates forever by design. Left running in a background tab it keeps
@@ -73,8 +56,8 @@ export function prefersReducedMotion() {
  * tilting the handset turns the mark as though you were holding the object.
  *
  * A module-level singleton rather than a hook, because two very different
- * consumers need it — the R3F scene reads it every frame, and the DOM renders a
- * permission button — and there should only ever be one listener.
+ * consumers need it — the R3F scene reads it every frame, and the DOM renders the
+ * motion prompt — and there should only ever be one listener.
  * ------------------------------------------------------------------------- */
 
 const tilt = { x: 0, y: 0, active: false };
