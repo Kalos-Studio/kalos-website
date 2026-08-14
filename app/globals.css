@@ -1,3 +1,18 @@
+@import "tailwindcss";
+
+/* Everything below this line is unlayered, which is what keeps it winning.
+ *
+ * Tailwind v4 puts its own reset inside `@layer base`, and unlayered CSS beats
+ * any layer regardless of source order — so the element styling here overrides
+ * preflight rather than fighting it. That is deliberate: the type scale and the
+ * near-black ground are art direction, not defaults to be normalised away.
+ *
+ * Utilities still work as normal on top, because they sit in `@layer utilities`
+ * but are applied via class rather than element selectors. Where a utility and
+ * a rule in here target the same property on the same element, the rule here
+ * wins — reach for a plain class in that case instead of fighting it with
+ * `!important`. */
+
 * {
   margin: 0;
   padding: 0;
@@ -11,6 +26,12 @@ body {
   background: #000;
   color: #fff;
   -webkit-font-smoothing: antialiased;
+  /* Preflight sets the root to line-height 1.5. Every page here was composed
+     against the browser default, and adopting 1.5 silently moved things — the
+     work login card grew 17px, the home hero shifted 3px. Restoring `normal`
+     keeps existing pages pixel-identical; anything new should set its own
+     leading explicitly rather than depending on either default. */
+  line-height: normal;
 }
 
 main {
