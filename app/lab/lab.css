@@ -86,57 +86,42 @@
   inset: 0;
 }
 
-/* ---------- hero copy ---------- */
+/* ---------- masthead ---------- */
 
-.lab-hero {
+/* Top left, the way a logo sits on any site. `env()` rather than a flat inset so
+   the mark clears the notch and the rounded corner when this is opened on a
+   phone in landscape — where a fixed 1.5rem would put it under the sensor
+   housing. */
+.lab-header {
   position: absolute;
-  left: 0;
-  right: 0;
-  /* Fixed. The gap between the lockup and the 3D mark above it is a composition
-     decision, so nothing else on the page is allowed to move it. */
-  bottom: 8.5rem;
-  text-align: center;
+  top: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-top));
+  left: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-left));
   pointer-events: none;
   z-index: 3;
-  animation: lab-rise 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
-}
-
-/* With no WebGL there's no object to sit beneath, so the lockup takes the centre
-   rather than hovering above an empty lower third. */
-.lab.no-webgl .lab-hero {
-  top: 50%;
-  bottom: auto;
-  transform: translateY(-50%);
+  animation: lab-fade-in 1.2s ease 0.25s both;
 }
 
 /* The lockup is real artwork, not type, so the inherited h1 sizing from
    globals.css has to be zeroed out or it reserves a line box around the SVG. */
-.lab-hero h1 {
+.lab-header h1 {
   font-size: 0;
   line-height: 0;
+  margin: 0;
 }
 
+/* Sized off its height rather than its width — 568×139 is a long lockup, and a
+   width that looks modest on a wide window is a hairline on a phone. These land
+   it between 24px and 30px tall, which is the range a site header logo lives in. */
 .lab-lockup {
   display: block;
-  margin: 0 auto;
-  width: clamp(124px, 13vw, 190px);
+  width: clamp(98px, 9vw, 124px);
   height: auto;
-  /* Held back deliberately: the 3D mark is the subject, this is the signature. */
-  opacity: 0.88;
 }
 
-.lab-hero p {
-  margin-top: 1.1rem;
-  font-size: clamp(0.7rem, 1.4vw, 0.85rem);
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
-  color: #7a6647;
-}
-
-@keyframes lab-rise {
+@keyframes lab-fade-in {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
@@ -146,23 +131,24 @@
 
 /* ---------- iOS motion prompt ---------- */
 
-/* Out of the hero's flow on purpose. The hero is anchored by its bottom edge, so
-   a hint rendered inline made the box taller and lifted the lockup toward the
-   mark — then dropped it again the moment the prompt was tapped away. Hung below
-   the hero instead, it can appear and disappear without moving anything. */
+/* Positioned against the viewport rather than sitting in anything's flow, so it
+   can appear and disappear without moving a pixel of the rest of the page. It
+   takes the lower margin the lockup used to occupy: an instruction about
+   handling the phone belongs near the thumbs, not up by the masthead. */
 .lab-tilt-hint {
   position: absolute;
-  top: 100%;
   left: 0;
   right: 0;
+  bottom: max(3.25rem, calc(env(safe-area-inset-bottom) + 2.25rem));
   display: block;
-  margin-top: 1.5rem;
+  text-align: center;
+  pointer-events: none;
+  z-index: 3;
   font-size: 0.72rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  /* Brighter than "coming soon", not dimmer. An earlier pass sat at #4c4132,
-     which put the one line that's actually an instruction below the ambient
-     copy and made it effectively invisible on an OLED phone. */
+  /* An earlier pass sat at #4c4132, which made the one line on the page that's
+     actually an instruction effectively invisible on an OLED phone. */
   color: #d6c199;
   /* Delays are measured from the moment this mounts, which is now the stage's
      first frame rather than page load. 0.9s lets the mark's entrance swing play
@@ -198,26 +184,32 @@
 /* ---------- mobile ---------- */
 
 @media (max-width: 640px) {
-  .lab-hero {
-    bottom: clamp(5rem, 13vh, 6.5rem);
-  }
-
-  .lab-lockup {
-    width: clamp(132px, 40vw, 180px);
-  }
-
-  .lab-hero p {
-    margin-top: 0.9rem;
-    letter-spacing: 0.32em;
+  /* 9vw of a phone is nothing, so the clamp floor is what applies here — this
+     just nudges the mark in from the edge a little more than the fluid inset
+     would on its own. */
+  .lab-header {
+    top: max(1.35rem, env(safe-area-inset-top));
+    left: max(1.35rem, env(safe-area-inset-left));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lab-hero {
-    animation: none;
+  .lab-header {
+    animation: lab-opacity-in 1.2s ease 0.25s both;
   }
 
   .lab-tilt-hint {
     animation: lab-hint-in 1s ease 0.9s both;
+  }
+}
+
+/* Same entrance, no travel — the fade is information (the page is arriving), the
+   6px of movement is decoration. */
+@keyframes lab-opacity-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

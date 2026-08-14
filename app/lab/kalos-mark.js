@@ -19,8 +19,8 @@ const MARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 139">
 // a 30° camera at z=8 frames it with room to breathe above the wordmark.
 export const MARK_SCALE = 0.016;
 
-// The 3D mark sits dead centre of the viewport. The lockup underneath is small
-// enough now to live in the lower margin without pushing the object off-centre.
+// The 3D mark sits dead centre of the viewport — it's the only thing in the
+// middle of the page, with the lockup up in the corner as a masthead.
 export const MARK_LIFT = 0;
 
 // Size of the lockup in geometry units, bevel included.
@@ -34,8 +34,7 @@ const MARK_HEIGHT = 145;
  * and distance, so it's identical on a phone and a desktop — only the width
  * changes with aspect ratio. That means a fixed scale that frames nicely at
  * 16:9 runs straight off both edges of a portrait phone. This scales down (never
- * up) so the mark always occupies a sane fraction of the narrow axis, and lifts
- * it slightly higher in portrait where the wordmark needs more room beneath.
+ * up) so the mark always occupies a sane fraction of the narrow axis.
  */
 export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
   const width = useThree((state) => state.viewport.width);
@@ -49,9 +48,9 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
     // centred mark grows tall enough to run straight through the wordmark
     // underneath it. Height is what actually binds in landscape.
     const widthFit = (width * (portrait ? 0.66 : 0.44)) / (MARK_WIDTH * baseScale);
-    // 0.42 left the mark's lower point crowding the lockup underneath it. The
-    // gap between the object and the signature is part of the composition, so
-    // the mark gives up a little size to protect it.
+    // Height is the tighter constraint in landscape, where a mark fitted on
+    // width alone grows tall enough to fill the window edge to edge. 0.38 keeps
+    // clear air above and below it at every aspect ratio.
     const heightFit = (height * 0.38) / (MARK_HEIGHT * baseScale);
 
     // Only ever scale down — baseScale is the intended size, not a target to

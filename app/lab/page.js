@@ -87,22 +87,26 @@ export default function Lab() {
   }, []);
 
   return (
-    <main className={`lab ${webgl ? "" : "no-webgl"}`}>
+    <main className="lab">
       {webgl && (
         <div className="lab-stage">
           <Solid onReady={onStageReady} />
         </div>
       )}
 
-      <div className="lab-hero">
+      {/* The lockup sits where a site's logo sits — top left, small, out of the
+          way. The 3D mark is the only thing in the middle of the page now, which
+          is the point: the composition is the object, and this is the masthead
+          around it. */}
+      <header className="lab-header">
         <h1>
           <Lockup className="lab-lockup" />
         </h1>
-        <p>coming soon</p>
-        {hintTilt && stageReady && (
-          <span className="lab-tilt-hint">tap to enable gyroscope</span>
-        )}
-      </div>
+      </header>
+
+      {hintTilt && stageReady && (
+        <span className="lab-tilt-hint">tap to enable gyroscope</span>
+      )}
     </main>
   );
 }
