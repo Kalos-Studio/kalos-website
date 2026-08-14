@@ -46,7 +46,13 @@ Consequences to keep in mind:
   classes rather than elements.
 - Where an element rule in `globals.css` and a utility set the same property on
   the same element, **the element rule wins**. Add a plain class rather than
-  fighting it.
+  fighting it. The live example: `globals.css` styles bare `p`, so
+  `<p className="text-sm">` renders at the `globals.css` size, not `text-sm`.
+  Verified, not theoretical. Wrap it or use a `span`/class instead.
+- **Never reintroduce a bare `* { margin: 0; padding: 0 }`.** Preflight already
+  does it. An unlayered copy outranks `@layer utilities`, which silently
+  resolves every `p-*` and `m-*` in the project to 0 — no error, no warning,
+  the classes are simply inert.
 - `html, body` pins `line-height: normal`. Preflight sets the root to `1.5`,
   which silently moved existing pages (the work login card grew 17px, the home
   hero shifted 3px). New components should set their own leading explicitly

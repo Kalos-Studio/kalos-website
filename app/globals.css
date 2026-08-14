@@ -13,11 +13,16 @@
  * wins — reach for a plain class in that case instead of fighting it with
  * `!important`. */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* The `* { margin: 0; padding: 0; box-sizing: border-box }` that used to sit
+   here is gone, and deliberately so.
+ *
+ * Preflight already applies exactly that rule — same three properties, same
+ * values — but from inside `@layer base`. Keeping an unlayered copy changed
+ * nothing visually and quietly broke every spacing utility in the project: `p-6`
+ * and `m-4` live in `@layer utilities`, which an unlayered `*` selector outranks,
+ * so they resolved to 0 everywhere with no warning.
+ *
+ * If Tailwind is ever removed, this reset has to come back. */
 
 html,
 body {
