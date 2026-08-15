@@ -1,5 +1,48 @@
 @import "tailwindcss";
 
+/* ---------- brand tokens ---------- */
+
+/* Sampled from the artwork in the Kalos brand file, not invented and not taken
+   from a spec page: the deck's Contents lists Color and Type but those slides
+   don't exist yet, and the file has no Figma variables bound. Every value below
+   was read off a real render, with the source noted so it can be re-derived.
+   Replace these the moment the guidelines deck gains real swatch pages.
+ *
+ * Tailwind v4 has no config file — `@theme` is where tokens live, and each
+ * entry here also generates the matching utility (`--color-gold-base` gives you
+ * `bg-gold-base`, `text-gold-base`, and so on). */
+@theme {
+  /* The ground. Dominant colour of every slide in the deck, 22% of the
+     Principles frame alone. Note it is cool-shifted (blue channel highest),
+     where the hero's existing #060505 is warm-shifted and two stops lighter. */
+  --color-ink: #030305;
+
+  /* Brand white. Cross-checked two ways: sampled #F5FEFC off the 3D render
+     slide, and already hardcoded as WHITE in the lockup SVG. */
+  --color-bone: #f5fefd;
+
+  /* The gold ramp, dark to light. `base` is the face of the 3D mark and
+     `highlight` is the lit bevel — that pairing is also the spec for the matte
+     material, where the faces go rough and the edges stay polished. */
+  --color-gold-deep: #8b7462;
+  --color-gold-base: #ac9267;
+  --color-gold-light: #c19d79;
+  --color-gold-highlight: #f4eeda;
+
+  /* Space Grotesk, Medium, with five OpenType features deliberately on. The
+     alternates are not decoration: they are why the wordmark and the deck's
+     headlines have the letterforms they do. See .ds-display / --brand-features
+     below for the feature string. */
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Applied wherever the brand face is set. Kept as a custom property rather than
+   repeated, because forgetting it renders Space Grotesk's default forms and the
+   type quietly stops matching the logo. */
+:root {
+  --brand-features: "salt" 1, "ss01" 1, "ss02" 1, "ss03" 1, "ss04" 1;
+}
+
 /* Everything below this line is unlayered, which is what keeps it winning.
  *
  * Tailwind v4 puts its own reset inside `@layer base`, and unlayered CSS beats

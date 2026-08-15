@@ -1,0 +1,153 @@
+/* Scoped to /design-system.
+
+   globals.css sets html/body to overflow:hidden, because the landing page is a
+   single fixed viewport. This page is a long reference sheet, so it takes its
+   own scroll container — the same escape /work uses. */
+.ds-root {
+  display: block;
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--color-ink);
+  color: var(--color-bone);
+  font-family: var(--font-display);
+  font-feature-settings: var(--brand-features);
+  line-height: 1.5;
+}
+
+/* ---------- type ----------
+ *
+ * Every text style below is a plain class, and none of them are Tailwind type
+ * utilities. That is not a preference, it is the only thing that works here.
+ *
+ * globals.css styles bare h1 and p as art direction (an 11rem clamp, uppercase
+ * letter-spaced grey) and it does so *unlayered*, which outranks every Tailwind
+ * layer no matter the specificity. The first version of this file tried to hand
+ * the properties back with `:where(h1, h2, h3, p) { font-size: inherit }` and
+ * then set sizes with `text-4xl`. The reset is unlayered too, so it beat the
+ * utilities as well: every heading on the page rendered at 16px. Measured, not
+ * guessed.
+ *
+ * So: classes own type, utilities own layout. Same split CLAUDE.md prescribes.
+ * Tailwind is still doing the grids, spacing and borders throughout the page. */
+
+.ds-h1 {
+  font-size: clamp(2.25rem, 5vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  text-transform: none;
+  color: var(--color-bone);
+}
+
+.ds-h2 {
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-transform: none;
+  color: var(--color-bone);
+}
+
+/* Small caps label above a heading. The one place uppercase and wide tracking
+   are wanted rather than inherited by accident. */
+.ds-kicker {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-gold-base);
+}
+
+.ds-lead,
+.ds-body,
+.ds-note {
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.6;
+}
+
+.ds-lead {
+  font-size: 1rem;
+  color: rgba(245, 254, 253, 0.62);
+}
+
+.ds-body {
+  font-size: 0.9375rem;
+  color: rgba(245, 254, 253, 0.62);
+}
+
+.ds-note {
+  font-size: 0.875rem;
+  color: rgba(245, 254, 253, 0.48);
+}
+
+.ds-swatch-name {
+  font-size: 0.875rem;
+  color: var(--color-bone);
+}
+
+.ds-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  letter-spacing: normal;
+}
+
+.ds-mono--dim {
+  color: rgba(245, 254, 253, 0.45);
+}
+
+.ds-mono--gold {
+  color: var(--color-gold-base);
+}
+
+/* ---------- specimen ---------- */
+
+.ds-specimen {
+  display: block;
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.ds-quote {
+  display: block;
+  font-size: clamp(2rem, 5.5vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.ds-quote-sub {
+  display: block;
+  font-size: 1.375rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: rgba(245, 254, 253, 0.8);
+}
+
+/* The stylistic sets are the whole point of the type token, so the specimen
+   shows both states side by side. This class is the "before". */
+.ds-plain {
+  font-feature-settings: normal;
+}
+
+/* A swatch has to show its own colour honestly, including how it behaves on the
+   ground it will actually sit on. The hairline keeps the near-black chips from
+   vanishing into the page entirely. */
+.ds-chip {
+  aspect-ratio: 3 / 2;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 0 0 1px rgba(245, 254, 253, 0.14);
+}
+
+/* globals.css colours bare <li> nothing, but it does set <p>, and the open
+   questions list reads as body copy — keep it consistent with .ds-body. */
+.ds-list li {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: rgba(245, 254, 253, 0.62);
+}
