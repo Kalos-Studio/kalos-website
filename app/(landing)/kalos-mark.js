@@ -57,7 +57,18 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
     // grow into on a big screen.
     const scale = baseScale * Math.min(1, widthFit, heightFit);
 
-    return { scale, lift, portrait };
+    // Push the mark off centre in landscape so the hero copy has a column of
+    // its own. Dead centre was right when the mark was the only thing on the
+    // page; with a headline beside it the two collide, and text sitting across
+    // a lit object reads as a mistake rather than as a composition. The brand
+    // deck's own title slide is laid out exactly this way: words left, object
+    // filling the right.
+    //
+    // Portrait keeps it centred. There is no room for two columns on a phone,
+    // where the copy sits under the mark instead of beside it.
+    const offsetX = portrait ? 0 : width * 0.19;
+
+    return { scale, lift, offsetX, portrait };
   }, [width, height, baseScale, lift]);
 }
 

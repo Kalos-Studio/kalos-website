@@ -54,21 +54,37 @@
   border-top: 1px solid var(--color-eerie-gray);
 }
 
-/* ---------- type ---------- */
+/* ---------- type ----------
+ *
+ * Tracking is -0.02em everywhere, because that is what the brand file does at
+ * every size: its 16px label tracks -0.32px, its 26px body -0.52px, its 116px
+ * statement -2.32px. Three sizes, one ratio. The per-element values that used to
+ * be here (-0.01em, -0.025em, -0.035em, +0.24em) were invented.
+ *
+ * Leading is the one place this deliberately departs from the file. The deck
+ * sets body at `normal`, which is right for a presentation read from a distance
+ * and too tight for a paragraph someone actually reads on a phone. */
 
+/* The deck's own label treatment, taken from its slide header (node 162:10194):
+   Space Grotesk Regular at 16px, tracking -0.02em, sentence case, white at 32%.
+ *
+ * This was a 0.7rem uppercase gold label tracked at +0.24em, which is the house
+ * style of every SaaS template and belongs to none of them in particular. The
+ * brand does not do small caps and does not use gold for labels: gold is the
+ * accent, which the palette defines as buttons and active indicators. */
 .ln-kicker {
   display: block;
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--color-vulcan-gold);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: color-mix(in srgb, var(--color-snow-white) 32%, transparent);
 }
 
 .ln-h2 {
   font-size: clamp(1.875rem, 4.4vw, 3rem);
   font-weight: 500;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   line-height: 1.08;
   text-wrap: balance;
 }
@@ -76,13 +92,14 @@
 .ln-h3 {
   font-size: 1.125rem;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   line-height: 1.3;
 }
 
 .ln-body {
   font-size: clamp(1rem, 1.6vw, 1.125rem);
   font-weight: 400;
+  letter-spacing: -0.02em;
   line-height: 1.6;
   color: var(--color-dark-silver);
 }
@@ -92,6 +109,7 @@
    than from inventing intermediate greys it does not have. */
 .ln-body--tight {
   font-size: 0.9375rem;
+  letter-spacing: -0.02em;
   line-height: 1.6;
   color: var(--color-dark-silver);
 }
@@ -101,6 +119,7 @@
    offer, because most of the pipeline is buying the primary one. */
 .ln-aside {
   font-size: 0.9375rem;
+  letter-spacing: -0.02em;
   line-height: 1.6;
   color: color-mix(in srgb, var(--color-dark-silver) 68%, transparent);
 }
@@ -117,7 +136,7 @@
   font-family: inherit;
   font-size: 0.9375rem;
   font-weight: 500;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.02em;
   color: var(--color-obsidian-black);
   background: var(--color-vulcan-gold);
   cursor: pointer;
@@ -161,7 +180,7 @@
 .ln-client {
   font-size: clamp(1.125rem, 2.4vw, 1.5rem);
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--color-dark-silver);
 }
 
@@ -184,11 +203,15 @@
 
 /* ---------- process ---------- */
 
+/* Set like the deck's page numbers, which is exactly what these are: same
+   Regular weight, same negative tracking, same 32% white. They were gold and
+   tracked at +0.18em, which made four step numbers louder than the headline
+   above them. */
 .ln-step-index {
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  color: var(--color-vulcan-gold);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--color-snow-white) 32%, transparent);
 }
 
 /* ---------- faq ---------- */
@@ -201,7 +224,7 @@
 .ln-faq-q {
   font-size: 1.0625rem;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   line-height: 1.35;
 }
 
@@ -210,6 +233,7 @@
    what is missing rather than shipping an invented figure. */
 .ln-faq-pending {
   font-size: 0.875rem;
+  letter-spacing: -0.02em;
   line-height: 1.6;
   color: color-mix(in srgb, var(--color-dark-silver) 58%, transparent);
   font-style: italic;

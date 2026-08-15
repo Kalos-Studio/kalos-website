@@ -17,7 +17,7 @@ const Post = dynamic(() => import("../post"), { ssr: false });
 
 function Lockup({ still, started }) {
   const geometries = useMarkGeometries();
-  const { scale, lift } = useMarkFit();
+  const { scale, lift, offsetX } = useMarkFit();
   const group = useRef();
   const pointer = usePointer();
 
@@ -68,7 +68,7 @@ function Lockup({ still, started }) {
   });
 
   return (
-    <group ref={group} position={[0, lift, 0]} rotation={[0.3, -0.8, 0]}>
+    <group ref={group} position={[offsetX, lift, 0]} rotation={[0.3, -0.8, 0]}>
       <group scale={[scale, -scale, scale]}>
         {geometries.map((geometry, i) => (
           <mesh key={i} geometry={geometry}>
