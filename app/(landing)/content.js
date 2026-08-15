@@ -19,14 +19,17 @@ export const TIMELINE_RANGE = null; // TODO(owner): e.g. "six to eight"
 // renders. Kept side by side rather than in git history so they can be compared
 // on the deploy preview by changing one word.
 //
-// A: story-led. Opens on the prospect's problem rather than on us, which is
-//    what makes it land cold. The claim is specific enough to argue with.
+// A: the claim, short. Owner's pick. It is deliberately not a value
+//    proposition, so the subheading has to carry the concrete offer on its own.
+//    Watch this one on the preview: an abstract line is the most likely thing on
+//    the page to read as mood rather than meaning to a cold visitor, which is
+//    exactly the reader it exists for.
 // B: direct. Says what we sell in one line. Safer, less memorable.
 export const heroes = {
   active: "A",
 
   A: {
-    h1: "Most websites make good companies look smaller than they are.",
+    h1: "Good work deserves to look like it.",
     sub: "We design your brand and build your site as one piece of work, so what people see matches what you actually do.",
   },
 
