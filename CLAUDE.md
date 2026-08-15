@@ -130,10 +130,22 @@ anything that anchors other elements, or showing and hiding it moves the page.
 The prompt is anchored to the viewport bottom with a safe-area inset for exactly
 this reason. Any new conditional element gets the same treatment.
 
+## Showing work to a human
+
+**Open a draft PR.** Netlify builds a deploy preview for every PR, and that
+preview is how the work actually gets looked at — a hero that reads as gold on
+a CPU rasterizer in CI is not evidence about a phone. A localhost server in an
+agent sandbox is unreachable from anywhere else, and screenshots of a live
+renderer are a still of one frame of something whose whole point is that it
+moves. Push the branch, open the PR as a draft, hand over the preview link.
+
+This applies to anything visual, which here is nearly everything.
+
 ## Verifying changes
 
-There is no test suite, and the interesting behaviour here is visual. Drive a
-real browser instead of assuming:
+Automated checks come first — a draft PR is for judging art direction, not for
+finding out the build is broken. There is no test suite, and the interesting
+behaviour is visual, so drive a real browser instead of assuming:
 
 ```js
 // Chromium is preinstalled; do NOT run `playwright install`.
@@ -169,3 +181,6 @@ chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/c
 Work on a feature branch and confirm before pushing anywhere else. Commit
 messages: short imperative subject, then prose explaining the reasoning — match
 the existing log, which is unusually descriptive and worth keeping that way.
+
+Feature branches want a draft PR early, for the deploy preview — see **Showing
+work to a human** above. Nothing reaches production until it merges to `main`.
