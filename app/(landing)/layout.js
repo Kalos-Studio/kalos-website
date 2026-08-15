@@ -14,7 +14,7 @@ import { meta } from "./content";
 // is gone and this is the homepage now, so it inherits the site default and is
 // indexable.
 //
-// themeColor is the brand's #030305 rather than the hero's old #060505. It is
+// themeColor is Obsidian Black, the palette's named canvas background. It is
 // the first colour a phone paints while the page loads, so it should be the
 // real ground and not a warmer approximation of it.
 export const metadata = {
@@ -34,7 +34,7 @@ export const metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#030305",
+  themeColor: "#040406",
 };
 
 export default function LandingLayout({ children }) {

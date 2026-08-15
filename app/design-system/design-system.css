@@ -7,8 +7,8 @@
   display: block;
   height: 100dvh;
   overflow-y: auto;
-  background: var(--color-ink);
-  color: var(--color-bone);
+  background: var(--color-obsidian-black);
+  color: var(--color-snow-white);
   font-family: var(--font-display);
   font-feature-settings: var(--brand-features);
   line-height: 1.5;
@@ -36,7 +36,7 @@
   letter-spacing: -0.02em;
   line-height: 1.05;
   text-transform: none;
-  color: var(--color-bone);
+  color: var(--color-snow-white);
 }
 
 .ds-h2 {
@@ -45,7 +45,7 @@
   letter-spacing: -0.02em;
   line-height: 1.15;
   text-transform: none;
-  color: var(--color-bone);
+  color: var(--color-snow-white);
 }
 
 /* Small caps label above a heading. The one place uppercase and wide tracking
@@ -56,7 +56,7 @@
   font-weight: 500;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--color-gold-base);
+  color: var(--color-vulcan-gold);
 }
 
 .ds-lead,
@@ -85,7 +85,7 @@
 
 .ds-swatch-name {
   font-size: 0.875rem;
-  color: var(--color-bone);
+  color: var(--color-snow-white);
 }
 
 .ds-mono {
@@ -99,7 +99,7 @@
 }
 
 .ds-mono--gold {
-  color: var(--color-gold-base);
+  color: var(--color-vulcan-gold);
 }
 
 /* ---------- specimen ---------- */

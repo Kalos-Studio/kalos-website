@@ -12,8 +12,8 @@
   height: 100dvh;
   overflow-y: auto;
   overscroll-behavior-y: none;
-  background: var(--color-ink);
-  color: var(--color-bone);
+  background: var(--color-obsidian-black);
+  color: var(--color-snow-white);
   line-height: 1.5;
 }
 
@@ -51,7 +51,7 @@
 }
 
 .ln-rule {
-  border-top: 1px solid rgba(245, 254, 253, 0.09);
+  border-top: 1px solid var(--color-eerie-gray);
 }
 
 /* ---------- type ---------- */
@@ -62,7 +62,7 @@
   font-weight: 500;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--color-gold-base);
+  color: var(--color-vulcan-gold);
 }
 
 .ln-h2 {
@@ -84,13 +84,16 @@
   font-size: clamp(1rem, 1.6vw, 1.125rem);
   font-weight: 400;
   line-height: 1.6;
-  color: rgba(245, 254, 253, 0.66);
+  color: var(--color-dark-silver);
 }
 
+/* Same colour as .ln-body on purpose. The palette carries exactly one secondary
+   text value, so hierarchy under a headline comes from size and measure rather
+   than from inventing intermediate greys it does not have. */
 .ln-body--tight {
   font-size: 0.9375rem;
   line-height: 1.6;
-  color: rgba(245, 254, 253, 0.55);
+  color: var(--color-dark-silver);
 }
 
 /* The secondary product track. Deliberately quieter than everything around it:
@@ -99,7 +102,7 @@
 .ln-aside {
   font-size: 0.9375rem;
   line-height: 1.6;
-  color: rgba(245, 254, 253, 0.42);
+  color: color-mix(in srgb, var(--color-dark-silver) 68%, transparent);
 }
 
 /* ---------- call to action ---------- */
@@ -115,19 +118,21 @@
   font-size: 0.9375rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: #0b0906;
-  background: var(--color-gold-highlight);
+  color: var(--color-obsidian-black);
+  background: var(--color-vulcan-gold);
   cursor: pointer;
   transition: background 180ms ease, transform 180ms ease;
 }
 
+/* Lifts toward Snow White rather than to a brighter gold: the palette carries
+   one gold, and inventing a hover tint of it would be inventing a sixth colour. */
 .ln-cta:hover {
-  background: #fff;
+  background: var(--color-snow-white);
   transform: translateY(-1px);
 }
 
 .ln-cta:focus-visible {
-  outline: 2px solid var(--color-gold-highlight);
+  outline: 2px solid var(--color-vulcan-gold);
   outline-offset: 3px;
 }
 
@@ -157,7 +162,7 @@
   font-size: clamp(1.125rem, 2.4vw, 1.5rem);
   font-weight: 500;
   letter-spacing: -0.01em;
-  color: rgba(245, 254, 253, 0.62);
+  color: var(--color-dark-silver);
 }
 
 /* ---------- work cards ---------- */
@@ -167,8 +172,8 @@
   aspect-ratio: 16 / 10;
   overflow: hidden;
   border-radius: 0.625rem;
-  background: rgba(245, 254, 253, 0.04);
-  box-shadow: inset 0 0 0 1px rgba(245, 254, 253, 0.08);
+  background: var(--color-eerie-gray);
+  box-shadow: inset 0 0 0 1px var(--color-eerie-gray);
 }
 
 .ln-card-media img {
@@ -183,13 +188,13 @@
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.18em;
-  color: var(--color-gold-base);
+  color: var(--color-vulcan-gold);
 }
 
 /* ---------- faq ---------- */
 
 .ln-faq-item {
-  border-top: 1px solid rgba(245, 254, 253, 0.09);
+  border-top: 1px solid var(--color-eerie-gray);
   padding-block: 1.5rem;
 }
 
@@ -206,6 +211,6 @@
 .ln-faq-pending {
   font-size: 0.875rem;
   line-height: 1.6;
-  color: rgba(245, 254, 253, 0.34);
+  color: color-mix(in srgb, var(--color-dark-silver) 58%, transparent);
   font-style: italic;
 }

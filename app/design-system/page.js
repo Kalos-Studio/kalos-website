@@ -10,46 +10,51 @@ export const metadata = {
   robots: { index: false, follow: false, nocache: true },
 };
 
-// Each swatch paints itself from the @theme token rather than from the hex
-// beside it, so this page cannot quietly drift from the source of truth. If a
-// chip stops matching its label, the label is what is wrong.
+// The palette, verbatim from "Our colors." in the brand file (node 132:9101).
+// Names and roles are theirs, not mine. Each swatch paints itself from the
+// @theme token rather than from the hex beside it, so this page cannot drift
+// from the source of truth: if a chip stops matching its label, the label is
+// what is wrong.
 const COLORS = [
   {
-    token: "--color-ink",
-    hex: "#030305",
-    name: "Ink",
-    note: "The ground. 22% of the Principles frame on its own. Cool-shifted, where the hero currently uses a warmer, lighter #060505.",
+    token: "--color-obsidian-black",
+    hex: "#040406",
+    name: "Obsidian Black",
+    note: "Primary canvas background.",
   },
   {
-    token: "--color-bone",
+    token: "--color-snow-white",
     hex: "#F5FEFD",
-    name: "Bone",
-    note: "Brand white. Sampled #F5FEFC off the render slide, and already hardcoded in the lockup SVG.",
+    name: "Snow White",
+    note: "Primary text and key headlines. Also the value hardcoded in the lockup SVG.",
   },
   {
-    token: "--color-gold-deep",
-    hex: "#8B7462",
-    name: "Gold deep",
-    note: "Mean of the warm specks in Gold_Sand. The shadow end of the ramp.",
+    token: "--color-dark-silver",
+    hex: "#A8A8A8",
+    name: "Dark Silver",
+    note: "Secondary text and sub-labels. One value, so hierarchy below a headline comes from size rather than from invented intermediate greys.",
   },
   {
-    token: "--color-gold-base",
-    hex: "#AC9267",
-    name: "Gold base",
-    note: "The faces of the 3D mark. This is the matte body colour.",
+    token: "--color-eerie-gray",
+    hex: "#212225",
+    name: "Eerie Gray",
+    note: "Borders, grid lines and card backgrounds.",
   },
   {
-    token: "--color-gold-light",
-    hex: "#C19D79",
-    name: "Gold light",
-    note: "Brightest warm value in Gold_Ray. The colour the sunrise arrives in.",
+    token: "--color-vulcan-gold",
+    hex: "#AE9357",
+    name: "Vulcan Gold",
+    note: "Accent only: buttons, callouts, active indicators. Not a fill, and not a body text colour.",
   },
-  {
-    token: "--color-gold-highlight",
-    hex: "#F4EEDA",
-    name: "Gold highlight",
-    note: "The lit bevel on the principle pills. Reserved for edges, never for fills.",
-  },
+];
+
+// Deliberately not in @theme, so they cannot be reached as bg-* utilities and
+// leak into the page as though they were brand colours. The mark is a lit
+// object rather than a flat shape, so the hero material needs a ramp the
+// palette does not carry. Measured off the renders.
+const MATERIAL = [
+  { token: "--gold-render-face", hex: "#AC9267", name: "Render face" },
+  { token: "--gold-render-rim", hex: "#F4EEDA", name: "Render rim" },
 ];
 
 const PLATES = [
@@ -80,7 +85,6 @@ const PLATES = [
 ];
 
 const OPEN = [
-  "Which of the brand file's palettes is the canonical one. These six were sampled off renders.",
   "Client logos for the proof strip. The repo has case study covers and nothing else.",
   "Booking URL for the primary call to action.",
   "Price anchor and timeline range for the FAQ.",
@@ -106,15 +110,16 @@ export default function DesignSystem() {
           <Lockup className="mb-10 block h-7 w-auto" />
           <h1 className="ds-h1 max-w-2xl">Design system</h1>
           <p className="ds-lead mt-5 max-w-2xl">
-            Derived from the artwork in the brand file rather than from a spec
-            page. The deck lists Color and Type in its contents, but those
-            slides do not exist yet and the file has no bound variables, so
-            every value here was sampled off a real render. Sources are noted so
-            anything can be re-derived, or overruled.
+            The palette and typeface are taken from the brand file itself, with
+            its own names and roles. The guidelines deck lists Color and Type in
+            its contents with placeholder page numbers, so these come from the
+            {" "}
+            <span className="ds-mono ds-mono--gold">Our colors.</span> board and
+            from the type styles on the slides rather than from a written spec.
           </p>
         </header>
 
-        <Section label="Colour" title="Six tokens, sampled">
+        <Section label="Colour" title="Our colors">
           <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {COLORS.map((c) => (
               <div key={c.token}>
@@ -130,6 +135,31 @@ export default function DesignSystem() {
                   {c.token}
                 </code>
                 <p className="ds-note mt-2">{c.note}</p>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="ds-h2 mt-14">Hero material</h3>
+          <p className="ds-body mt-3 max-w-2xl">
+            Not part of the palette. The 3D mark is a lit object rather than a
+            flat shape, so it needs a ramp the five brand colours do not carry.
+            These are measured off the renders and kept out of the theme on
+            purpose, so they cannot be used as page colours by accident.
+          </p>
+          <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+            {MATERIAL.map((c) => (
+              <div key={c.token}>
+                <div
+                  className="ds-chip"
+                  style={{ background: `var(${c.token})` }}
+                />
+                <div className="mt-3 flex items-baseline justify-between gap-3">
+                  <span className="ds-swatch-name">{c.name}</span>
+                  <code className="ds-mono ds-mono--dim">{c.hex}</code>
+                </div>
+                <code className="ds-mono ds-mono--gold mt-1 block">
+                  {c.token}
+                </code>
               </div>
             ))}
           </div>

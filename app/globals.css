@@ -2,38 +2,50 @@
 
 /* ---------- brand tokens ---------- */
 
-/* Sampled from the artwork in the Kalos brand file, not invented and not taken
-   from a spec page: the deck's Contents lists Color and Type but those slides
-   don't exist yet, and the file has no Figma variables bound. Every value below
-   was read off a real render, with the source noted so it can be re-derived.
-   Replace these the moment the guidelines deck gains real swatch pages.
+/* The palette, verbatim from "Our colors." in the brand file (node 132:9101),
+   names and roles included. Earlier versions of this block were sampled off
+   renders because that slide had not been found yet; the sampling was close
+   (Snow White came out exact) but these are the real values and, more usefully,
+   the real names and jobs. Use the role, not the vibe: silver is secondary
+   text, eerie gray is borders and card grounds, vulcan gold is the accent and
+   nothing else.
  *
  * Tailwind v4 has no config file — `@theme` is where tokens live, and each
- * entry here also generates the matching utility (`--color-gold-base` gives you
- * `bg-gold-base`, `text-gold-base`, and so on). */
+ * entry also generates the matching utility, so `--color-vulcan-gold` gives you
+ * `bg-vulcan-gold`, `text-vulcan-gold` and the rest. */
 @theme {
-  /* The ground. Dominant colour of every slide in the deck, 22% of the
-     Principles frame alone. Note it is cool-shifted (blue channel highest),
-     where the hero's existing #060505 is warm-shifted and two stops lighter. */
-  --color-ink: #030305;
+  /* Primary canvas background. */
+  --color-obsidian-black: #040406;
 
-  /* Brand white. Cross-checked two ways: sampled #F5FEFC off the 3D render
-     slide, and already hardcoded as WHITE in the lockup SVG. */
-  --color-bone: #f5fefd;
+  /* Primary text and key headlines. */
+  --color-snow-white: #f5fefd;
 
-  /* The gold ramp, dark to light. `base` is the face of the 3D mark and
-     `highlight` is the lit bevel — that pairing is also the spec for the matte
-     material, where the faces go rough and the edges stay polished. */
-  --color-gold-deep: #8b7462;
-  --color-gold-base: #ac9267;
-  --color-gold-light: #c19d79;
-  --color-gold-highlight: #f4eeda;
+  /* Secondary text and sub-labels. Replaces the assorted rgba(snow, 0.4-0.6)
+     values that were standing in for it before the palette turned up. */
+  --color-dark-silver: #a8a8a8;
+
+  /* Borders, grid lines and card backgrounds. */
+  --color-eerie-gray: #212225;
+
+  /* Accent: buttons, callouts, active indicators. One gold, used sparingly.
+     The brand file is explicit about the job, so it should not start showing up
+     as a fill or a body-text colour. */
+  --color-vulcan-gold: #ae9357;
 
   /* Space Grotesk, Medium, with five OpenType features deliberately on. The
      alternates are not decoration: they are why the wordmark and the deck's
-     headlines have the letterforms they do. See .ds-display / --brand-features
-     below for the feature string. */
+     headlines have the letterforms they do. */
   --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Not brand palette: values measured off the 3D renders, for the hero material
+   only. The mark is a lit object rather than a flat fill, so it needs a ramp
+   the palette does not carry. Kept out of @theme deliberately, so they cannot
+   be reached as `bg-*` utilities and drift into the page as if they were brand
+   colours. */
+:root {
+  --gold-render-face: #ac9267;
+  --gold-render-rim: #f4eeda;
 }
 
 /* Applied wherever the brand face is set. Kept as a custom property rather than

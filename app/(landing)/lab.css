@@ -3,7 +3,7 @@
   height: 100dvh;
   width: 100%;
   overflow: hidden;
-  background: var(--color-ink);
+  background: var(--color-obsidian-black);
   display: block;
   /* `pan-y`, not `none`.
    *
@@ -181,7 +181,7 @@
   letter-spacing: -0.035em;
   line-height: 1.02;
   text-wrap: balance;
-  color: var(--color-bone);
+  color: var(--color-snow-white);
 }
 
 /* The headline is a claim rather than an offer, so this line is the only thing
@@ -195,7 +195,7 @@
   line-height: 1.55;
   letter-spacing: normal;
   text-transform: none;
-  color: rgba(245, 254, 253, 0.72);
+  color: var(--color-dark-silver);
 }
 
 /* ---------- iOS motion prompt ---------- */
