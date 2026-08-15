@@ -1,17 +1,16 @@
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
-// The brand face, confirmed off the guidelines deck rather than guessed. It is
-// loaded here but deliberately NOT set as the body font yet: /work and
-// /coming-soon were composed against Inter, and swapping the face under them
-// would move every line of those pages. New surfaces opt in with `font-display`
-// (the token in globals.css), and flipping the site over is its own decision.
+// The brand face, confirmed off the guidelines deck rather than guessed, and now
+// the font for the whole site. Inter is gone: it was only ever a stand-in from
+// before anyone had checked what the brand face actually was.
 //
-// The variable goes on <html> rather than <body> so the @theme token can
-// reference it: a custom property declared on body isn't resolvable from :root,
-// where Tailwind puts the theme.
+// The variable goes on <html> as well as the class on <body>, because the
+// @theme token in globals.css references it and a custom property declared on
+// body is not resolvable from :root, which is where Tailwind puts the theme.
+//
+// This moves every line of /work, which was composed against Inter. Intended,
+// not a side effect.
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space-grotesk",
@@ -48,7 +47,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={spaceGrotesk.variable}>
-      <body className={inter.className}>{children}</body>
+      <body className={spaceGrotesk.className}>{children}</body>
     </html>
   );
 }

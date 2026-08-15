@@ -1,8 +1,13 @@
 # Kalos website
 
-Next.js 15 (App Router) marketing site. Three areas: the WebGL hero at `/`, the
-spotlight hero it replaced parked at `/coming-soon`, and a password-gated case
-study section under `/work`.
+Next.js 15 (App Router) marketing site. Three areas: the WebGL hero at `/`, a
+password-gated case study section under `/work`, and `/design-system`, an
+unlisted reference sheet for the brand tokens.
+
+Type is Space Grotesk (the brand face, confirmed off the brand file) with five
+stylistic sets on, applied site-wide from `app/layout.js`. Colour tokens live in
+the `@theme` block at the top of `globals.css` and were sampled off real renders
+rather than a spec page, which does not exist yet.
 
 The hero lives in the `app/(landing)/` route group. The group is not decoration:
 its layout carries the zoom lock and `themeColor`, and those must not reach
@@ -153,8 +158,8 @@ chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/c
 ```
 
 - Prefer **computed styles and bounding boxes** over screenshot diffing. The hero
-  renders live and the spotlight page has animated grain, so no two frames ever
-  match byte-for-byte — a size comparison proves nothing.
+  renders live, so no two frames ever match byte-for-byte — a size comparison
+  proves nothing.
 - For before/after work, build each side cleanly. Starting a server and then
   rebuilding underneath it serves a `.next` whose hashed CSS no longer exists,
   and the page comes back **unstyled** — which looks like a catastrophic

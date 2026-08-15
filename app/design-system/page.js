@@ -80,10 +80,10 @@ const PLATES = [
 ];
 
 const OPEN = [
+  "Which of the brand file's palettes is the canonical one. These six were sampled off renders.",
   "Client logos for the proof strip. The repo has case study covers and nothing else.",
   "Booking URL for the primary call to action.",
   "Price anchor and timeline range for the FAQ.",
-  "Whether /work and /coming-soon move to Space Grotesk too, or stay on Inter.",
 ];
 
 function Section({ label, title, children }) {

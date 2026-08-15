@@ -13,12 +13,11 @@ import { readFileSync } from "node:fs";
 
 const COPY_FILES = ["app/(landing)/content.js"];
 
-// U+2014 em dash, and U+2013 en dash, which is the substitution people reach
-// for the moment they are told to stop using em dashes.
-const BANNED = [
-  { char: "—", name: "em dash" },
-  { char: "–", name: "en dash" },
-];
+// Em dash only. En dashes were briefly banned here too, on the theory that they
+// are what people reach for the moment em dashes are taken away, but they are
+// allowed by the owner and they do real work in a number range ("six–eight
+// weeks"). Banning a useful mark to pre-empt a misuse is the wrong trade.
+const BANNED = [{ char: "—", name: "em dash" }];
 
 let failed = false;
 

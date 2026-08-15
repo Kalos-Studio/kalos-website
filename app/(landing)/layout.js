@@ -7,8 +7,9 @@
 // client component, and client components can't export metadata or viewport.
 //
 // There's deliberately no `robots` block here. This carried `noindex` for as long
-// as it was the /lab prototype living behind a coming-soon homepage. It is the
-// homepage now, so it inherits the site default and is indexable.
+// as it was the /lab prototype living behind a coming-soon homepage. That page
+// is gone and this is the homepage now, so it inherits the site default and is
+// indexable.
 
 // The page is one fixed viewport with a drag-driven object in the middle of it,
 // so pinch-zoom and scroll are only ever accidents here.

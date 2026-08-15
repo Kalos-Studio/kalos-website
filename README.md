@@ -11,7 +11,10 @@ npm run dev   # or bun run dev
 Then open http://localhost:3000. The homepage (`/`) is the WebGL hero — the
 gold mark that responds to the pointer, and to device tilt on a phone. It used
 to live at `/lab`, and that URL still redirects here. The spotlight "coming
-soon" page it replaced is parked at `/coming-soon`.
+soon" page it replaced has been removed; it is in the git history if it is ever
+wanted back.
+
+`/design-system` is an internal, unlisted reference sheet for the brand tokens.
 
 It's safe to try things locally before pushing — nothing reaches production
 until changes land on `main`. Open a pull request (a draft is fine) and Netlify
