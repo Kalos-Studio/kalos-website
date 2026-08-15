@@ -1,116 +1,180 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import Lockup from "./lockup";
+import Image from "next/image";
+import Hero from "./hero";
+import CallToAction from "./cta";
+import { caseStudies } from "../work/data";
 import {
-  isCoarsePointer,
-  needsMotionPermission,
-  requestDeviceTilt,
-  startDeviceTilt,
-} from "./device";
-import "./lab.css";
+  faq,
+  featuredWork,
+  finalCta,
+  mission,
+  offering,
+  process,
+  proof,
+  story,
+  values,
+} from "./content";
+import "./landing.css";
 
-// three.js is client-only and worth a couple of hundred KB, so it stays behind a
-// dynamic import: the page shell paints immediately and the renderer follows.
-const Solid = dynamic(() => import("./variants/solid"), {
-  ssr: false,
-  loading: () => <div className="lab-loading" />,
-});
+// A server component on purpose. Only the hero needs the client, and everything
+// below it is copy that should exist in the HTML for a crawler and for anyone
+// whose JS never arrives.
 
-// Some phones — older devices, low-power mode, locked-down browsers — either
-// can't give us a WebGL context or lose it under memory pressure. Probe once and
-// fall back to the lockup on its own rather than rendering an empty black canvas.
-function hasWebGL() {
-  try {
-    const canvas = document.createElement("canvas");
-    return Boolean(
-      window.WebGLRenderingContext &&
-        (canvas.getContext("webgl2") || canvas.getContext("webgl"))
-    );
-  } catch {
-    return false;
-  }
+function Section({ children, rule = true, className = "" }) {
+  return (
+    <section className={`ln-section ${rule ? "ln-rule" : ""} ${className}`}>
+      <div className="ln-shell">{children}</div>
+    </section>
+  );
 }
 
-// How long to wait for the renderer before showing the motion prompt anyway.
-// It normally arrives with the first rendered frame, but a lost context or a
-// chunk that never downloads would otherwise strand the prompt forever — and
-// without it there's no way to reach the gyroscope at all.
-const STAGE_READY_TIMEOUT_MS = 4000;
+function SectionHead({ kicker, heading, className = "" }) {
+  return (
+    <div className={className}>
+      {kicker && <span className="ln-kicker mb-3">{kicker}</span>}
+      <h2 className="ln-h2 max-w-3xl">{heading}</h2>
+    </div>
+  );
+}
 
-// Formerly /lab, now the site's landing page. The `lab-` class prefix and
-// lab.css stay as they are: those names describe the WebGL hero itself, and the
-// stylesheet's value is in the comments recording what each number was tried
-// against — a rename would churn every one of them for nothing.
+// Titles and alt text come from app/work/data.js rather than being restated
+// here, so a case study renamed over there stays correct on the homepage.
+//
+// The cover image does NOT. Everything under /work is behind the password gate,
+// and middleware.js matches /work/:path* which includes the static files, so
+// those images 307 to the login page for anyone not already signed in. Next's
+// image optimizer follows the redirect, gets HTML, and fails the request. That
+// is not a bug to route around by loosening the gate: the homepage is public
+// and should serve its own public assets deliberately, so the three featured
+// covers are copied into /public/home. Verified by watching them 400 first.
+function featured() {
+  return featuredWork.slugs
+    .map((slug) => {
+      const study = caseStudies.find((c) => c.slug === slug);
+      if (!study) return null;
+      return {
+        ...study,
+        blurb: featuredWork.blurbs[slug],
+        publicCover: `/home/${slug}.webp`,
+      };
+    })
+    .filter(Boolean);
+}
+
 export default function Landing() {
-  const [webgl, setWebgl] = useState(true);
-  const [hintTilt, setHintTilt] = useState(false);
-  // The stage lands seconds after this copy does. The prompt waits for it:
-  // "tap to enable gyroscope" over an empty background is an instruction about
-  // something that isn't on screen yet.
-  const [stageReady, setStageReady] = useState(false);
-  const onStageReady = useCallback(() => setStageReady(true), []);
-
-  useEffect(() => {
-    if (stageReady) return;
-    const id = setTimeout(() => setStageReady(true), STAGE_READY_TIMEOUT_MS);
-    return () => clearTimeout(id);
-  }, [stageReady]);
-
-  useEffect(() => {
-    const supported = hasWebGL();
-    setWebgl(supported);
-    // Nothing to wait for when there's no stage to render.
-    if (!supported) setStageReady(true);
-
-    // ?hint=1 forces the motion prompt on any browser. It only ever mounts on
-    // iOS otherwise, which makes it impossible to art-direct from a desktop —
-    // Chrome's mobile emulation isn't iOS and doesn't expose requestPermission.
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("hint") === "1") setHintTilt(true);
-
-    // Gyroscope input, phones only.
-    if (!isCoarsePointer()) return;
-
-    // Android hands over the sensor as soon as we listen. iOS 13+ needs a grant
-    // that must originate from a user gesture — but that gesture doesn't have to
-    // be a button about permissions. Piggybacking on the first touch anywhere
-    // gets the same result without putting a pill over the hero.
-    if (!needsMotionPermission()) {
-      startDeviceTilt();
-      return;
-    }
-    setHintTilt(true);
-    const onFirstTouch = () => {
-      setHintTilt(false);
-      requestDeviceTilt();
-    };
-    window.addEventListener("pointerdown", onFirstTouch, { once: true });
-    return () => window.removeEventListener("pointerdown", onFirstTouch);
-  }, []);
+  const work = featured();
 
   return (
-    <main className="lab">
-      {webgl && (
-        <div className="lab-stage">
-          <Solid onReady={onStageReady} />
+    <main className="landing-root">
+      <Hero />
+
+      {/* Proof directly under the hero, before any argument. Someone deciding
+          whether to keep reading wants evidence, not a second claim. */}
+      <Section rule={false}>
+        <span className="ln-kicker mb-6">{proof.eyebrow}</span>
+        <div className="ln-proof">
+          {proof.clients.map((name) => (
+            <span className="ln-client" key={name}>
+              {name}
+            </span>
+          ))}
         </div>
-      )}
+      </Section>
 
-      {/* The lockup sits where a site's logo sits — top left, small, out of the
-          way. The 3D mark is the only thing in the middle of the page now, which
-          is the point: the composition is the object, and this is the masthead
-          around it. */}
-      <header className="lab-header">
-        <h1>
-          <Lockup className="lab-lockup" />
-        </h1>
-      </header>
+      <Section>
+        <SectionHead kicker={story.kicker} heading={story.heading} />
+        <p className="ln-body mt-7 max-w-2xl">{story.body}</p>
+      </Section>
 
-      {hintTilt && stageReady && (
-        <span className="lab-tilt-hint">tap to enable gyroscope</span>
-      )}
+      <Section>
+        <SectionHead kicker={offering.kicker} heading={offering.heading} />
+        <p className="ln-body mt-7 max-w-2xl">{offering.body}</p>
+        <p className="ln-aside mt-6 max-w-2xl">{offering.secondary}</p>
+      </Section>
+
+      <Section>
+        <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2">
+          {values.map((v) => (
+            <div key={v.title}>
+              <h3 className="ln-h3">{v.title}</h3>
+              <p className="ln-body--tight mt-2.5 max-w-sm">{v.body}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Not linked. Every /work route is behind the password gate, so a card
+          that looks clickable would send a cold visitor into a login wall. The
+          covers and the blurbs do the work here; /work stays for warm leads who
+          are given the URL. */}
+      <Section>
+        <SectionHead heading={featuredWork.heading} />
+        <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {work.map((study) => (
+            <article key={study.slug}>
+              <div className="ln-card-media">
+                <Image
+                  src={study.publicCover}
+                  alt={study.cover?.alt ?? study.title}
+                  width={1200}
+                  height={750}
+                  sizes="(min-width: 1024px) 340px, (min-width: 640px) 50vw, 100vw"
+                  style={{ objectPosition: study.cover?.cardPosition }}
+                />
+              </div>
+              <h3 className="ln-h3 mt-4">{study.title}</h3>
+              <p className="ln-body--tight mt-2">{study.blurb}</p>
+            </article>
+          ))}
+        </div>
+      </Section>
+
+      <Section>
+        <h2 className="ln-h2 max-w-3xl">{mission.heading}</h2>
+        <p className="ln-body mt-7 max-w-2xl">{mission.body}</p>
+      </Section>
+
+      <Section>
+        <SectionHead kicker={process.kicker} heading="How it works" />
+        <ol className="mt-10 grid gap-x-8 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
+          {process.steps.map((step, i) => (
+            <li key={step.title}>
+              <span className="ln-step-index">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <h3 className="ln-h3 mt-3">{step.title}</h3>
+              <p className="ln-body--tight mt-2">{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      <Section>
+        <SectionHead heading="Questions" />
+        {/* Rendered in the order content.js declares, answered or not. An
+            earlier version grouped the unanswered ones at the end, which read
+            fine on the preview and quietly moved "how much does it cost" to the
+            bottom of the page. That is the question most visitors came for, so
+            the placeholder holds its slot instead. */}
+        <div className="mt-8 max-w-3xl">
+          {faq.map((item) => (
+            <div className="ln-faq-item" key={item.q}>
+              <h3 className="ln-faq-q">{item.q}</h3>
+              {item.a ? (
+                <p className="ln-body--tight mt-2.5">{item.a}</p>
+              ) : (
+                <p className="ln-faq-pending mt-2.5">
+                  Answer pending: {item.pending} is not set yet.
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section className="text-center">
+        <h2 className="ln-h2 mx-auto max-w-2xl">{finalCta.heading}</h2>
+        <CallToAction className="mt-9" />
+      </Section>
     </main>
   );
 }

@@ -3,12 +3,17 @@
   height: 100dvh;
   width: 100%;
   overflow: hidden;
-  background: #060505;
+  background: var(--color-ink);
   display: block;
-  /* No zoom, no scroll, no long-press selection callout. The page is a single
-     fixed viewport, so any of those are accidents rather than intent. */
-  touch-action: none;
-  overscroll-behavior: none;
+  /* `pan-y`, not `none`.
+   *
+   * This was `touch-action: none` for as long as the hero was the entire page,
+   * where every touch was meant for the mark. It is the first section of a
+   * scrolling page now, and `none` swallows the vertical swipe too: a thumb
+   * starting anywhere on the hero, which is the whole first screen, would fail
+   * to scroll the page at all. `pan-y` hands vertical panning back to the
+   * browser and keeps horizontal drag for the mark. */
+  touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -55,9 +60,9 @@
 .lab-stage {
   position: absolute;
   inset: 0;
-  /* Every touch here is meant for the mark — none of it should scroll, bounce
-     or pinch the page. */
-  touch-action: none;
+  /* Same reasoning as .lab above: horizontal drag turns the mark, vertical
+     swipe scrolls the page past it. */
+  touch-action: pan-y;
 }
 
 .lab-stage canvas {
@@ -129,6 +134,70 @@
   }
 }
 
+/* ---------- hero copy ---------- */
+
+/* Lower left, over the mark rather than beside it, which is how the brand
+   deck's own title slide is composed: the object fills the frame and the words
+   sit in the corner.
+ *
+ * Anchored to the bottom rather than placed in flow, so the mark stays centred
+ * in the viewport and the copy cannot push it around at any height. */
+.lab-copy {
+  position: absolute;
+  left: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-left));
+  right: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-right));
+  bottom: max(clamp(2.5rem, 7vh, 5rem), calc(env(safe-area-inset-bottom) + 2rem));
+  z-index: 3;
+  max-width: 34rem;
+  animation: lab-fade-in 1.2s ease 0.45s both;
+}
+
+/* The mark drifts and the vignette is not dark enough under it to guarantee a
+   readable line, so the copy brings its own ground. A gradient rather than a
+   panel: an edge anywhere near the text would read as a card sitting on the
+   composition instead of light falling off it. */
+.lab-copy::before {
+  content: "";
+  position: absolute;
+  inset: -18% -12% -140% -12%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 90% 80% at 26% 78%,
+    rgba(3, 3, 5, 0.92) 0%,
+    rgba(3, 3, 5, 0.72) 42%,
+    transparent 76%
+  );
+}
+
+/* Scoped through `.lab` deliberately, for specificity rather than tidiness.
+   landing.css hands the inherited h1/p art direction back with a
+   `.landing-root :where(h1, p, ...)` reset that also weighs (0,1,0), and the
+   hero lives inside that container. A bare `.lab-h1` ties with it and loses on
+   source order, which rendered the headline at 16px. Measured. */
+.lab .lab-h1 {
+  font-size: clamp(2.25rem, 6.2vw, 4.25rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-wrap: balance;
+  color: var(--color-bone);
+}
+
+/* The headline is a claim rather than an offer, so this line is the only thing
+   on the first screen that says what we actually sell. It is sized to be read,
+   not skimmed past. */
+.lab .lab-sub {
+  margin-top: 1.125rem;
+  max-width: 30rem;
+  font-size: clamp(1rem, 1.7vw, 1.1875rem);
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: normal;
+  text-transform: none;
+  color: rgba(245, 254, 253, 0.72);
+}
+
 /* ---------- iOS motion prompt ---------- */
 
 /* Positioned against the viewport rather than sitting in anything's flow, so it
@@ -139,7 +208,10 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: max(3.25rem, calc(env(safe-area-inset-bottom) + 2.25rem));
+  /* Was at the bottom of the viewport, which the hero copy now occupies. Moved
+     to just under the masthead: still clear of the mark, still nowhere near the
+     headline. */
+  top: max(5.25rem, calc(env(safe-area-inset-top) + 4rem));
   display: block;
   text-align: center;
   pointer-events: none;
