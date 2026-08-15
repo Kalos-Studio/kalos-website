@@ -39,7 +39,11 @@ function hasWebGL() {
 // without it there's no way to reach the gyroscope at all.
 const STAGE_READY_TIMEOUT_MS = 4000;
 
-export default function Lab() {
+// Formerly /lab, now the site's landing page. The `lab-` class prefix and
+// lab.css stay as they are: those names describe the WebGL hero itself, and the
+// stylesheet's value is in the comments recording what each number was tried
+// against — a rename would churn every one of them for nothing.
+export default function Landing() {
   const [webgl, setWebgl] = useState(true);
   const [hintTilt, setHintTilt] = useState(false);
   // The stage lands seconds after this copy does. The prompt waits for it:

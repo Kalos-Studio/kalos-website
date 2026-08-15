@@ -1,7 +1,13 @@
 # Kalos website
 
-Next.js 15 (App Router) marketing site. Three areas: a spotlight hero at `/`, a
-WebGL hero at `/lab`, and a password-gated case study section under `/work`.
+Next.js 15 (App Router) marketing site. Three areas: the WebGL hero at `/`, the
+spotlight hero it replaced parked at `/coming-soon`, and a password-gated case
+study section under `/work`.
+
+The hero lives in the `app/(landing)/` route group. The group is not decoration:
+its layout carries the zoom lock and `themeColor`, and those must not reach
+`/work`, which scrolls. `/lab` — where the hero was built — 307s to `/` from
+`next.config.mjs`.
 
 Stack: React 19, plain CSS + Tailwind v4, `@react-three/fiber` + `drei` for the
 3D, Inter via `next/font/google`, deployed on Netlify. Package manager is `bun`.
@@ -22,7 +28,7 @@ There is no test suite. See **Verifying changes** below for what to do instead.
 
 Two systems live here on purpose, and the split matters.
 
-**Plain CSS owns art direction.** `app/globals.css`, `app/lab/lab.css` and
+**Plain CSS owns art direction.** `app/globals.css`, `app/(landing)/lab.css` and
 `app/work/work.css` hold values that were arrived at by looking at the result —
 vignette falloff percentages, tilt ranges, gold lighting, entrance timings.
 Those files carry comments explaining what was tried and rejected. Do not
@@ -79,25 +85,25 @@ Consequences to keep in mind:
 `eslint-config-next` on the same major as `next` — mismatched majors resolve but
 misbehave.
 
-`react-hooks/exhaustive-deps` is promoted to **error**. The `/lab` code drives an
+`react-hooks/exhaustive-deps` is promoted to **error**. The hero code drives an
 imperative render loop through `useFrame`, where a stale closure shows up as a
 subtly wrong animation rather than a crash — close to impossible to catch by eye.
 Fix the dependency rather than silencing the rule; if a value genuinely must not
 retrigger an effect, hold it in a ref and say why in a comment.
 
-## /lab, the WebGL hero
+## `app/(landing)/`, the WebGL hero
 
 Read the comments in these files before changing them — most non-obvious lines
 record a specific failure.
 
-- `app/lab/device.js` — capability probes and gyroscope input. **Must never
+- `app/(landing)/device.js` — capability probes and gyroscope input. **Must never
   import three, drei or fiber.** The page shell imports it, so a three import
   here pulls the whole renderer into the page's own chunk and defeats the
   dynamic import. That cost ~350KB of First Load JS once already.
-- `app/lab/stage.js` — shared material, lighting rig, pointer helper. The gold
+- `app/(landing)/stage.js` — shared material, lighting rig, pointer helper. The gold
   environment is hand-built from `Lightformer` planes rather than an HDRI: no
   CDN fetch on first paint, and the highlights are aimed deliberately.
-- `app/lab/variants/solid.js` — the `Canvas` and the mark.
+- `app/(landing)/variants/solid.js` — the `Canvas` and the mark.
 
 ### Load sequencing
 
@@ -109,7 +115,7 @@ it lands seconds after the page shell. Rules that follow from that:
   `Solid` takes an `onReady` callback that fires on its first painted frame.
 - Anything gated on the renderer needs a timeout fallback, because a lost
   context or a failed chunk must not strand it forever. See
-  `STAGE_READY_TIMEOUT_MS` in `app/lab/page.js`.
+  `STAGE_READY_TIMEOUT_MS` in `app/(landing)/page.js`.
 - The mark's entrance swing (damping out of an off-target start rotation) is the
   page's only cue that it responds to movement. It is held until the canvas is
   revealed and must stay that way — frame counting alone isn't enough, since
@@ -117,7 +123,8 @@ it lands seconds after the page shell. Rules that follow from that:
 
 ### Layout
 
-`/lab` is a fixed single viewport — no scroll, no zoom, no selection callout.
+The landing page is a fixed single viewport — no scroll, no zoom, no selection
+callout.
 Conditional content (the gyroscope prompt) must be **out of the flow** of
 anything that anchors other elements, or showing and hiding it moves the page.
 The prompt is anchored to the viewport bottom with a safe-area inset for exactly
@@ -133,9 +140,9 @@ real browser instead of assuming:
 chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" })
 ```
 
-- Prefer **computed styles and bounding boxes** over screenshot diffing. The home
-  page has animated grain and `/lab` renders live, so no two frames ever match
-  byte-for-byte — a size comparison proves nothing.
+- Prefer **computed styles and bounding boxes** over screenshot diffing. The hero
+  renders live and the spotlight page has animated grain, so no two frames ever
+  match byte-for-byte — a size comparison proves nothing.
 - For before/after work, build each side cleanly. Starting a server and then
   rebuilding underneath it serves a `.next` whose hashed CSS no longer exists,
   and the page comes back **unstyled** — which looks like a catastrophic

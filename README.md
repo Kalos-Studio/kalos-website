@@ -8,10 +8,14 @@ npm install   # or bun install
 npm run dev   # or bun run dev
 ```
 
-Then open http://localhost:3000. The homepage (`/`) is the spotlight "coming
-soon" page. It's safe to try things locally before pushing — nothing deploys
-until changes are pushed to `main` (or a PR branch, if this repo has preview
-deploys configured on Netlify).
+Then open http://localhost:3000. The homepage (`/`) is the WebGL hero — the
+gold mark that responds to the pointer, and to device tilt on a phone. It used
+to live at `/lab`, and that URL still redirects here. The spotlight "coming
+soon" page it replaced is parked at `/coming-soon`.
+
+It's safe to try things locally before pushing — nothing deploys until changes
+are pushed to `main` (or a PR branch, if this repo has preview deploys
+configured on Netlify).
 
 ## `/work` — password-protected portfolio
 
