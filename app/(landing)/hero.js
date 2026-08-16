@@ -88,12 +88,65 @@ export default function Hero() {
       return;
     }
     setHintTilt(true);
-    const onFirstTouch = () => {
-      setHintTilt(false);
-      requestDeviceTilt();
+
+    // Piggyback on the first *deliberate tap* anywhere, so someone who taps the
+    // mark gets the sensor without having to aim at the prompt.
+    //
+    // "Deliberate" is doing real work here. This used to be a plain
+    // `pointerdown` with `{ once: true }`, from when the hero was the whole page
+    // and `touch-action: none` meant it could not scroll: the first touch was
+    // necessarily an interaction with the mark. Now the page scrolls, and the
+    // first touch on a phone is nearly always the start of a scroll. That still
+    // fires pointerdown, so it burned the one and only listener, threw the iOS
+    // permission sheet up in the middle of a swipe where it gets dismissed, and
+    // left no way to ask again. Measured in a browser: a drag gesture delivers
+    // pointerdown exactly like a tap does.
+    //
+    // So: measure the gesture, ignore anything that moved or dwelled, and only
+    // stop listening once permission is actually granted. A refused or missed
+    // attempt can be retried, which the previous version made impossible.
+    let start = null;
+    const onDown = (e) => {
+      start = { x: e.clientX, y: e.clientY, t: e.timeStamp };
     };
-    window.addEventListener("pointerdown", onFirstTouch, { once: true });
-    return () => window.removeEventListener("pointerdown", onFirstTouch);
+    const onUp = async (e) => {
+      if (!start) return;
+      // The prompt is a button with its own handler. Without this, tapping it
+      // asks twice, which on iOS means putting the permission sheet up twice.
+      if (e.target?.closest?.(".lab-tilt-hint")) {
+        start = null;
+        return;
+      }
+      const moved = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+      const held = e.timeStamp - start.t;
+      start = null;
+      if (moved > 10 || held > 700) return;
+      const granted = await requestDeviceTilt();
+      if (granted) {
+        setHintTilt(false);
+        detach();
+      }
+    };
+    const detach = () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+    };
+    const onCancel = () => {
+      start = null;
+    };
+
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    return detach;
+  }, []);
+
+  // The prompt is a real button now. It was a <span> with pointer-events: none,
+  // which meant the one element on screen telling you to tap was the one element
+  // that could not be tapped.
+  const onEnableTilt = useCallback(async () => {
+    if (await requestDeviceTilt()) setHintTilt(false);
   }, []);
 
   return (
@@ -125,7 +178,9 @@ export default function Hero() {
       </div>
 
       {hintTilt && stageReady && (
-        <span className="lab-tilt-hint">tap to enable gyroscope</span>
+        <button type="button" className="lab-tilt-hint" onClick={onEnableTilt}>
+          tap to enable gyroscope
+        </button>
       )}
     </section>
   );

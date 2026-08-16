@@ -214,8 +214,16 @@
      headline. */
   top: max(5.25rem, calc(env(safe-area-inset-top) + 4rem));
   display: block;
+  /* Tappable, which it was not. This is a <button> now: it is the one element on
+     screen that says "tap", so it had no business being pointer-events: none. */
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0.5rem 1rem;
+  margin: 0 auto;
+  cursor: pointer;
+  font-family: inherit;
   text-align: center;
-  pointer-events: none;
   z-index: 3;
   /* Matched to the deck's label treatment like the rest: Regular, sentence
      case, negative tracking. It was 0.72rem uppercase at +0.2em. */
@@ -230,6 +238,12 @@
      and settle first — motion, then the instruction about motion. */
   animation: lab-hint-in 1s ease 0.9s both,
     lab-hint-pulse 2.6s ease-in-out 1.9s infinite;
+}
+
+.lab-tilt-hint:focus-visible {
+  outline: 2px solid var(--color-vulcan-gold);
+  outline-offset: 4px;
+  border-radius: 999px;
 }
 
 @keyframes lab-hint-in {
