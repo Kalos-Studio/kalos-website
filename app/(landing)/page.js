@@ -16,6 +16,8 @@ import {
 } from "./content";
 import "./landing.css";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 // A server component on purpose. Only the hero needs the client, and everything
 // below it is copy that should exist in the HTML for a crawler and for anyone
 // whose JS never arrives.
@@ -68,6 +70,11 @@ function featured() {
 
 export default function Landing() {
   const [lead, ...rest] = featured();
+  // Unanswered questions are a preview aid, not content. They show while
+  // developing so the section can be judged at its real length, and never reach
+  // a visitor: "answer pending: PRICE_ANCHOR is not set yet" is worse than not
+  // asking the question.
+  const questions = faq.filter((item) => item.a || !isProduction);
 
   return (
     <main className="landing-root">
@@ -245,7 +252,7 @@ export default function Landing() {
               the bottom of the page. That is the question most visitors came
               for, so the placeholder holds its slot instead. */}
             <div>
-              {faq.map((item, i) => (
+              {questions.map((item, i) => (
                 // Built on <details> rather than state: no JS, keyboard and
                 // screen reader behaviour for free, and it still opens if
                 // scripting fails. The first one is open so the pattern is

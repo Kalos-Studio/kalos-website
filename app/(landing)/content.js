@@ -11,8 +11,12 @@
 
 // Owner-supplied values that do not exist yet. Kept as named constants so the
 // placeholders are impossible to miss in a review and become real in one edit.
-export const PRICE_ANCHOR = null; // TODO(owner): e.g. "$12k". Never a range.
-export const TIMELINE_RANGE = null; // TODO(owner): e.g. "six to eight"
+// Deliberately unset. The comparable studios publish theirs (Kree8 runs
+// $2,799 / $5,149 / $7,199, Designjoy $4,995 a month), and a number here would
+// qualify people out before the call, but the owner would rather scope each one.
+// Set it and the question below answers itself; leave it and the question does
+// not render in production at all.
+export const PRICE_ANCHOR = null; // e.g. "$8k". "Starting at" only, never a range.
 
 // Cal.com. `link` is the public booking path, so the call to action can point at
 // https://cal.com/<link> as a real href and still work if the embed never loads.
@@ -216,9 +220,10 @@ export const process = {
   ],
 };
 
-// `pending` marks an answer that depends on an owner input. The page renders
-// those questions only once the constant above is filled, rather than shipping
-// a visible TODO or an invented number.
+// An entry with no `a` is a question we are not answering yet. It renders as a
+// visible placeholder in development, so the section can be judged at full
+// length, and is dropped entirely from the production page. Shipping "answer
+// pending" to a prospect would be worse than not raising the question.
 export const faq = [
   {
     q: "Do you do brand without the website, or the other way around?",
@@ -233,11 +238,11 @@ export const faq = [
     pending: "PRICE_ANCHOR",
   },
   {
+    // Deliberately not a number. A range on the page becomes a promise before
+    // anyone has said what they want, and the honest answer is that it depends
+    // on the scope.
     q: "How long does it take?",
-    a: TIMELINE_RANGE
-      ? `Most brand and web projects run ${TIMELINE_RANGE} weeks.`
-      : null,
-    pending: "TIMELINE_RANGE",
+    a: "It depends what you need. Our team can turn a basic redesign and build around in a few weeks, and you get a real timeline along with the scope after the call.",
   },
   {
     // Both halves matter. The Care Plan is the recurring revenue, but saying out
