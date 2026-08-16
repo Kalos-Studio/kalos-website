@@ -37,10 +37,25 @@
     );
 }
 
-/* globals.css sets a blanket uppercase/letter-spaced style on <p> for the
-   homepage's "coming soon" subtitle — reset it here so /work's body copy
-   reads as normal sentence case. Classes below still set their own color
-   and font-size on top of this. */
+/* Two rules, at two different weights, and the difference between them is the
+   whole point.
+ *
+ * The size is the default /work's paragraphs were getting from a bare `p` rule
+ * in globals.css, written for the old spotlight homepage. That page is gone and
+ * the rule with it, so the value lives here now. It is wrapped in `:where()` so
+ * it weighs the same as a class and loses to one on source order, exactly as a
+ * bare element selector did. Setting it as `.work-root p` instead reads as
+ * tidier and quietly overrode nine class rules further down this file, blowing
+ * every card summary up from 15px to 18px. Caught by diffing computed styles.
+ *
+ * The reset below is deliberately the heavier of the two. It has to beat the
+ * classes rather than lose to them: several of them set their own uppercase,
+ * and /work has been rendering in sentence case because this rule outranks
+ * them. Changing that is a design decision, not a cleanup. */
+.work-root :where(p) {
+  font-size: clamp(0.875rem, 2vw, 1.125rem);
+}
+
 .work-root p {
   text-transform: none;
   letter-spacing: normal;
@@ -318,11 +333,10 @@
   line-height: 1.7;
 }
 
-/* globals.css's blanket `p { color: #888 }` (for the homepage subtitle)
-   targets these paragraphs directly, so it wins over the inherited color
-   from .work-case-body above no matter what that's set to — override it
-   here instead. Also caps text at a comfortable reading width — the column
-   itself is wider than that so images (figure, below) can be bigger. */
+/* Caps text at a comfortable reading width — the column itself is wider than
+   that so images (figure, below) can be bigger. The colour here used to be
+   fighting a blanket `p { color: #888 }` in globals.css; that rule is gone, but
+   the value stays because it is what these paragraphs should be. */
 .work-case-body p,
 .work-case-body ul {
   color: #fff;
@@ -582,6 +596,9 @@
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  /* Was inherited from the global h1 rule, which is gone. Stated so the card
+     does not quietly grow when the heading picks up the body leading. */
+  line-height: 1;
   margin-bottom: 0.5rem;
 }
 

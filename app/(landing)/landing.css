@@ -17,34 +17,17 @@
   line-height: 1.5;
 }
 
-/* Hand the inherited art direction back before styling anything.
+/* There used to be a `.landing-root :where(h1, h2, h3, p, ...)` reset here,
+   handing back the type properties globals.css was imposing through bare
+   element rules. Those rules are gone now, so there is nothing to hand back and
+   the reset went with them.
  *
- * globals.css styles bare h1/p unlayered (an 11rem clamp, uppercase grey), and
- * unlayered rules outrank every Tailwind layer, so utilities cannot touch them.
- * `:where()` contributes no specificity, which makes this whole selector weigh
- * exactly as much as `.landing-root` (0,1,0). That beats the element rules at
- * (0,0,1) and ties with the .ln-* classes below, and a tie goes to source
- * order, so the classes win. One rule instead of fighting each property twice.
- *
- * The same reasoning is why type here is plain classes and not Tailwind text
- * utilities. Layout is still Tailwind throughout.
- *
- * `margin: 0` is deliberately NOT in this list, and removing it fixed a real
- * bug. It was here out of reset habit, but nothing needs it: preflight already
- * zeroes every margin from inside `@layer base`, and globals.css sets no margin
- * on these elements. What it did instead was outrank `@layer utilities` and
- * silently kill every `mt-*` on a p, h2 or h3 on the page. Measured: twenty-odd
- * spacing utilities computing to 0px, with only divs and buttons unaffected
- * because they are not in this selector. Same failure the top of globals.css
- * records for a bare `* { margin: 0 }`, just scoped smaller and harder to see. */
-.landing-root :where(h1, h2, h3, p, ul, li, figure, blockquote) {
-  font-size: inherit;
-  font-weight: inherit;
-  letter-spacing: normal;
-  text-transform: none;
-  color: inherit;
-  line-height: inherit;
-}
+ * Worth knowing what that unlocks: Tailwind's type utilities work on this page
+ * again. They could not before, because the reset was unlayered and unlayered
+ * CSS outranks `@layer utilities` no matter how specific the utility is. The
+ * .ln-* classes below stay, because a type scale belongs in one place rather
+ * than scattered across markup, but `text-sm` on a paragraph is now a normal
+ * thing to write here instead of a silent no-op. */
 
 /* ---------- rhythm ---------- */
 
