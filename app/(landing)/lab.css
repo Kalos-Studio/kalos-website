@@ -146,11 +146,37 @@
   position: absolute;
   left: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-left));
   right: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-right));
-  bottom: max(clamp(2.5rem, 7vh, 5rem), calc(env(safe-area-inset-bottom) + 2rem));
+  /* Landscape: centred against the mark, not pinned to the floor.
+   *
+   * This was bottom-anchored, which is how the brand deck composes a title
+   * slide, and it does not survive the mark being moved off centre to make room
+   * for it. Measured at 1440x900: the mark centres at y441 and the copy block
+   * centred at y680, so the two sat 239px apart on an axis they are supposed to
+   * share, and the whole top-left quadrant was empty. Centring both puts words
+   * and object on one line. */
+  /* The offset lives in a custom property because the entrance animates the same
+     property. `lab-fade-in` ends on `transform: none`, and with fill-mode `both`
+     that final keyframe holds forever, so it silently cancelled the centring:
+     measured, the copy stayed at y450 instead of y293. The keyframes below
+     compose against this value rather than replacing it. */
+  --lab-copy-shift: -50%;
+  top: 50%;
+  transform: translateY(var(--lab-copy-shift));
   z-index: 3;
   /* Sized to the column the mark's offset leaves free, not to the viewport. */
   max-width: min(34rem, 46vw);
-  animation: lab-fade-in 1.2s ease 0.45s both;
+  animation: lab-copy-in 1.2s ease 0.45s both;
+}
+
+@keyframes lab-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--lab-copy-shift) + 6px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(var(--lab-copy-shift));
+  }
 }
 
 /* The mark drifts and the vignette is not dark enough under it to guarantee a
@@ -272,10 +298,14 @@
 
 /* ---------- mobile ---------- */
 
-/* Portrait: the mark is centred again and the copy sits under it, so the
-   measure goes back to the full column. */
+/* Portrait: the copy goes back to the floor, because there is no second column
+   to centre against and a bottom-anchored block is what leaves the mark its own
+   space above. The measure goes back to the full column with it. */
 @media (max-aspect-ratio: 1/1) {
   .lab-copy {
+    --lab-copy-shift: 0px;
+    top: auto;
+    bottom: max(clamp(2.5rem, 7vh, 5rem), calc(env(safe-area-inset-bottom) + 2rem));
     max-width: 34rem;
   }
 }
@@ -297,6 +327,25 @@
 
   .lab-tilt-hint {
     animation: lab-hint-in 1s ease 0.9s both;
+  }
+
+  /* The copy never had a reduced-motion variant, so it kept its 6px of travel
+     while everything around it went still. Fades in place now, and the centring
+     offset has to be restated because these keyframes replace the ones that
+     compose against it. */
+  .lab-copy {
+    animation: lab-copy-in-still 1.2s ease 0.45s both;
+  }
+
+  @keyframes lab-copy-in-still {
+    from {
+      opacity: 0;
+      transform: translateY(var(--lab-copy-shift));
+    }
+    to {
+      opacity: 1;
+      transform: translateY(var(--lab-copy-shift));
+    }
   }
 }
 

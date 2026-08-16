@@ -68,7 +68,18 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
     // where the copy sits under the mark instead of beside it.
     const offsetX = portrait ? 0 : width * 0.19;
 
-    return { scale, lift, offsetX, portrait };
+    // Portrait lifts the mark. Dead centre of the viewport sounds right and
+    // measures wrong once there is copy at the bottom: at 390x844 the masthead
+    // ended at y46 and the mark did not start until y300, so a quarter of the
+    // screen above it was empty while the mark sat only 91px clear of the
+    // headline. The composition read as bottom-heavy for that reason rather than
+    // because anything was too low.
+    //
+    // Centring the mark in the space it actually has, between masthead and copy,
+    // rather than in the whole viewport, is about a tenth of the height.
+    const lifted = portrait ? lift + height * 0.1 : lift;
+
+    return { scale, lift: lifted, offsetX, portrait };
   }, [width, height, baseScale, lift]);
 }
 
