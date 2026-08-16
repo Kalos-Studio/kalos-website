@@ -79,12 +79,21 @@
  *
  * If Tailwind is ever removed, this reset has to come back. */
 
+/* The ground and the primary text colour, from the tokens above rather than from
+   pure black and pure white. Those two predate the palette by a long way, and
+   `#000` in particular is not a brand value: Obsidian Black is `#040406`, which
+   is very slightly blue and very slightly lifted. The difference is small on a
+   monitor and clearly visible on an OLED phone, which is where most of the
+   traffic is.
+ *
+ * Kept in sync with `themeColor` in app/layout.js, or the browser chrome and
+ * the page ground are two different blacks meeting at the top of the screen. */
 html,
 body {
   height: 100%;
   overflow: hidden;
-  background: #000;
-  color: #fff;
+  background: var(--color-obsidian-black);
+  color: var(--color-snow-white);
   -webkit-font-smoothing: antialiased;
   /* The brand face ships with five stylistic sets deliberately on. Set here so
      no surface can forget them and quietly render the default letterforms,
@@ -109,10 +118,20 @@ main {
   overflow: hidden;
 }
 
+/* Weight and tracking measured off the brand file rather than set by web habit.
+ *
+ * The deck uses exactly two weights, Regular and Medium — there is no bold
+ * anywhere in it, and the wordmark itself is Medium. `700` here was heavier than
+ * anything the brand contains. Space Grotesk also tops out at 700, so nothing
+ * above that renders honestly.
+ *
+ * Tracking is -0.02em at every size in the file: -0.32px at 16px, -0.52px at
+ * 26px, -2.32px at 116px, -3.08px at 154px. One ratio, four sizes. -0.04em was
+ * roughly double that and was invented. */
 h1 {
   font-size: clamp(3.5rem, 20vw, 11rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-weight: 500;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 

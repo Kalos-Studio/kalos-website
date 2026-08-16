@@ -64,8 +64,12 @@ export const metadata = {
   },
 };
 
+// Obsidian Black, matching the `html, body` ground in globals.css. It was
+// #000000, which left the browser chrome a slightly different black from the
+// page meeting it at the top of the screen — visible on an OLED phone, which is
+// the only place this property does anything.
 export const viewport = {
-  themeColor: "#000000",
+  themeColor: "#040406",
 };
 
 export default function RootLayout({ children }) {
