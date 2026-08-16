@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "lint:copy": "node scripts/check-copy.mjs",
+    "lint:copy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-copy.mjs",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
