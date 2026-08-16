@@ -40,8 +40,12 @@
 
 /* ---------- rhythm ---------- */
 
+/* Was clamp(4.5rem, 11vw, 9rem), which gave a section 480 to 750px of height to
+   carry 50 to 80 words. The page measured 510 words over 6.4 screens, about 80
+   words a screen: you scrolled a lot and received little, and that ratio is what
+   read as "wordy" rather than the words themselves, which measure at grade 5. */
 .ln-section {
-  padding-block: clamp(4.5rem, 11vw, 9rem);
+  padding-block: clamp(3.25rem, 7vw, 5.5rem);
 }
 
 .ln-shell {
@@ -52,6 +56,41 @@
 
 .ln-rule {
   border-top: 1px solid var(--color-eerie-gray);
+}
+
+/* Heading in one column, prose in the other, instead of a heading stacked on a
+   672px paragraph inside a 1080px shell with the right half empty. Uses the
+   width the page already has, and breaks up a run of sections that were all the
+   same shape. Collapses to a stack below the breakpoint, where there is no
+   second column to be had. */
+.ln-cols {
+  display: grid;
+  gap: 2rem 3.5rem;
+}
+
+@media (min-width: 860px) {
+  .ln-cols {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: start;
+  }
+}
+
+/* The principles, as a row under the offer rather than a screen of their own. */
+.ln-values {
+  display: grid;
+  gap: 1.75rem 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .ln-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .ln-values {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* ---------- type ----------

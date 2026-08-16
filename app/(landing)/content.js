@@ -55,6 +55,10 @@ export const proof = {
 
 // Close to verbatim from the brand kit. This is the strongest writing we have
 // and rewriting it would be vandalism. Only the em dashes came out.
+//
+// Rendered in the same section as `mission` below. They were two sections and
+// they were saying one thing: here is what we believe. Splitting a single idea
+// across two full screens is what made the page feel long.
 export const story = {
   kicker: "Why Kalos",
   heading: "Beautiful because it is made well.",
@@ -74,6 +78,10 @@ export const offering = {
 // Four of the five principles. Premium and timeless are carried by the voice
 // rather than listed: in a grid of claims they read as table stakes and cost
 // the other three their force.
+//
+// These render inside the offering section rather than as a section of their
+// own. Alone they had no headline and read as four orphaned claims; under "one
+// team, from identity to launch" they are the evidence for it.
 export const values = [
   {
     title: "Structural",
@@ -118,8 +126,11 @@ export const featuredWork = {
 // the pipeline does not actually contain. The premium voice survives; the
 // enterprise-only implication that would put off a nonprofit or a local firm
 // does not.
+//
+// The heading is gone and the body now closes the story section. It was a
+// standalone screen carrying 49 words, and the concrete half of it (small team,
+// senior hands, no handoff) is the part a buyer can actually use.
 export const mission = {
-  heading: "Great design and flawless execution are not competing goals.",
   body: "We build work that has to hold up in the real world, for teams who need it to be both beautiful and true. Small team, senior hands, and no handoff between the people who design and the people who build.",
 };
 

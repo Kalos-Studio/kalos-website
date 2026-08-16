@@ -18,21 +18,18 @@ import "./landing.css";
 // A server component on purpose. Only the hero needs the client, and everything
 // below it is copy that should exist in the HTML for a crawler and for anyone
 // whose JS never arrives.
+//
+// Section order: offer, then evidence, then belief. The first version led with
+// the καλός story, which put two screens of philosophy in front of a visitor who
+// did not yet know what we sell. Both of the peer sites worth copying the shape
+// of (Kree8, Designjoy) put the offer and the proof first and the studio's own
+// story after, and that is also the order a cold reader needs.
 
 function Section({ children, rule = true, className = "" }) {
   return (
     <section className={`ln-section ${rule ? "ln-rule" : ""} ${className}`}>
       <div className="ln-shell">{children}</div>
     </section>
-  );
-}
-
-function SectionHead({ kicker, heading, className = "" }) {
-  return (
-    <div className={className}>
-      {kicker && <span className="ln-kicker mb-3">{kicker}</span>}
-      <h2 className="ln-h2 max-w-3xl">{heading}</h2>
-    </div>
   );
 }
 
@@ -80,35 +77,39 @@ export default function Landing() {
         </div>
       </Section>
 
+      {/* The offer, with the principles as its evidence rather than as a
+          separate screen. They used to be a section with no headline at all,
+          which rendered as four orphaned claims. */}
       <Section>
-        <SectionHead kicker={story.kicker} heading={story.heading} />
-        <p className="ln-body mt-7 max-w-2xl">{story.body}</p>
-      </Section>
+        <div className="ln-cols">
+          <div>
+            <span className="ln-kicker mb-3">{offering.kicker}</span>
+            <h2 className="ln-h2">{offering.heading}</h2>
+          </div>
+          <div>
+            <p className="ln-body">{offering.body}</p>
+            <p className="ln-aside mt-5">{offering.secondary}</p>
+          </div>
+        </div>
 
-      <Section>
-        <SectionHead kicker={offering.kicker} heading={offering.heading} />
-        <p className="ln-body mt-7 max-w-2xl">{offering.body}</p>
-        <p className="ln-aside mt-6 max-w-2xl">{offering.secondary}</p>
-      </Section>
-
-      <Section>
-        <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2">
+        <div className="ln-values mt-14">
           {values.map((v) => (
             <div key={v.title}>
               <h3 className="ln-h3">{v.title}</h3>
-              <p className="ln-body--tight mt-2.5 max-w-sm">{v.body}</p>
+              <p className="ln-body--tight mt-2">{v.body}</p>
             </div>
           ))}
         </div>
       </Section>
 
-      {/* Not linked. Every /work route is behind the password gate, so a card
-          that looks clickable would send a cold visitor into a login wall. The
-          covers and the blurbs do the work here; /work stays for warm leads who
-          are given the URL. */}
+      {/* Work, then the call to action. This is the point of highest intent on
+          the page: someone who has just looked at three projects and is still
+          reading should not have to scroll to the bottom to act. It is the same
+          single offer, not a competing one, which is the distinction the
+          research actually draws. */}
       <Section>
-        <SectionHead heading={featuredWork.heading} />
-        <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+        <h2 className="ln-h2 max-w-3xl">{featuredWork.heading}</h2>
+        <div className="mt-9 grid gap-x-7 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {work.map((study) => (
             <article key={study.slug}>
               <div className="ln-card-media">
@@ -126,54 +127,72 @@ export default function Landing() {
             </article>
           ))}
         </div>
+        <CallToAction className="mt-12" />
+      </Section>
+
+      {/* Story and mission as one section. They were two full screens saying a
+          single thing, which is most of why the page felt long. */}
+      <Section>
+        <div className="ln-cols">
+          <div>
+            <span className="ln-kicker mb-3">{story.kicker}</span>
+            <h2 className="ln-h2">{story.heading}</h2>
+          </div>
+          <div>
+            <p className="ln-body">{story.body}</p>
+            <p className="ln-body mt-5">{mission.body}</p>
+          </div>
+        </div>
       </Section>
 
       <Section>
-        <h2 className="ln-h2 max-w-3xl">{mission.heading}</h2>
-        <p className="ln-body mt-7 max-w-2xl">{mission.body}</p>
+        <div className="ln-cols">
+          <div>
+            <span className="ln-kicker mb-3">{process.kicker}</span>
+            <h2 className="ln-h2">How it works</h2>
+          </div>
+          <ol className="grid gap-7 sm:grid-cols-2">
+            {process.steps.map((step, i) => (
+              <li key={step.title}>
+                <span className="ln-step-index">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="ln-h3 mt-2">{step.title}</h3>
+                <p className="ln-body--tight mt-1.5">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
       </Section>
 
       <Section>
-        <SectionHead kicker={process.kicker} heading="How it works" />
-        <ol className="mt-10 grid gap-x-8 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
-          {process.steps.map((step, i) => (
-            <li key={step.title}>
-              <span className="ln-step-index">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <h3 className="ln-h3 mt-3">{step.title}</h3>
-              <p className="ln-body--tight mt-2">{step.body}</p>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section>
-        <SectionHead heading="Questions" />
-        {/* Rendered in the order content.js declares, answered or not. An
-            earlier version grouped the unanswered ones at the end, which read
-            fine on the preview and quietly moved "how much does it cost" to the
-            bottom of the page. That is the question most visitors came for, so
-            the placeholder holds its slot instead. */}
-        <div className="mt-8 max-w-3xl">
-          {faq.map((item) => (
-            <div className="ln-faq-item" key={item.q}>
-              <h3 className="ln-faq-q">{item.q}</h3>
-              {item.a ? (
-                <p className="ln-body--tight mt-2.5">{item.a}</p>
-              ) : (
-                <p className="ln-faq-pending mt-2.5">
-                  Answer pending: {item.pending} is not set yet.
-                </p>
-              )}
-            </div>
-          ))}
+        <div className="ln-cols">
+          <h2 className="ln-h2">Questions</h2>
+          {/* Rendered in the order content.js declares, answered or not. An
+              earlier version grouped the unanswered ones at the end, which read
+              fine on the preview and quietly moved "how much does it cost" to
+              the bottom of the page. That is the question most visitors came
+              for, so the placeholder holds its slot instead. */}
+          <div>
+            {faq.map((item) => (
+              <div className="ln-faq-item" key={item.q}>
+                <h3 className="ln-faq-q">{item.q}</h3>
+                {item.a ? (
+                  <p className="ln-body--tight mt-2">{item.a}</p>
+                ) : (
+                  <p className="ln-faq-pending mt-2">
+                    Answer pending: {item.pending} is not set yet.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </Section>
 
       <Section className="text-center">
         <h2 className="ln-h2 mx-auto max-w-2xl">{finalCta.heading}</h2>
-        <CallToAction className="mt-9" />
+        <CallToAction className="mt-8" />
       </Section>
     </main>
   );
