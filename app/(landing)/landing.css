@@ -239,7 +239,8 @@
    have files for yet. Sized and spaced like a logo row rather than like text,
    so swapping real marks in later does not move the layout. */
 .ln-client {
-  font-size: clamp(1.125rem, 2.4vw, 1.5rem);
+  /* Trimmed to sit with the logos rather than shout over them. See .ln-logo. */
+  font-size: clamp(1rem, 2vw, 1.25rem);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--color-dark-silver);
@@ -525,19 +526,34 @@
   }
 }
 
-/* Client logos, rendered in one monochrome weight so the row reads as evidence
-   rather than as four competing brand palettes. `brightness(0)` flattens every
-   opaque pixel to black and `invert(1)` lifts it to white, which is why the
-   files have to arrive on a transparent background: a logo supplied on a white
-   rectangle becomes a white rectangle. Held at Dark Silver's weight so the row
-   sits with the rest of the secondary text rather than shouting over it.
-
-   Sized on height, not width, so a long lockup and a square mark carry the same
-   optical weight, and matched to .ln-client so swapping a name for a logo does
-   not move the layout. */
+/* Client logos, in one weight so the row reads as evidence rather than as
+   several competing brand palettes on a near-black page.
+ *
+ * The committed assets are already monochrome, recoloured properly rather than
+ * flattened, because flattening destroys some marks: the Shell pecten is a
+ * yellow fan with red ribs, and one flat colour turns it into a featureless
+ * blob. It is baked the way Shell's own monochrome version works, with the fan
+ * as ink and the ribs knocked out as gaps.
+ *
+ * The filter stays anyway. It is a no-op on artwork that is already white, and
+ * it means a future logo dropped in with its brand colours intact still lands
+ * in the row rather than glowing. Imperfect for a mark like the pecten, which is
+ * why the README asks for monochrome files.
+ *
+ * 0.66 puts white at roughly #A3A9A8, which is Dark Silver within a couple of
+ * points, so a logo and a name that has no logo yet carry the same weight and a
+ * half-supplied row still looks deliberate.
+ *
+ * Sized on height, not width, so a long lockup and a square mark read as equals,
+ * and matched to .ln-client so swapping one for the other does not move the
+ * layout. */
 .ln-logo {
   display: block;
-  height: clamp(1.25rem, 2.6vw, 1.75rem);
+  /* Taller than the type beside it looks wrong on paper and right on screen. A
+     logo's cap height is a fraction of its box (a stacked lockup like Priority
+     is three lines inside the same 28px), where a name is nearly all cap. Sized
+     by eye against MARA until the row reads level. */
+  height: clamp(1.6rem, 3.4vw, 2.35rem);
   width: auto;
   filter: brightness(0) invert(1);
   opacity: 0.66;

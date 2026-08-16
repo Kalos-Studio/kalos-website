@@ -65,9 +65,14 @@ export const proof = {
   // version: SVG, transparent background, or the monochrome treatment turns it
   // into a white rectangle.
   clients: [
-    { slug: "shell-tapup", name: "Shell", logo: null },
+    { slug: "shell-tapup", name: "Shell", logo: "/home/logos/shell-tapup.webp" },
+    {
+      slug: "priority-ambulance-transfer",
+      name: "Priority Ambulance Transfer",
+      logo: "/home/logos/priority-ambulance-transfer.svg",
+    },
+    { slug: "allganize", name: "Allganize", logo: "/home/logos/allganize.webp" },
     { slug: "mara", name: "MARA", logo: null },
-    { slug: "allganize", name: "Allganize", logo: null },
     { slug: "echocare", name: "EchoCare", logo: null },
   ],
 };
