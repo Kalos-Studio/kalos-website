@@ -226,8 +226,12 @@ export const faq = [
     pending: "TIMELINE_RANGE",
   },
   {
+    // Both halves matter. The Care Plan is the recurring revenue, but saying out
+    // loud that a clean handoff is on the table is what stops the question
+    // behind this one, which is whether choosing Kalos means being stuck with
+    // Kalos. Answering it here is cheaper than answering it on the call.
     q: "What happens after launch?",
-    a: "We offer a Care Plan that keeps the site fast, current, and handled.",
+    a: "Your choice. We can keep it on a Care Plan that covers hosting, updates and small changes, or hand the whole thing over to your team with everything they need to run it.",
   },
 ];
 
