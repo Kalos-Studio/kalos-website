@@ -301,3 +301,161 @@
   color: color-mix(in srgb, var(--color-dark-silver) 58%, transparent);
   font-style: italic;
 }
+
+/* ---------- texture ----------
+ *
+ * A whisper of film grain over the whole page. The old spotlight homepage
+ * carried this and it went out with that page; it is worth having back, because
+ * every plate in the brand file is grainy (Gold_Sand is literally a photograph
+ * of grain) and because flat #040406 across five screens bands visibly on an
+ * OLED phone. Fixed rather than absolute, so it reads as a property of the
+ * screen instead of scrolling away with the content. */
+.landing-root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- entrance ----------
+ *
+ * Rise and fade on first scroll into view. Deliberately small: 14px and 620ms.
+ * The tell of a template is not that things animate, it is that they animate a
+ * long way and slowly enough to wait for. */
+.ln-reveal {
+  transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ln-reveal--out {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.ln-reveal--in,
+.ln-reveal--static {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-reveal {
+    transition: none;
+  }
+  .ln-reveal--out {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- work, editorial ----------
+ *
+ * One project at full width above two half-width ones, rather than three equal
+ * cards in a row. Three identical thumbnails is the most generic arrangement
+ * available and it wastes the flagship: Priority Ambulance Transfer is the whole
+ * offering delivered end to end, and it was the same size as everything else. */
+.ln-work-lead .ln-card-media {
+  aspect-ratio: 21 / 9;
+}
+
+@media (min-width: 860px) {
+  .ln-work-rest {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem;
+  }
+}
+
+/* ---------- closing plate ----------
+ *
+ * The final call to action sits on Gold_Ray from the brand file rather than on
+ * more flat black. It is the one full-bleed image moment on the page, and it is
+ * the studio's own artwork rather than a stock gradient. The scrim keeps the
+ * headline off the brightest part of the shaft. */
+.ln-closing {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ln-closing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: url("/home/gold-ray.webp");
+  background-size: cover;
+  background-position: 50% 40%;
+  opacity: 0.5;
+}
+
+.ln-closing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 70% 70% at 50% 55%,
+    rgba(4, 4, 6, 0.82) 0%,
+    rgba(4, 4, 6, 0.6) 55%,
+    rgba(4, 4, 6, 0.9) 100%
+  );
+}
+
+/* ---------- faq ---------- */
+
+/* A real accordion, built on <details>. No JS, keyboard and screen reader
+   support for free, and it stays open-able when scripting fails. The arrow is
+   the only affordance, so the marker has to go: Safari and Chrome both draw
+   their own triangle otherwise. */
+.ln-faq-item summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ln-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.ln-faq-item summary:focus-visible {
+  outline: 2px solid var(--color-vulcan-gold);
+  outline-offset: 4px;
+}
+
+.ln-faq-mark {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  position: relative;
+  transform: translateY(-0.1em);
+}
+
+/* Plus to minus, drawn rather than typed, so it cannot inherit a font quirk. */
+.ln-faq-mark::before,
+.ln-faq-mark::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 1px;
+  background: var(--color-dark-silver);
+  transition: transform 220ms ease;
+}
+
+.ln-faq-mark::after {
+  transform: rotate(90deg);
+}
+
+.ln-faq-item[open] .ln-faq-mark::after {
+  transform: rotate(0deg);
+}
+
+.ln-faq-answer {
+  padding-top: 0.75rem;
+}

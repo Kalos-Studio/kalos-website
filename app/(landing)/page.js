@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Hero from "./hero";
 import CallToAction from "./cta";
+import Reveal from "./reveal";
 import { caseStudies } from "../work/data";
 import {
   faq,
@@ -58,7 +59,7 @@ function featured() {
 }
 
 export default function Landing() {
-  const work = featured();
+  const [lead, ...rest] = featured();
 
   return (
     <main className="landing-root">
@@ -67,123 +68,173 @@ export default function Landing() {
       {/* Proof directly under the hero, before any argument. Someone deciding
           whether to keep reading wants evidence, not a second claim. */}
       <Section rule={false}>
-        <span className="ln-runninghead mb-6">{proof.eyebrow}</span>
-        <div className="ln-proof">
-          {proof.clients.map((name) => (
-            <span className="ln-client" key={name}>
-              {name}
-            </span>
-          ))}
-        </div>
+        <Reveal>
+          <span className="ln-runninghead mb-6">{proof.eyebrow}</span>
+          <div className="ln-proof">
+            {proof.clients.map((name) => (
+              <span className="ln-client" key={name}>
+                {name}
+              </span>
+            ))}
+          </div>
+        </Reveal>
       </Section>
 
       {/* The offer, with the principles as its evidence rather than as a
           separate screen. They used to be a section with no headline at all,
           which rendered as four orphaned claims. */}
       <Section>
-        <div className="ln-cols">
-          <h2 className="ln-h2">{offering.heading}</h2>
-          <div>
-            <p className="ln-body">{offering.body}</p>
-            <p className="ln-aside mt-5">{offering.secondary}</p>
-          </div>
-        </div>
-
-        <div className="ln-values mt-14">
-          {values.map((v) => (
-            <div key={v.title}>
-              <h3 className="ln-h3">{v.title}</h3>
-              <p className="ln-body--tight mt-2">{v.body}</p>
+        <Reveal>
+          <div className="ln-cols">
+            <h2 className="ln-h2">{offering.heading}</h2>
+            <div>
+              <p className="ln-body">{offering.body}</p>
+              <p className="ln-aside mt-5">{offering.secondary}</p>
             </div>
-          ))}
-        </div>
+          </div>
+        </Reveal>
+
+        <Reveal delay={80}>
+          <div className="ln-values mt-14">
+            {values.map((v) => (
+              <div key={v.title}>
+                <h3 className="ln-h3">{v.title}</h3>
+                <p className="ln-body--tight mt-2">{v.body}</p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
       </Section>
 
-      {/* Work, then the call to action. This is the point of highest intent on
-          the page: someone who has just looked at three projects and is still
-          reading should not have to scroll to the bottom to act. It is the same
-          single offer, not a competing one, which is the distinction the
-          research actually draws. */}
+      {/* Flagship at full width, the other two beneath it. Three equal
+          thumbnails is the most generic arrangement available, and it spent the
+          same space on Priority Ambulance Transfer, which is the entire offering
+          delivered end to end, as on everything else.
+
+          There is deliberately no call to action here any more. One went in on
+          the theory that this is the highest-intent point on the page, which is
+          true, but three buttons started to read as pestering and the research
+          is on the side of fewer links, not more: one link converts at 13.5%
+          against 10.5% for five or more. Hero and close is enough. */}
       <Section>
-        <h2 className="ln-h2 max-w-3xl">{featuredWork.heading}</h2>
-        <div className="mt-9 grid gap-x-7 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-          {work.map((study) => (
-            <article key={study.slug}>
-              <div className="ln-card-media">
-                <Image
-                  src={study.publicCover}
-                  alt={study.cover?.alt ?? study.title}
-                  width={1200}
-                  height={750}
-                  sizes="(min-width: 1024px) 340px, (min-width: 640px) 50vw, 100vw"
-                  style={{ objectPosition: study.cover?.cardPosition }}
-                />
-              </div>
-              <h3 className="ln-h3 mt-4">{study.title}</h3>
-              <p className="ln-body--tight mt-2">{study.blurb}</p>
-            </article>
-          ))}
-        </div>
-        <CallToAction className="mt-12" />
+        <Reveal>
+          <h2 className="ln-h2 max-w-3xl">{featuredWork.heading}</h2>
+        </Reveal>
+        <Reveal delay={80}>
+          <article className="ln-work-lead mt-9">
+            <div className="ln-card-media">
+              <Image
+                src={lead.publicCover}
+                alt={lead.cover?.alt ?? lead.title}
+                width={1200}
+                height={750}
+                sizes="(min-width: 1080px) 1040px, 100vw"
+                priority={false}
+                style={{ objectPosition: lead.cover?.cardPosition }}
+              />
+            </div>
+            <div className="ln-cols mt-5">
+              <h3 className="ln-h3">{lead.title}</h3>
+              <p className="ln-body--tight">{lead.blurb}</p>
+            </div>
+          </article>
+        </Reveal>
+        <Reveal delay={120}>
+          <div className="ln-work-rest mt-12 grid gap-x-7 gap-y-10">
+            {rest.map((study) => (
+              <article key={study.slug}>
+                <div className="ln-card-media">
+                  <Image
+                    src={study.publicCover}
+                    alt={study.cover?.alt ?? study.title}
+                    width={1200}
+                    height={750}
+                    sizes="(min-width: 860px) 500px, 100vw"
+                    style={{ objectPosition: study.cover?.cardPosition }}
+                  />
+                </div>
+                <h3 className="ln-h3 mt-4">{study.title}</h3>
+                <p className="ln-body--tight mt-2">{study.blurb}</p>
+              </article>
+            ))}
+          </div>
+        </Reveal>
       </Section>
 
       {/* Story and mission as one section. They were two full screens saying a
           single thing, which is most of why the page felt long. */}
       <Section>
-        <div className="ln-cols">
-          <h2 className="ln-h2">{story.heading}</h2>
-          <div>
-            <p className="ln-body">{story.body}</p>
-            <p className="ln-body mt-5">{mission.body}</p>
+        <Reveal>
+          <div className="ln-cols">
+            <h2 className="ln-h2">{story.heading}</h2>
+            <div>
+              <p className="ln-body">{story.body}</p>
+              <p className="ln-body mt-5">{mission.body}</p>
+            </div>
           </div>
-        </div>
+        </Reveal>
       </Section>
 
       <Section>
-        <div className="ln-cols">
-          <h2 className="ln-h2">{process.heading}</h2>
-          <ol className="grid gap-7 sm:grid-cols-2">
-            {process.steps.map((step, i) => (
-              <li key={step.title}>
-                <span className="ln-step-index">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="ln-h3 mt-2">{step.title}</h3>
-                <p className="ln-body--tight mt-1.5">{step.body}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
+        <Reveal>
+          <div className="ln-cols">
+            <h2 className="ln-h2">{process.heading}</h2>
+            <ol className="grid gap-7 sm:grid-cols-2">
+              {process.steps.map((step, i) => (
+                <li key={step.title}>
+                  <span className="ln-step-index">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="ln-h3 mt-2">{step.title}</h3>
+                  <p className="ln-body--tight mt-1.5">{step.body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </Reveal>
       </Section>
 
       <Section>
-        <div className="ln-cols">
-          <h2 className="ln-h2">Questions</h2>
-          {/* Rendered in the order content.js declares, answered or not. An
+        <Reveal>
+          <div className="ln-cols">
+            <h2 className="ln-h2">Questions</h2>
+            {/* Rendered in the order content.js declares, answered or not. An
               earlier version grouped the unanswered ones at the end, which read
               fine on the preview and quietly moved "how much does it cost" to
               the bottom of the page. That is the question most visitors came
               for, so the placeholder holds its slot instead. */}
-          <div>
-            {faq.map((item) => (
-              <div className="ln-faq-item" key={item.q}>
-                <h3 className="ln-faq-q">{item.q}</h3>
-                {item.a ? (
-                  <p className="ln-body--tight mt-2">{item.a}</p>
-                ) : (
-                  <p className="ln-faq-pending mt-2">
-                    Answer pending: {item.pending} is not set yet.
-                  </p>
-                )}
-              </div>
-            ))}
+            <div>
+              {faq.map((item, i) => (
+                // Built on <details> rather than state: no JS, keyboard and
+                // screen reader behaviour for free, and it still opens if
+                // scripting fails. The first one is open so the pattern is
+                // legible at a glance instead of reading as four dead rules.
+                <details className="ln-faq-item" key={item.q} open={i === 0}>
+                  <summary>
+                    <h3 className="ln-faq-q">{item.q}</h3>
+                    <span className="ln-faq-mark" aria-hidden />
+                  </summary>
+                  <div className="ln-faq-answer">
+                    {item.a ? (
+                      <p className="ln-body--tight">{item.a}</p>
+                    ) : (
+                      <p className="ln-faq-pending">
+                        Answer pending: {item.pending} is not set yet.
+                      </p>
+                    )}
+                  </div>
+                </details>
+              ))}
+            </div>
           </div>
-        </div>
+        </Reveal>
       </Section>
 
-      <Section className="text-center">
-        <h2 className="ln-h2 mx-auto max-w-2xl">{finalCta.heading}</h2>
-        <CallToAction className="mt-8" />
+      <Section className="ln-closing text-center" rule={false}>
+        <Reveal>
+          <h2 className="ln-h2 mx-auto max-w-2xl">{finalCta.heading}</h2>
+          <CallToAction className="mt-8" />
+        </Reveal>
       </Section>
     </main>
   );
