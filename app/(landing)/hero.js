@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Lockup from "./lockup";
 import { heroes } from "./content";
-import CallToAction from "./cta";
 import {
   isCoarsePointer,
   needsMotionPermission,
@@ -28,7 +27,7 @@ function hasWebGL() {
     const canvas = document.createElement("canvas");
     return Boolean(
       window.WebGLRenderingContext &&
-        (canvas.getContext("webgl2") || canvas.getContext("webgl"))
+      (canvas.getContext("webgl2") || canvas.getContext("webgl")),
     );
   } catch {
     return false;
@@ -174,7 +173,6 @@ export default function Hero() {
       <div className="lab-copy">
         <h1 className="lab-h1">{hero.h1}</h1>
         <p className="lab-sub">{hero.sub}</p>
-        <CallToAction className="mt-7" />
       </div>
 
       {hintTilt && stageReady && (

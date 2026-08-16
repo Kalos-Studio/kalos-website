@@ -68,6 +68,14 @@ export const proof = {
 // they were saying one thing: here is what we believe. Splitting a single idea
 // across two full screens is what made the page feel long.
 export const story = {
+  // Laid out as the dictionary entry the brand file makes of it (node 206:165):
+  // the Greek word at display size, the grammatical labels in gold, then the
+  // definition. The word is the studio's whole argument, so it should be the
+  // largest thing in the section rather than a mention inside a paragraph.
+  word: "καλός",
+  labels: ["[adj]", "[Greek]"],
+  definition:
+    "A word that deepens beauty and lifts your spirits, adding a touch of magic that brightens your world and puts a spring in your step.",
   heading: "Beautiful because it is made well.",
   body: "Our name comes from the Greek καλός, a word that meant beautiful, good, and well-made all at once, with no line drawn between them. A thing was beautiful because it was made well, not in addition to it. That belief is the whole studio. When something looks right but works wrong, we do not call it finished. We call it broken.",
 };

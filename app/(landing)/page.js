@@ -161,15 +161,40 @@ export default function Landing() {
         </Reveal>
       </Section>
 
-      {/* Story and mission as one section. They were two full screens saying a
-          single thing, which is most of why the page felt long. */}
+      {/* The word, set the way the brand file sets it (node 206:165): a
+          dictionary entry with the Greek at display size, the grammatical
+          labels in gold, then the definition and a rule. It used to be a single
+          mention inside a paragraph, which is a strange way to treat the thing
+          the whole studio is named after and argues from.
+
+          Gold_Sand on the right, as the slide has it. The page's second image,
+          and the studio's own artwork rather than a stock texture. */}
       <Section>
         <Reveal>
           <div className="ln-cols">
-            <h2 className="ln-h2">{story.heading}</h2>
             <div>
-              <p className="ln-body">{story.body}</p>
+              <span className="ln-word" lang="grc">
+                {story.word}
+              </span>
+              <div className="ln-word-labels" aria-hidden>
+                {story.labels.map((l) => (
+                  <span key={l}>{l}</span>
+                ))}
+              </div>
+              <p className="ln-definition">{story.definition}</p>
+              <div className="ln-word-rule" />
+              <h2 className="ln-h2 mt-8">{story.heading}</h2>
+              <p className="ln-body mt-5">{story.body}</p>
               <p className="ln-body mt-5">{mission.body}</p>
+            </div>
+            <div className="ln-sand">
+              <Image
+                src="/home/gold-sand.webp"
+                alt="Black sand in shallow focus, scattered with grains of gold"
+                width={900}
+                height={795}
+                sizes="(min-width: 860px) 480px, 100vw"
+              />
             </div>
           </div>
         </Reveal>

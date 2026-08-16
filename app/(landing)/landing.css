@@ -187,45 +187,60 @@
   color: color-mix(in srgb, var(--color-dark-silver) 68%, transparent);
 }
 
-/* ---------- call to action ---------- */
-
+/* ---------- call to action ----------
+ *
+ * Modelled on the principle pills in the brand file, which are the only
+ * button-shaped objects the brand actually has. Sampled off the render rather
+ * than guessed, because the interesting part is not obvious from a screenshot:
+ * the stroke is not one colour. It runs bright cream at the top edge (#F4F0DF),
+ * falls to a duller gold at the sides (#CDB796), and goes dark at the bottom.
+ * It is a lit bevel, the same logic as the 3D mark's material, and a flat gold
+ * border misses the whole effect.
+ *
+ * So the border is a gradient (padding-box over border-box, which is the only
+ * way to get a gradient stroke with a solid interior), the interior stays the
+ * page ground rather than a fill, and a soft glow sits above it. */
 .ln-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.9rem 1.75rem;
+  padding: 0.95rem 2.25rem;
   border-radius: 999px;
-  border: 0;
+  border: 1px solid transparent;
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 500;
   letter-spacing: -0.02em;
-  color: var(--color-obsidian-black);
-  background: var(--color-vulcan-gold);
+  /* Between Vulcan Gold and the lit rim, which is where the pill's own label
+     sits when sampled. */
+  color: color-mix(in srgb, var(--color-vulcan-gold) 50%, var(--gold-render-rim));
+  background:
+    linear-gradient(var(--color-obsidian-black), var(--color-obsidian-black)) padding-box,
+    linear-gradient(
+        to bottom,
+        var(--gold-render-rim) 0%,
+        var(--color-vulcan-gold) 45%,
+        color-mix(in srgb, var(--color-vulcan-gold) 45%, var(--color-obsidian-black)) 100%
+      )
+      border-box;
+  box-shadow: 0 0 24px -6px color-mix(in srgb, var(--color-vulcan-gold) 45%, transparent);
   cursor: pointer;
-  transition: background 180ms ease, transform 180ms ease;
+  transition: box-shadow 220ms ease, color 220ms ease, transform 220ms ease;
 }
 
-/* Lifts toward Snow White rather than to a brighter gold: the palette carries
-   one gold, and inventing a hover tint of it would be inventing a sixth colour. */
 .ln-cta:hover {
-  background: var(--color-snow-white);
+  color: var(--gold-render-rim);
+  box-shadow: 0 0 34px -4px color-mix(in srgb, var(--color-vulcan-gold) 70%, transparent);
   transform: translateY(-1px);
+}
+
+.ln-cta:active {
+  transform: translateY(0);
 }
 
 .ln-cta:focus-visible {
   outline: 2px solid var(--color-vulcan-gold);
-  outline-offset: 3px;
-}
-
-/* No booking URL yet, so the button has nowhere to go. Rendered as a disabled
-   <button> rather than a dead <a href="#">: it is the honest element, it stays
-   out of the tab order, and it is visibly unfinished on the preview, which is
-   the point until the real link lands. */
-.ln-cta:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-  transform: none;
+  outline-offset: 4px;
 }
 
 /* ---------- proof strip ---------- */
@@ -458,4 +473,71 @@
 
 .ln-faq-answer {
   padding-top: 0.75rem;
+}
+
+/* ---------- the kalos entry ----------
+ *
+ * Built from the brand file's own treatment of the word (node 206:165), which
+ * sets it as a dictionary entry: the Greek at 120px, the grammatical labels at
+ * 50px in Vulcan Gold, then the definition and a rule. It was previously one
+ * mention inside a paragraph, which is a strange way to treat the studio's
+ * entire argument.
+ *
+ * Note the tracking. -0.05em, not the -0.02em the rest of the page uses. The
+ * file tightens display type as it grows: -8px at 160px on "Mission", -6px at
+ * 120px here, both landing on -0.05em. */
+.ln-word {
+  display: block;
+  font-size: clamp(3.5rem, 11vw, 7.5rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--color-snow-white);
+}
+
+.ln-word-labels {
+  display: flex;
+  gap: clamp(1rem, 3vw, 1.875rem);
+  margin-top: clamp(1.25rem, 3vw, 2.5rem);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--color-vulcan-gold);
+}
+
+.ln-definition {
+  margin-top: 1.25rem;
+  font-size: clamp(1.0625rem, 2vw, 1.375rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+  color: var(--color-snow-white);
+}
+
+.ln-word-rule {
+  margin-top: clamp(1.75rem, 4vw, 2.5rem);
+  border-top: 1px solid var(--color-eerie-gray);
+}
+
+/* The Gold_Sand plate, as the slide has it: the word on the left, the material
+   on the right. Second image on the page, and it is the studio's own artwork. */
+.ln-sand {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  aspect-ratio: 4 / 5;
+  box-shadow: inset 0 0 0 1px var(--color-eerie-gray);
+}
+
+.ln-sand img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 859px) {
+  .ln-sand {
+    aspect-ratio: 16 / 10;
+  }
 }

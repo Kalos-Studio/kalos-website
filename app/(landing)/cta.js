@@ -8,10 +8,15 @@ import { cta } from "./content";
  * same label, and adding a second, different button means editing this file and
  * noticing that you are doing it.
  *
- * When BOOKING_URL is still null it renders a disabled <button> rather than an
- * anchor pointing at "#". A dead link looks identical to a working one, invites
- * a click and does nothing; a disabled button stays out of the tab order, tells
- * assistive tech the truth, and is visibly unfinished on the deploy preview.
+ * It renders fully active whether or not BOOKING_URL is set. An earlier version
+ * greyed it out to 45% opacity while the link was missing, on the grounds that a
+ * dead control should look dead. The owner wants to judge the real thing, and a
+ * washed-out button is not the real thing, so the styling no longer depends on
+ * the URL.
+ *
+ * The element still does. With a URL it is an anchor; without one it stays a
+ * <button>, so it is not a link that goes nowhere, and it carries a title saying
+ * why. Nothing about that is visible until the link lands, which is the point.
  */
 export default function CallToAction({ className = "" }) {
   if (!cta.href) {
@@ -19,7 +24,6 @@ export default function CallToAction({ className = "" }) {
       <button
         type="button"
         className={`ln-cta ${className}`}
-        disabled
         title="Booking link not set yet"
       >
         {cta.label}

@@ -14,6 +14,30 @@ import "./globals.css";
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space-grotesk",
+  // Space Grotesk has no Greek glyphs, and "καλός" is now the largest word in
+  // the story section, so what catches those characters matters.
+  //
+  // By default next/font builds a metric-matched fallback out of Times New
+  // Roman and puts it straight after the real family. Every Greek character
+  // therefore rendered as a high-contrast serif, next to a monoline grotesk,
+  // which is not what the brand file shows. Measured: the word came out exactly
+  // as wide with the brand font as with `font-family: serif`, which is only
+  // possible if it was already serif.
+  //
+  // Naming a sans stack here makes the fallback a grotesk instead, so unsupported
+  // glyphs land on SF Pro, Segoe UI or Roboto depending on the platform. That is
+  // effectively what Figma is doing when it renders this slide.
+  fallback: [
+    "ui-sans-serif",
+    "system-ui",
+    "-apple-system",
+    "Segoe UI",
+    "Roboto",
+    "Helvetica Neue",
+    "Arial",
+    "sans-serif",
+  ],
+  adjustFontFallback: false,
 });
 
 // og:image has to be an absolute URL or iMessage and friends can't resolve it.
