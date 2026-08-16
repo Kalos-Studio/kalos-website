@@ -524,3 +524,21 @@
     aspect-ratio: 16 / 10;
   }
 }
+
+/* Client logos, rendered in one monochrome weight so the row reads as evidence
+   rather than as four competing brand palettes. `brightness(0)` flattens every
+   opaque pixel to black and `invert(1)` lifts it to white, which is why the
+   files have to arrive on a transparent background: a logo supplied on a white
+   rectangle becomes a white rectangle. Held at Dark Silver's weight so the row
+   sits with the rest of the secondary text rather than shouting over it.
+
+   Sized on height, not width, so a long lockup and a square mark carry the same
+   optical weight, and matched to .ln-client so swapping a name for a logo does
+   not move the layout. */
+.ln-logo {
+  display: block;
+  height: clamp(1.25rem, 2.6vw, 1.75rem);
+  width: auto;
+  filter: brightness(0) invert(1);
+  opacity: 0.66;
+}

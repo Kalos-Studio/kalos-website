@@ -51,9 +51,25 @@ export const proof = {
   // section tag. Set like the deck's running head, which is the only small text
   // the brand file actually contains.
   eyebrow: "Trusted by teams who ship",
-  // Rendered as logos when we have clean files, and as the brand typeface
-  // otherwise. Names stay accurate either way.
-  clients: ["Shell", "MARA", "Allganize", "EchoCare"],
+  // Set `logo` to a path under /public and that client renders as artwork;
+  // leave it off and the name renders in the brand typeface instead. Mixed is
+  // fine, which matters because the logos are arriving a few at a time.
+  //
+  // This started as a filesystem lookup so that dropping a file in was the only
+  // step, which is nicer and does not survive the bundler: `process.cwd` is not
+  // a function in the context Next prerenders server components in, and it
+  // fails the build with an error about collecting route configuration. One
+  // explicit line is worth more than that cleverness.
+  //
+  // Requirements for the file are in public/home/logos/README.md. The short
+  // version: SVG, transparent background, or the monochrome treatment turns it
+  // into a white rectangle.
+  clients: [
+    { slug: "shell-tapup", name: "Shell", logo: null },
+    { slug: "mara", name: "MARA", logo: null },
+    { slug: "allganize", name: "Allganize", logo: null },
+    { slug: "echocare", name: "EchoCare", logo: null },
+  ],
 };
 
 // Close to verbatim from the brand kit. This is the strongest writing we have

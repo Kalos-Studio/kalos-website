@@ -44,6 +44,14 @@ function Section({ children, rule = true, className = "" }) {
 // is not a bug to route around by loosening the gate: the homepage is public
 // and should serve its own public assets deliberately, so the three featured
 // covers are copied into /public/home. Verified by watching them 400 first.
+// A plain <img> rather than next/image. These are SVGs at a fixed height, so
+// there is nothing for the optimizer to do, and next/image would add a layout
+// wrapper and a round trip to serve the same bytes.
+function ClientLogo({ src, name }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img className="ln-logo" src={src} alt={name} />;
+}
+
 function featured() {
   return featuredWork.slugs
     .map((slug) => {
@@ -71,11 +79,19 @@ export default function Landing() {
         <Reveal>
           <span className="ln-runninghead mb-6">{proof.eyebrow}</span>
           <div className="ln-proof">
-            {proof.clients.map((name) => (
-              <span className="ln-client" key={name}>
-                {name}
-              </span>
-            ))}
+            {proof.clients.map((client) =>
+              client.logo ? (
+                <ClientLogo
+                  key={client.slug}
+                  src={client.logo}
+                  name={client.name}
+                />
+              ) : (
+                <span className="ln-client" key={client.slug}>
+                  {client.name}
+                </span>
+              )
+            )}
           </div>
         </Reveal>
       </Section>
