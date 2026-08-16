@@ -11,9 +11,17 @@
 
 // Owner-supplied values that do not exist yet. Kept as named constants so the
 // placeholders are impossible to miss in a review and become real in one edit.
-export const BOOKING_URL = null; // TODO(owner): scheduling link
 export const PRICE_ANCHOR = null; // TODO(owner): e.g. "$12k". Never a range.
 export const TIMELINE_RANGE = null; // TODO(owner): e.g. "six to eight"
+
+// Cal.com. `link` is the public booking path, so the call to action can point at
+// https://cal.com/<link> as a real href and still work if the embed never loads.
+// `namespace` scopes the embed's config to this one event type, which matters
+// the moment a second booking type exists.
+export const booking = {
+  namespace: "intro",
+  link: "kalos/intro",
+};
 
 // Two hero directions, both written to the same brief. `active` picks which one
 // renders. Kept side by side rather than in git history so they can be compared
@@ -41,9 +49,8 @@ export const heroes = {
 
 export const cta = {
   label: "Book a Call",
-  // Every call to action on the page points here. One primary action, no
-  // competing buttons, per the brief.
-  href: BOOKING_URL,
+  // One primary action and no competing buttons, per the brief. The destination
+  // lives in `booking` above.
 };
 
 export const proof = {

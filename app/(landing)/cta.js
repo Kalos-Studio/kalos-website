@@ -1,4 +1,9 @@
-import { cta } from "./content";
+"use client";
+
+import { useCallback, useEffect, useRef } from "react";
+import { booking, cta } from "./content";
+
+const CAL_CONFIG = { layout: "week_view", useSlotsViewOnSmallScreen: "true", theme: "dark" };
 
 /**
  * The page's only call to action, in its only styling.
@@ -8,31 +13,80 @@ import { cta } from "./content";
  * same label, and adding a second, different button means editing this file and
  * noticing that you are doing it.
  *
- * It renders fully active whether or not BOOKING_URL is set. An earlier version
- * greyed it out to 45% opacity while the link was missing, on the grounds that a
- * dead control should look dead. The owner wants to judge the real thing, and a
- * washed-out button is not the real thing, so the styling no longer depends on
- * the URL.
+ * It is an anchor pointing at the real Cal.com page, and the click is taken over
+ * in JavaScript to open the embed instead. That ordering is deliberate: if the
+ * embed is blocked, still loading, or fails outright, the link goes somewhere
+ * that books a call. A <button> in the same situation is an inert control on the
+ * one element the whole page exists to get clicked.
  *
- * The element still does. With a URL it is an anchor; without one it stays a
- * <button>, so it is not a link that goes nowhere, and it carries a title saying
- * why. Nothing about that is visible until the link lands, which is the point.
+ * The click is handled explicitly rather than through Cal's `data-cal-link`
+ * attributes, which is their documented approach and did not work here: the
+ * embed loaded, `Cal.ns.intro` existed, and the click still navigated away
+ * instead of opening the modal, so its binding never caught the element.
+ * Calling `modal` ourselves is one line, and it is testable.
  */
 export default function CallToAction({ className = "" }) {
-  if (!cta.href) {
-    return (
-      <button
-        type="button"
-        className={`ln-cta ${className}`}
-        title="Booking link not set yet"
-      >
-        {cta.label}
-      </button>
-    );
-  }
+  const api = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      // Imported here rather than at the top of the file so the embed lands in
+      // its own chunk, fetched after hydration, instead of in the page's initial
+      // JavaScript. Worth about 1kB of First Load rather than the whole embed.
+      const { getCalApi } = await import("@calcom/embed-react");
+      const cal = await getCalApi({ namespace: booking.namespace });
+      if (cancelled) return;
+
+      cal("ui", {
+        theme: "dark",
+        // The modal takes the brand rather than Cal's default. `cal-brand` is
+        // what it uses for its own accents, so it gets Snow White on dark and
+        // Obsidian Black on light, matching the tokens in globals.css.
+        cssVarsPerTheme: {
+          light: { "cal-brand": "#040406" },
+          dark: { "cal-brand": "#F5FEFD" },
+        },
+        hideEventTypeDetails: false,
+        layout: "week_view",
+      });
+
+      api.current = cal;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onClick = useCallback((event) => {
+    // Let the browser have the ones it should own: new tab, new window, save.
+    // Hijacking a cmd-click into a modal is the kind of thing that makes a link
+    // feel broken.
+    if (
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button !== 0
+    ) {
+      return;
+    }
+
+    // Not ready yet: fall through to the href rather than swallow the click.
+    if (!api.current) return;
+
+    event.preventDefault();
+    api.current("modal", { calLink: booking.link, config: CAL_CONFIG });
+  }, []);
 
   return (
-    <a className={`ln-cta ${className}`} href={cta.href}>
+    <a
+      className={`ln-cta ${className}`}
+      href={`https://cal.com/${booking.link}`}
+      onClick={onClick}
+    >
       {cta.label}
     </a>
   );
