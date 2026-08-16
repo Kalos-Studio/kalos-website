@@ -52,18 +52,41 @@ function Lockup({ still, started }) {
     // though the gyro earns more range, since holding a phone is a much more
     // direct sort of contact than pushing a cursor around.
     const swing = gyro ? 0.62 : 0.46;
-    const targetY = source ? source.x * swing : Math.sin(t * 0.34) * 0.26;
-    const targetX = source ? -source.y * swing * 0.7 : Math.sin(t * 0.23) * 0.13;
+    const targetY = source ? source.x * swing : 0;
+    const targetX = source ? -source.y * swing * 0.7 : 0;
 
     // Damping tuned for a mouse feels like treacle on a gyroscope — you move the
     // phone and the mark arrives a beat later. Tighter when the sensor is
     // driving, but not so tight that sensor noise becomes visible jitter.
     const lambda = gyro ? 6 : 3.2;
 
+    // `still` silences the motion the page makes on its own. It must not
+    // silence the motion the visitor is making.
+    //
+    // This used to pin every rotation to 0 whenever prefers-reduced-motion was
+    // set, which killed the gyroscope stone dead: someone with Reduce Motion on
+    // in iOS Settings was shown a prompt asking for the sensor, granted it, and
+    // then watched a mark that could not move. Asking for motion access and
+    // ignoring the readings is worse than never asking. Measured, by feeding
+    // opposite tilts and diffing frames: 13.5 average pixel change normally,
+    // 0.0 with reduced motion.
+    //
+    // Reduced motion is about animation the page starts by itself, which is the
+    // vestibular problem. Turning an object because the visitor turned their
+    // phone, or moved their cursor, is direct manipulation, closer to scrolling
+    // than to an autoplaying banner, and they opted into it by tapping a button
+    // that says so. So a live input always drives, and `still` now only
+    // suppresses the idle drift and the float underneath it.
+    const idleY = still ? 0 : Math.sin(t * 0.34) * 0.26;
+    const idleX = still ? 0 : Math.sin(t * 0.23) * 0.13;
+
     // The initial rotation is off-target, so this same damp doubles as the
     // entrance: the mark swings into place instead of popping in.
-    g.rotation.y = damp(g.rotation.y, still ? 0 : targetY, lambda, delta);
-    g.rotation.x = damp(g.rotation.x, still ? 0 : targetX, lambda, delta);
+    g.rotation.y = damp(g.rotation.y, source ? targetY : idleY, lambda, delta);
+    g.rotation.x = damp(g.rotation.x, source ? targetX : idleX, lambda, delta);
+    // The float is autonomous, so `still` alone decides it. An earlier version of
+    // this line also stopped it whenever an input was driving, which quietly made
+    // the mark deader the moment you picked the phone up.
     g.position.y = lift + (still ? 0 : Math.sin(t * 0.55) * 0.05);
   });
 
