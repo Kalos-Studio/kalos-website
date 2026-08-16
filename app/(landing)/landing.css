@@ -27,7 +27,16 @@
  * order, so the classes win. One rule instead of fighting each property twice.
  *
  * The same reasoning is why type here is plain classes and not Tailwind text
- * utilities. Layout is still Tailwind throughout. */
+ * utilities. Layout is still Tailwind throughout.
+ *
+ * `margin: 0` is deliberately NOT in this list, and removing it fixed a real
+ * bug. It was here out of reset habit, but nothing needs it: preflight already
+ * zeroes every margin from inside `@layer base`, and globals.css sets no margin
+ * on these elements. What it did instead was outrank `@layer utilities` and
+ * silently kill every `mt-*` on a p, h2 or h3 on the page. Measured: twenty-odd
+ * spacing utilities computing to 0px, with only divs and buttons unaffected
+ * because they are not in this selector. Same failure the top of globals.css
+ * records for a bare `* { margin: 0 }`, just scoped smaller and harder to see. */
 .landing-root :where(h1, h2, h3, p, ul, li, figure, blockquote) {
   font-size: inherit;
   font-weight: inherit;
@@ -35,7 +44,6 @@
   text-transform: none;
   color: inherit;
   line-height: inherit;
-  margin: 0;
 }
 
 /* ---------- rhythm ---------- */
@@ -104,14 +112,26 @@
  * sets body at `normal`, which is right for a presentation read from a distance
  * and too tight for a paragraph someone actually reads on a phone. */
 
-/* The deck's own label treatment, taken from its slide header (node 162:10194):
-   Space Grotesk Regular at 16px, tracking -0.02em, sentence case, white at 32%.
+/* The hierarchy, measured off the brand file rather than invented. Four levels
+   and no fifth:
  *
- * This was a 0.7rem uppercase gold label tracked at +0.24em, which is the house
- * style of every SaaS template and belongs to none of them in particular. The
- * brand does not do small caps and does not use gold for labels: gold is the
- * accent, which the palette defines as buttons and active indicators. */
-.ln-kicker {
+ *   section word   160px  Medium   -0.05em  leading 0.79   ("Mission", 206:223)
+ *   statement      116px  Medium   -0.02em  leading normal (209:10493)
+ *   body            26px  Regular  -0.02em  leading normal (194:10423)
+ *   running head    16px  Regular  -0.02em  32% white      (162:10194)
+ *
+ * Two things follow from that list. Tracking tightens as type grows, so -0.02em
+ * is not universal after all: the single-word display label takes -0.05em.
+ * And there is no eyebrow anywhere in the file. The 16px label is a running
+ * head at the top of a slide, not a tag above a headline.
+ *
+ * So the kicker over every section is gone. It was invented, and it is what made
+ * the page read as a template. Headings carry their own sections now, which also
+ * removed a redundancy: "Process" sat above "How it works". */
+
+/* The running head. The one small label the brand actually has, used here for
+   the single line that is genuinely a label rather than a section tag. */
+.ln-runninghead {
   display: block;
   font-size: 1rem;
   font-weight: 400;
@@ -120,11 +140,15 @@
   color: color-mix(in srgb, var(--color-snow-white) 32%, transparent);
 }
 
+/* Section headline. Sized up from a 3rem cap: the file sets its statements at
+   116px on a 1920 frame, roughly 6vw, and this was sitting at under 4vw, which
+   is quieter than the brand is anywhere. Leading loosens toward the `normal`
+   the file uses, rather than the 1.08 that came from web habit. */
 .ln-h2 {
-  font-size: clamp(1.875rem, 4.4vw, 3rem);
+  font-size: clamp(2rem, 5vw, 3.75rem);
   font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 1.08;
+  line-height: 1.14;
   text-wrap: balance;
 }
 

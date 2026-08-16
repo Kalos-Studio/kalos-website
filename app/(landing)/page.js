@@ -67,7 +67,7 @@ export default function Landing() {
       {/* Proof directly under the hero, before any argument. Someone deciding
           whether to keep reading wants evidence, not a second claim. */}
       <Section rule={false}>
-        <span className="ln-kicker mb-6">{proof.eyebrow}</span>
+        <span className="ln-runninghead mb-6">{proof.eyebrow}</span>
         <div className="ln-proof">
           {proof.clients.map((name) => (
             <span className="ln-client" key={name}>
@@ -82,10 +82,7 @@ export default function Landing() {
           which rendered as four orphaned claims. */}
       <Section>
         <div className="ln-cols">
-          <div>
-            <span className="ln-kicker mb-3">{offering.kicker}</span>
-            <h2 className="ln-h2">{offering.heading}</h2>
-          </div>
+          <h2 className="ln-h2">{offering.heading}</h2>
           <div>
             <p className="ln-body">{offering.body}</p>
             <p className="ln-aside mt-5">{offering.secondary}</p>
@@ -134,10 +131,7 @@ export default function Landing() {
           single thing, which is most of why the page felt long. */}
       <Section>
         <div className="ln-cols">
-          <div>
-            <span className="ln-kicker mb-3">{story.kicker}</span>
-            <h2 className="ln-h2">{story.heading}</h2>
-          </div>
+          <h2 className="ln-h2">{story.heading}</h2>
           <div>
             <p className="ln-body">{story.body}</p>
             <p className="ln-body mt-5">{mission.body}</p>
@@ -147,10 +141,7 @@ export default function Landing() {
 
       <Section>
         <div className="ln-cols">
-          <div>
-            <span className="ln-kicker mb-3">{process.kicker}</span>
-            <h2 className="ln-h2">How it works</h2>
-          </div>
+          <h2 className="ln-h2">{process.heading}</h2>
           <ol className="grid gap-7 sm:grid-cols-2">
             {process.steps.map((step, i) => (
               <li key={step.title}>

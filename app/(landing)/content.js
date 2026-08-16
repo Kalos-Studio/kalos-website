@@ -47,6 +47,9 @@ export const cta = {
 };
 
 export const proof = {
+  // The one small label on the page, and it is a line of copy rather than a
+  // section tag. Set like the deck's running head, which is the only small text
+  // the brand file actually contains.
   eyebrow: "Trusted by teams who ship",
   // Rendered as logos when we have clean files, and as the brand typeface
   // otherwise. Names stay accurate either way.
@@ -56,17 +59,20 @@ export const proof = {
 // Close to verbatim from the brand kit. This is the strongest writing we have
 // and rewriting it would be vandalism. Only the em dashes came out.
 //
+// No `kicker`. The brand file has no eyebrow-above-heading pattern at all: its
+// section labels are single words set at 160px, and its only small text is the
+// running head at the top of a slide. A 16px tag over every headline was
+// invented, and it is the thing that made the page read as generic.
+//
 // Rendered in the same section as `mission` below. They were two sections and
 // they were saying one thing: here is what we believe. Splitting a single idea
 // across two full screens is what made the page feel long.
 export const story = {
-  kicker: "Why Kalos",
   heading: "Beautiful because it is made well.",
   body: "Our name comes from the Greek καλός, a word that meant beautiful, good, and well-made all at once, with no line drawn between them. A thing was beautiful because it was made well, not in addition to it. That belief is the whole studio. When something looks right but works wrong, we do not call it finished. We call it broken.",
 };
 
 export const offering = {
-  kicker: "The work",
   heading: "One team, from identity to launch.",
   body: "Most teams stitch a brand together from one freelancer, a site from another, and hope the two match. We do both, so the brand and the build come from the same hands and actually fit. Brand identity first, then a fast, custom website designed and developed end to end.",
   // The secondary track. One line, never a co-equal headline, or it dilutes the
@@ -135,7 +141,7 @@ export const mission = {
 };
 
 export const process = {
-  kicker: "Process",
+  heading: "How it works",
   steps: [
     {
       title: "Book a call",
