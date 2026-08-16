@@ -79,8 +79,12 @@ export const proof = {
       logo: "/home/logos/priority-ambulance-transfer.svg",
     },
     { slug: "allganize", name: "Allganize", logo: "/home/logos/allganize.webp" },
-    { slug: "mara", name: "MARA", logo: null },
-    { slug: "echocare", name: "EchoCare", logo: null },
+    { slug: "mara", name: "MARA", logo: "/home/logos/mara.webp" },
+    // Composed rather than supplied. echoambulance.com publishes the mark on its
+    // own with no wordmark anywhere on the site, so the name is set beside it in
+    // Space Grotesk. Worth knowing it is our lettering, not their lockup, if
+    // EchoCare ever sends a real one.
+    { slug: "echocare", name: "EchoCare", logo: "/home/logos/echocare.webp" },
   ],
 };
 
