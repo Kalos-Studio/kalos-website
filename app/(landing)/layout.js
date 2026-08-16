@@ -18,9 +18,11 @@ import { meta } from "./content";
 // the first colour a phone paints while the page loads, so it should be the
 // real ground and not a warmer approximation of it.
 export const metadata = {
+  // The tab gets the short title and the share cards get the long one. See the
+  // note on `meta` in content.js for why they differ.
   title: meta.title,
   description: meta.description,
-  openGraph: { title: meta.title, description: meta.description, url: "/" },
+  openGraph: { title: meta.shareTitle, description: meta.description, url: "/" },
   // `card` has to be restated. Next merges metadata by replacing whole keys, not
   // by deep merge, so declaring `twitter` here dropped the root layout's
   // summary_large_image and fell back to `summary` — a small square crop, which
@@ -28,7 +30,7 @@ export const metadata = {
   // rendered meta tags rather than the source.
   twitter: {
     card: "summary_large_image",
-    title: meta.title,
+    title: meta.shareTitle,
     description: meta.description,
   },
 };

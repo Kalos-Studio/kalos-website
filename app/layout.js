@@ -46,13 +46,21 @@ const spaceGrotesk = Space_Grotesk({
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ?? process.env.URL ?? "http://localhost:3000";
 
+// Site-wide defaults. Every route that does not set its own falls back to these,
+// which currently means /work and /design-system.
+//
+// The description used to read "Coming soon", left over from the placeholder
+// homepage that was deleted several commits ago. It was still the default every
+// non-landing route inherited.
+const SITE_DESCRIPTION = "Brand and web design studio.";
+
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: "Kalos",
-  description: "Coming soon",
+  description: SITE_DESCRIPTION,
   openGraph: {
     title: "Kalos",
-    description: "Coming soon",
+    description: SITE_DESCRIPTION,
     siteName: "Kalos",
     url: "/",
     type: "website",
@@ -60,7 +68,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Kalos",
-    description: "Coming soon",
+    description: SITE_DESCRIPTION,
   },
 };
 

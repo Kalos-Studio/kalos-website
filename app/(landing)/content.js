@@ -231,8 +231,19 @@ export const finalCta = {
   heading: "Let's build something made well.",
 };
 
+// Two titles on purpose.
+//
+// `title` is the <title> element, which is the browser tab, the bookmark and the
+// window. It is one word because that is what a tab should be: at tab width
+// anything longer truncates to "Kalos, Brand and..." and reads as clutter.
+//
+// `shareTitle` is what goes on a link preview, where there is room for a line
+// and the reader has no other context for what Kalos is. Search engines weigh
+// the <title> most heavily, so the short one does cost something there; the
+// description below is carrying that weight instead.
 export const meta = {
-  title: "Kalos, Brand and Web Design Studio",
+  title: "Kalos",
+  shareTitle: "Kalos, Brand and Web Design Studio",
   description:
     "We design and build brand identities and websites for teams who need both done properly. Beautiful because it is made well.",
 };
