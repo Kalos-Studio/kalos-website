@@ -21,7 +21,16 @@ export const metadata = {
   title: meta.title,
   description: meta.description,
   openGraph: { title: meta.title, description: meta.description, url: "/" },
-  twitter: { title: meta.title, description: meta.description },
+  // `card` has to be restated. Next merges metadata by replacing whole keys, not
+  // by deep merge, so declaring `twitter` here dropped the root layout's
+  // summary_large_image and fell back to `summary` — a small square crop, which
+  // is the worst possible frame for a wide lockup. Caught by reading the
+  // rendered meta tags rather than the source.
+  twitter: {
+    card: "summary_large_image",
+    title: meta.title,
+    description: meta.description,
+  },
 };
 
 // The zoom lock that used to live here is gone.
