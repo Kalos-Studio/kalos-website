@@ -100,16 +100,30 @@ export const proof = {
 // they were saying one thing: here is what we believe. Splitting a single idea
 // across two full screens is what made the page feel long.
 export const story = {
-  // Laid out as the dictionary entry the brand file makes of it (node 206:165):
-  // the Greek word at display size, the grammatical labels in gold, then the
-  // definition. The word is the studio's whole argument, so it should be the
-  // largest thing in the section rather than a mention inside a paragraph.
+  // Laid out as the dictionary entry node 206:165 makes of it: the Greek word at
+  // display size, the grammatical labels in gold, then the definition. The word
+  // is the studio's whole argument, so it should be the largest thing in the
+  // section rather than a mention inside a paragraph.
+  //
+  // The *treatment* is from 206:165. The *words* are not, and that distinction
+  // cost us. 206:165 sits in the superseded column of the brand file — the copy
+  // of the deck still set in Host Grotesk, page numbers unpadded — and the
+  // definition it carries ("deepens beauty and lifts your spirits, adding a
+  // touch of magic…") is copy the studio has since thrown out. It shipped here
+  // for a while. The live About slide (194:10423, page 04) has no dictionary
+  // entry at all and defines the word plainly; that wording is what is below.
+  //
+  // Anything else sourced from a 206:* node deserves the same check.
   word: "καλός",
   labels: ["[adj]", "[Greek]"],
   definition:
-    "A word that deepens beauty and lifts your spirits, adding a touch of magic that brightens your world and puts a spring in your step.",
+    "Beautiful, good, and well-made all at once, with no line drawn between them.",
   heading: "Beautiful because it is made well.",
-  body: "Our name comes from the Greek καλός, a word that meant beautiful, good, and well-made all at once, with no line drawn between them. A thing was beautiful because it was made well, not in addition to it. That belief is the whole studio. When something looks right but works wrong, we do not call it finished. We call it broken.",
+  // Opens on "the ancient idea" rather than re-introducing the word, because the
+  // entry above has just defined it. Previously both did, twenty words apart,
+  // and the entry was giving the definition the file had dropped while the
+  // paragraph gave the one it kept — the section argued with itself.
+  body: "The ancient idea was that a thing was beautiful because it was made well, not in addition to it. That belief is the whole studio. When something looks right but works wrong, we do not call it finished. We call it broken.",
 };
 
 export const offering = {

@@ -21,7 +21,31 @@
   --color-snow-white: #f5fefd;
 
   /* Secondary text and sub-labels. Replaces the assorted rgba(snow, 0.4-0.6)
-     values that were standing in for it before the palette turned up. */
+     values that were standing in for it before the palette turned up.
+   *
+   * SECONDARY TEXT, THE RULE. The brand file supports two readings and the site
+   * was quietly using both, so this is the decision:
+   *
+   *   prose you read      -> --color-dark-silver          (#A8A8A8)
+   *   chrome you glance at -> snow white at 32%           (about #545454)
+   *
+   * Body copy, captions, step descriptions and client names are prose. Running
+   * heads, step numbers and page indices are chrome. Both readings are honestly
+   * in the file: the palette board says Dark Silver is "secondary text and
+   * sub-labels", while every piece of secondary text the deck actually draws is
+   * white at 32% — and those two are nowhere near each other. Split by role
+   * because the deck is right about chrome and the board is right about prose:
+   * 32% is correct for a label you never read twice and genuinely hard to read
+   * for a paragraph on a phone in daylight.
+   *
+   * Body copy stays Dark Silver rather than following the deck to Snow White.
+   * That is a deliberate departure: a slide is read once from across a room,
+   * where its only competition is the wall, and a landing page is read at arm's
+   * length while scrolling, where the headline has to stay the loudest thing in
+   * its section. Recorded here so it reads as a decision and not as drift.
+   *
+   * Do not invent a third value. Where something needs to sit quieter than
+   * Dark Silver, it should come from size and measure, not from a new grey. */
   --color-dark-silver: #a8a8a8;
 
   /* Borders, grid lines and card backgrounds. */
@@ -79,12 +103,21 @@
  *
  * If Tailwind is ever removed, this reset has to come back. */
 
+/* The ground and the primary text colour, from the tokens above rather than from
+   pure black and pure white. Those two predate the palette by a long way, and
+   `#000` in particular is not a brand value: Obsidian Black is `#040406`, which
+   is very slightly blue and very slightly lifted. The difference is small on a
+   monitor and clearly visible on an OLED phone, which is where most of the
+   traffic is.
+ *
+ * Kept in sync with `themeColor` in app/layout.js, or the browser chrome and
+ * the page ground are two different blacks meeting at the top of the screen. */
 html,
 body {
   height: 100%;
   overflow: hidden;
-  background: #000;
-  color: #fff;
+  background: var(--color-obsidian-black);
+  color: var(--color-snow-white);
   -webkit-font-smoothing: antialiased;
   /* The brand face ships with five stylistic sets deliberately on. Set here so
      no surface can forget them and quietly render the default letterforms,
@@ -112,3 +145,16 @@ body {
  * the paragraph size to .work-root, the heading leading to .work-login-card.
  * Verified by diffing computed styles across every page before and after. */
 
+/* Two notes for whatever replaces them, both measured off the brand file rather
+   than off habit, because the deleted rules had them wrong and the next headline
+   rule written from scratch will otherwise get them wrong the same way.
+ *
+ * Weight: the deck contains exactly two, Regular and Medium. There is no bold
+ * anywhere in it and the wordmark itself is Medium, so the `700` that used to be
+ * on `h1` here was heavier than anything the brand owns. Space Grotesk also tops
+ * out at 700, so nothing above that renders honestly either.
+ *
+ * Tracking: -0.02em at every size in the file, measured across four of them —
+ * -0.32px at 16px, -0.52px at 26px, -2.32px at 116px, -3.08px at 154px. One
+ * ratio, four sizes. The `-0.04em` that used to be here was roughly double it
+ * and was invented, and nothing in the file tracks positive at all. */

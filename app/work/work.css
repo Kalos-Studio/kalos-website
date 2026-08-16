@@ -12,29 +12,47 @@
   background: #000;
 }
 
-/* Backdrop: a faint magenta diagonal-line texture plus a soft glow in the
-   corner, echoing the reference template without competing with content.
-   Fixed (not absolute) so it reads as a static backdrop rather than
-   scrolling away with the page. */
+/* Backdrop: a soft corner glow in Vulcan Gold over film grain. Fixed (not
+   absolute) so it reads as a static backdrop rather than scrolling away with
+   the page.
+ *
+ * This was a magenta glow over a magenta diagonal-line texture, echoing a
+ * reference template from before anyone had opened the brand file. Magenta
+ * appears nowhere in the brand, and it was the single loudest off-brand value
+ * on the site — /work read as a different studio to the homepage.
+ *
+ * The replacement is not invented either. The brand file's About slide lights
+ * its corner with a Vulcan Gold plane at 20% opacity (node 199:10430), which is
+ * exactly this gesture, and every plate in the file is grainy — Gold_Sand is
+ * literally a photograph of grain. So: the file's own corner wash, and the same
+ * grain the landing page carries, at the same 0.03.
+ *
+ * The diagonal lines are gone rather than recoloured. A ruled texture has no
+ * precedent anywhere in the brand, and in gold it read as wallpaper. */
 .work-root::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse 60% 45% at 12% 8%,
-      rgba(255, 0, 170, 0.4),
-      transparent 62%
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 0, 170, 0.18) 0px,
-      rgba(255, 0, 170, 0.18) 2px,
-      transparent 2px,
-      transparent 22px
-    );
+  background: radial-gradient(
+    ellipse 60% 45% at 12% 8%,
+    color-mix(in srgb, var(--color-vulcan-gold) 20%, transparent),
+    transparent 62%
+  );
+}
+
+/* Grain sits in its own layer rather than in the gradient above, so the two can
+   carry different opacities — the wash needs to be visible and the grain needs
+   to be almost not. */
+.work-root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Two rules, at two different weights, and the difference between them is the
@@ -104,13 +122,21 @@
 
 /* --- Case study list -------------------------------------------------- */
 
+/* The one callout on /work, and the brand file is explicit that callouts are
+   exactly what the accent is for. It was #ffcc66 — a bright amber picked before
+   the palette existed, and far enough from Vulcan Gold (#AE9357) to read as a
+   different brand sitting inside this one.
+ *
+ * The label goes lighter than the border rather than taking the accent flat:
+ * Vulcan Gold is a mid-tone and 0.9rem text set in it on near-black is thin to
+ * read. Same move the landing CTA makes with its own label. */
 .work-construction-note {
-  color: #ffcc66;
+  color: color-mix(in srgb, var(--color-vulcan-gold) 55%, var(--color-snow-white));
   font-size: 0.9rem;
   font-weight: 500;
   line-height: 1.5;
-  background: rgba(255, 204, 102, 0.08);
-  border: 1px solid rgba(255, 204, 102, 0.4);
+  background: color-mix(in srgb, var(--color-vulcan-gold) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-vulcan-gold) 40%, transparent);
   border-radius: 0.5rem;
   padding: 0.85rem 1.1rem;
   margin-bottom: 2.5rem;
