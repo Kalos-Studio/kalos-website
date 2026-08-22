@@ -198,28 +198,6 @@ export const mission = {
   body: "We build work that has to hold up in the real world, for teams who need it to be both beautiful and true. Small team, senior hands, and no handoff between the people who design and the people who build.",
 };
 
-export const process = {
-  heading: "How it works",
-  steps: [
-    {
-      title: "Book a call",
-      body: "We learn what you are building and where you are stuck.",
-    },
-    {
-      title: "We scope it",
-      body: "One clear plan, fixed and agreed upfront.",
-    },
-    {
-      title: "We design",
-      body: "Real directions early, not a month of questions.",
-    },
-    {
-      title: "We build and launch",
-      body: "Shipped, responsive, and yours.",
-    },
-  ],
-};
-
 // An entry with no `a` is a question we are not answering yet. It renders as a
 // visible placeholder in development, so the section can be judged at full
 // length, and is dropped entirely from the production page. Shipping "answer

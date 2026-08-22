@@ -3,7 +3,16 @@
 import { useCallback, useEffect, useRef } from "react";
 import { booking, cta } from "./content";
 
-const CAL_CONFIG = { layout: "week_view", useSlotsViewOnSmallScreen: "true", theme: "dark" };
+// month_view is the classic booker: month calendar beside a column of times, and
+// it sits at modal size. week_view, which the original snippet asked for, is the
+// full seven-day grid and needs most of the screen, so the modal opened close to
+// full bleed. useSlotsViewOnSmallScreen means a phone collapses to a slot list
+// either way, so this only changes desktop.
+const CAL_CONFIG = {
+  layout: "month_view",
+  useSlotsViewOnSmallScreen: "true",
+  theme: "dark",
+};
 
 /**
  * The page's only call to action, in its only styling.
@@ -49,7 +58,7 @@ export default function CallToAction({ className = "" }) {
           dark: { "cal-brand": "#F5FEFD" },
         },
         hideEventTypeDetails: false,
-        layout: "week_view",
+        layout: "month_view",
       });
 
       api.current = cal;

@@ -9,7 +9,6 @@ import {
   finalCta,
   mission,
   offering,
-  process,
   proof,
   story,
   values,
@@ -219,25 +218,6 @@ export default function Landing() {
                 sizes="(min-width: 860px) 480px, 100vw"
               />
             </div>
-          </div>
-        </Reveal>
-      </Section>
-
-      <Section>
-        <Reveal>
-          <div className="ln-cols">
-            <h2 className="ln-h2">{process.heading}</h2>
-            <ol className="grid gap-7 sm:grid-cols-2">
-              {process.steps.map((step, i) => (
-                <li key={step.title}>
-                  <span className="ln-step-index">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="ln-h3 mt-2">{step.title}</h3>
-                  <p className="ln-body--tight mt-1.5">{step.body}</p>
-                </li>
-              ))}
-            </ol>
           </div>
         </Reveal>
       </Section>
