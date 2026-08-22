@@ -4,7 +4,14 @@ import { useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMarkFit, useMarkGeometries } from "../kalos-mark";
-import { GoldEnvironment, GoldMaterial, damp, pointerLive, usePointer } from "../stage";
+import {
+  GoldBevelMaterial,
+  GoldEnvironment,
+  GoldFaceMaterial,
+  damp,
+  pointerLive,
+  usePointer,
+} from "../stage";
 import {
   getTilt,
   isCoarsePointer,
@@ -93,9 +100,12 @@ function Lockup({ still, started }) {
   return (
     <group ref={group} position={[offsetX, lift, 0]} rotation={[0.3, -0.8, 0]}>
       <group scale={[scale, -scale, scale]}>
+        {/* Two materials, in the order ExtrudeGeometry declares its groups:
+            0 is the flat caps, 1 is the side walls and the bevel. */}
         {geometries.map((geometry, i) => (
           <mesh key={i} geometry={geometry}>
-            <GoldMaterial />
+            <GoldFaceMaterial attach="material-0" />
+            <GoldBevelMaterial attach="material-1" />
           </mesh>
         ))}
       </group>

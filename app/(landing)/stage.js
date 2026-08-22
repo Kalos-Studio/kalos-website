@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Environment, Lightformer } from "@react-three/drei";
 
 export const GOLD = "#cba75f";
+
+// Two golds, because the mark is two surfaces. Sampled off Kalos_3D_Render in
+// the brand file rather than picked: the faces average #AC9267 and the lit bevel
+// peaks at #F4EEDA. With metalness 1 these are reflectance tints rather than
+// diffuse colours, so the brighter bevel tint is what makes the rim read hot
+// against a face that stays quiet.
+export const GOLD_FACE = "#ac9267";
+export const GOLD_BEVEL = "#f4eeda";
 export const BACKDROP = "#060505";
 
 // How long after the last pointer event the mark goes back to drifting on its
@@ -51,22 +59,67 @@ export function pointerLive(pointer) {
 
 
 /**
- * The gold itself.
+ * Fine grain for the faces, generated rather than fetched.
  *
- * metalness: 1 means `color` is the reflectance tint rather than a diffuse
- * colour, so everything you actually see is the environment. That's why the
- * lighting rig below matters more than any of these numbers.
+ * The reference render is sandblasted: the faces are not a flat matte, they have
+ * a visible micro-texture that breaks the reflection up at close range. A
+ * roughness map does that, and three multiplies `roughness` by this texture's
+ * green channel, so the values are deliberately kept high and narrow (0.82 to
+ * 1.0). Wider than that and the face starts to look dirty rather than machined.
+ *
+ * Built on a canvas at runtime for the same reason the mark's geometry is inline
+ * rather than loaded: nothing about the hero should wait on a network round trip
+ * before it can draw.
  */
-export function GoldMaterial(props) {
+function useGoldGrain() {
+  const texture = useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    const image = ctx.createImageData(size, size);
+    for (let i = 0; i < image.data.length; i += 4) {
+      const v = 209 + Math.random() * 46; // 0.82 to 1.0 of full roughness
+      image.data[i] = image.data[i + 1] = image.data[i + 2] = v;
+      image.data[i + 3] = 255;
+    }
+    ctx.putImageData(image, 0, 0);
+
+    const map = new THREE.CanvasTexture(canvas);
+    map.wrapS = map.wrapT = THREE.RepeatWrapping;
+    // The mark is roughly 150 units across, so this lands the grain at a size
+    // that reads as texture rather than as noise.
+    map.repeat.set(18, 18);
+    return map;
+  }, []);
+
+  // CanvasTexture allocates a GPU buffer React knows nothing about, and the
+  // variant switcher unmounts whole Canvases.
+  useEffect(() => () => texture.dispose(), [texture]);
+
+  return texture;
+}
+
+/**
+ * The faces: matte, and the larger surface by far.
+ *
+ * metalness 1 means `color` is the reflectance tint rather than a diffuse
+ * colour, so everything you see is the environment. That is why the lighting rig
+ * below matters more than any of these numbers.
+ *
+ * Roughness went from 0.28 to 0.58. At 0.28 the whole mark was one polished
+ * surface and read as plastic, and the bevel had nothing to contrast against.
+ * The anisotropy went with it: a sandblasted finish scatters evenly, so smearing
+ * the highlight along one axis was fighting the look the reference actually has.
+ */
+export function GoldFaceMaterial(props) {
+  const grain = useGoldGrain();
   return (
     <meshPhysicalMaterial
-      color={GOLD}
+      color={GOLD_FACE}
       metalness={1}
-      roughness={0.28}
-      // Brushed rather than mirror-polished — this smears the highlight along one
-      // axis the way the turned-metal finish in the render does.
-      anisotropy={0.7}
-      anisotropyRotation={Math.PI / 2}
+      roughness={0.58}
+      roughnessMap={grain}
       envMapIntensity={1.45}
       // The mark is mirrored on Y to convert SVG's y-down space to three's y-up.
       // A mirror inverts winding, so backface culling would eat the front faces;
@@ -75,6 +128,42 @@ export function GoldMaterial(props) {
       {...props}
     />
   );
+}
+
+/**
+ * The bevel and side walls: polished, and the reason the mark reads as metal.
+ *
+ * This is the whole of the designer's note about light being contoured around
+ * the edges. A single material cannot do it, because the effect is a difference
+ * between two surfaces rather than a lighting trick: the chamfer is smooth
+ * enough to mirror the key light into a hard line while the face beside it
+ * scatters. Making it a material property is also why it survives being turned.
+ * ExtrudeGeometry emits the caps as group 0 and the side walls as group 1, so
+ * the split is free.
+ */
+export function GoldBevelMaterial(props) {
+  return (
+    <meshPhysicalMaterial
+      color={GOLD_BEVEL}
+      metalness={1}
+      roughness={0.11}
+      // A little anisotropy left on the edge only. It stretches the highlight
+      // along the chamfer instead of pooling it in one spot, which is what makes
+      // the rim read as a continuous line around the shape.
+      anisotropy={0.45}
+      anisotropyRotation={Math.PI / 2}
+      envMapIntensity={1.9}
+      side={THREE.DoubleSide}
+      {...props}
+    />
+  );
+}
+
+/**
+ * Kept so nothing that only wants "the gold" has to know about the split.
+ */
+export function GoldMaterial(props) {
+  return <GoldFaceMaterial {...props} />;
 }
 
 /**
@@ -107,10 +196,10 @@ export function GoldEnvironment({ frames = 1, resolution = 256, children }) {
           `target` (the origin), and passing a rotation fights that. */}
       <Lightformer
         form="rect"
-        intensity={1.7}
+        intensity={2.9}
         color="#fff1d5"
-        position={[-2, 3, 6.5]}
-        scale={[9, 9, 1]}
+        position={[-2.6, 3.2, 6.5]}
+        scale={[6.5, 6.5, 1]}
       />
 
       {/* The hot rim: narrow, very bright, raking from the upper left so it
@@ -132,12 +221,32 @@ export function GoldEnvironment({ frames = 1, resolution = 256, children }) {
         scale={[7, 0.5, 1]}
       />
 
+      {/* Broad, dim, near-neutral fill, and it exists because of the matte
+          faces rather than for its own sake.
+
+          A rough surface samples a wide cone of the environment, so once the
+          faces went from 0.28 to 0.58 roughness they stopped gathering the key
+          softbox and started gathering the #16100a surround, which is why they
+          came out at #754C23 against the reference's #846E4C: too dark, and far
+          too orange. The tint was never the problem, the environment was.
+
+          Large and weak on purpose. The bevel samples a narrow cone and barely
+          sees this, so it lifts the faces without washing out the rim, which is
+          the one thing a global exposure change could not do. */}
+      <Lightformer
+        form="rect"
+        intensity={0.8}
+        color="#ddd9d2"
+        position={[1.5, 0.5, 7.5]}
+        scale={[16, 12, 1]}
+      />
+
       {/* Warm bounce from below right, so the underside reads as bronze rather
           than as shadow. */}
       <Lightformer
         form="rect"
-        intensity={1.1}
-        color="#c98a3c"
+        intensity={1.0}
+        color="#c0905c"
         position={[4.5, -3, 3]}
         scale={[7, 7, 1]}
       />
