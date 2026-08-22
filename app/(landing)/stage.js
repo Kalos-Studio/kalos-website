@@ -12,7 +12,13 @@ export const GOLD = "#cba75f";
 // diffuse colours, so the brighter bevel tint is what makes the rim read hot
 // against a face that stays quiet.
 export const GOLD_FACE = "#ac9267";
-export const GOLD_BEVEL = "#f4eeda";
+// Brighter than the face and still unmistakably gold. This was #F4EEDA, which is
+// the brightest *highlight* on the reference render rather than the bevel's own
+// colour, and at metalness 1 the tint is what the surface reflects: a near-white
+// tint reflects near-white, so the whole chamfer turned into a solid white band
+// with a glow around it. The white belongs where the edge catches the key, and
+// nowhere else.
+export const GOLD_BEVEL = "#d9b782";
 export const BACKDROP = "#060505";
 
 // How long after the last pointer event the mark goes back to drifting on its
@@ -146,13 +152,20 @@ export function GoldBevelMaterial(props) {
     <meshPhysicalMaterial
       color={GOLD_BEVEL}
       metalness={1}
-      roughness={0.11}
+      // Not a mirror. At 0.11 the chamfer reflected the key as one flat blown
+      // strip; a little roughness gives the highlight a falloff across the
+      // chamfer's width, which is what reads as a rounded edge rather than a
+      // painted line.
+      roughness={0.17}
       // A little anisotropy left on the edge only. It stretches the highlight
       // along the chamfer instead of pooling it in one spot, which is what makes
       // the rim read as a continuous line around the shape.
       anisotropy={0.45}
       anisotropyRotation={Math.PI / 2}
-      envMapIntensity={1.9}
+      // Was 1.9. The bevel also feeds the bloom pass, so a long strip of it far
+      // past the luminance threshold turned a rim light into a haze that washed
+      // across the faces and hid the matte finish that was the point.
+      envMapIntensity={1.35}
       side={THREE.DoubleSide}
       {...props}
     />
