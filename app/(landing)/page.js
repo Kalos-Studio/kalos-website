@@ -4,7 +4,6 @@ import CallToAction from "./cta";
 import Reveal from "./reveal";
 import { caseStudies } from "../work/data";
 import {
-  faq,
   featuredWork,
   finalCta,
   mission,
@@ -14,8 +13,6 @@ import {
   values,
 } from "./content";
 import "./landing.css";
-
-const isProduction = process.env.NODE_ENV === "production";
 
 // A server component on purpose. Only the hero needs the client, and everything
 // below it is copy that should exist in the HTML for a crawler and for anyone
@@ -69,11 +66,6 @@ function featured() {
 
 export default function Landing() {
   const [lead, ...rest] = featured();
-  // Unanswered questions are a preview aid, not content. They show while
-  // developing so the section can be judged at its real length, and never reach
-  // a visitor: "answer pending: PRICE_ANCHOR is not set yet" is worse than not
-  // asking the question.
-  const questions = faq.filter((item) => item.a || !isProduction);
 
   return (
     <main className="landing-root">
@@ -217,42 +209,6 @@ export default function Landing() {
                 height={795}
                 sizes="(min-width: 860px) 480px, 100vw"
               />
-            </div>
-          </div>
-        </Reveal>
-      </Section>
-
-      <Section>
-        <Reveal>
-          <div className="ln-cols">
-            <h2 className="ln-h2">Questions</h2>
-            {/* Rendered in the order content.js declares, answered or not. An
-              earlier version grouped the unanswered ones at the end, which read
-              fine on the preview and quietly moved "how much does it cost" to
-              the bottom of the page. That is the question most visitors came
-              for, so the placeholder holds its slot instead. */}
-            <div>
-              {questions.map((item, i) => (
-                // Built on <details> rather than state: no JS, keyboard and
-                // screen reader behaviour for free, and it still opens if
-                // scripting fails. The first one is open so the pattern is
-                // legible at a glance instead of reading as four dead rules.
-                <details className="ln-faq-item" key={item.q} open={i === 0}>
-                  <summary>
-                    <h3 className="ln-faq-q">{item.q}</h3>
-                    <span className="ln-faq-mark" aria-hidden />
-                  </summary>
-                  <div className="ln-faq-answer">
-                    {item.a ? (
-                      <p className="ln-body--tight">{item.a}</p>
-                    ) : (
-                      <p className="ln-faq-pending">
-                        Answer pending: {item.pending} is not set yet.
-                      </p>
-                    )}
-                  </div>
-                </details>
-              ))}
             </div>
           </div>
         </Reveal>

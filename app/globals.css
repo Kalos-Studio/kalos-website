@@ -72,6 +72,21 @@
   --gold-render-rim: #f4eeda;
 }
 
+/* The page grid, in one place, because two places is how it drifted.
+ *
+ * The hero used to inset from the viewport edge (a flat 2rem) while every
+ * section below sat in a centred 1080px container. Both look deliberate on a
+ * phone, where they happen to land on the same pixel, and diverge as the screen
+ * grows: measured, the hero headline started 108px left of the section text at
+ * 1280, 188px at 1440 and 332px on a 16in laptop. Nothing on the page shared a
+ * left edge, which is the thing you feel before you can name it.
+ *
+ * Anything that wants to sit on the page's left edge uses .page-shell now. */
+:root {
+  --page-max: 1080px;
+  --page-pad: clamp(1.25rem, 5vw, 2.5rem);
+}
+
 /* Applied wherever the brand face is set. Kept as a custom property rather than
    repeated, because forgetting it renders Space Grotesk's default forms and the
    type quietly stops matching the logo. */

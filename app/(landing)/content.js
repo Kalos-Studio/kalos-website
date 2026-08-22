@@ -11,13 +11,6 @@
 
 // Owner-supplied values that do not exist yet. Kept as named constants so the
 // placeholders are impossible to miss in a review and become real in one edit.
-// Deliberately unset. The comparable studios publish theirs (Kree8 runs
-// $2,799 / $5,149 / $7,199, Designjoy $4,995 a month), and a number here would
-// qualify people out before the call, but the owner would rather scope each one.
-// Set it and the question below answers itself; leave it and the question does
-// not render in production at all.
-export const PRICE_ANCHOR = null; // e.g. "$8k". "Starting at" only, never a range.
-
 // Cal.com. `link` is the public booking path, so the call to action can point at
 // https://cal.com/<link> as a real href and still work if the embed never loads.
 // `namespace` scopes the embed's config to this one event type, which matters
@@ -197,40 +190,6 @@ export const featuredWork = {
 export const mission = {
   body: "We build work that has to hold up in the real world, for teams who need it to be both beautiful and true. Small team, senior hands, and no handoff between the people who design and the people who build.",
 };
-
-// An entry with no `a` is a question we are not answering yet. It renders as a
-// visible placeholder in development, so the section can be judged at full
-// length, and is dropped entirely from the production page. Shipping "answer
-// pending" to a prospect would be worse than not raising the question.
-export const faq = [
-  {
-    q: "Do you do brand without the website, or the other way around?",
-    a: "Our best work is both together, but we scope to what you need.",
-  },
-  {
-    q: "How much does it cost?",
-    // "Starting at" only. Never a range, per the brief.
-    a: PRICE_ANCHOR
-      ? `Projects start at ${PRICE_ANCHOR}. You get a fixed number after the call.`
-      : null,
-    pending: "PRICE_ANCHOR",
-  },
-  {
-    // Deliberately not a number. A range on the page becomes a promise before
-    // anyone has said what they want, and the honest answer is that it depends
-    // on the scope.
-    q: "How long does it take?",
-    a: "It depends what you need. Our team can turn a basic redesign and build around in a few weeks, and you get a real timeline along with the scope after the call.",
-  },
-  {
-    // Both halves matter. The Care Plan is the recurring revenue, but saying out
-    // loud that a clean handoff is on the table is what stops the question
-    // behind this one, which is whether choosing Kalos means being stuck with
-    // Kalos. Answering it here is cheaper than answering it on the call.
-    q: "What happens after launch?",
-    a: "Your choice. We can keep it on a Care Plan that covers hosting, updates and small changes, or hand the whole thing over to your team with everything they need to run it.",
-  },
-];
 
 export const finalCta = {
   heading: "Let's build something made well.",

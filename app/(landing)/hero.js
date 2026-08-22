@@ -161,9 +161,9 @@ export default function Hero() {
           is the point: the composition is the object, and this is the masthead
           around it. */}
       <header className="lab-header">
-        <h1>
+        <div className="lab-shell">
           <Lockup className="lab-lockup" />
-        </h1>
+        </div>
       </header>
 
       {/* Copy sits over the mark rather than beside it, the way the brand
@@ -171,8 +171,12 @@ export default function Hero() {
           lower left. A scrim under the text does the legibility work, since the
           mark drifts and cannot be relied on to stay out from behind a line. */}
       <div className="lab-copy">
-        <h1 className="lab-h1">{hero.h1}</h1>
-        <p className="lab-sub">{hero.sub}</p>
+        <div className="lab-shell">
+          <div className="lab-measure">
+            <h1 className="lab-h1">{hero.h1}</h1>
+            <p className="lab-sub">{hero.sub}</p>
+          </div>
+        </div>
       </div>
 
       {hintTilt && stageReady && (

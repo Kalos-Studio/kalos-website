@@ -100,19 +100,24 @@
 .lab-header {
   position: absolute;
   top: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-top));
-  left: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-left));
+  /* Full width with the lockup placed on the page grid, rather than inset from
+     the viewport edge. See the note on --page-max in globals.css. */
+  left: 0;
+  right: 0;
   pointer-events: none;
   z-index: 3;
   animation: lab-fade-in 1.2s ease 0.25s both;
 }
 
-/* The lockup is real artwork, not type, so the inherited h1 sizing from
-   globals.css has to be zeroed out or it reserves a line box around the SVG. */
-.lab-header h1 {
-  font-size: 0;
-  line-height: 0;
-  margin: 0;
-}
+/* The lockup used to be wrapped in an <h1>, from when the hero was the entire
+   page and the logo was the only heading on it. The page has a real headline
+   now, so that left two h1 elements on one document: bad for a screen reader
+   walking the outline, and bad for search. It is just artwork here.
+
+   Its sizing rule went with it. Worth remembering why that rule was awkward:
+   `.lab-header h1` weighed (0,1,1) against `.lab-shell` at (0,1,0), so putting
+   the shell class on the h1 meant its `margin: 0` beat `margin: 0 auto` and the
+   masthead never centred on the grid at all. */
 
 /* Sized off its height rather than its width — 568×139 is a long lockup, and a
    width that looks modest on a wide window is a hairline on a phone. These land
@@ -144,8 +149,8 @@
  * in the viewport and the copy cannot push it around at any height. */
 .lab-copy {
   position: absolute;
-  left: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-left));
-  right: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-right));
+  left: 0;
+  right: 0;
   /* Landscape: centred against the mark, not pinned to the floor.
    *
    * This was bottom-anchored, which is how the brand deck composes a title
@@ -163,8 +168,6 @@
   top: 50%;
   transform: translateY(var(--lab-copy-shift));
   z-index: 3;
-  /* Sized to the column the mark's offset leaves free, not to the viewport. */
-  max-width: min(34rem, 46vw);
   animation: lab-copy-in 1.2s ease 0.45s both;
 }
 
@@ -179,11 +182,26 @@
   }
 }
 
+/* Puts hero content on the same grid as every section below it. */
+.lab-shell {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding-inline: max(var(--page-pad), env(safe-area-inset-left));
+}
+
+/* Sized to the column the mark's offset leaves free, not to the viewport. The
+   scrim below hangs off this rather than off .lab-copy, which now spans the full
+   width so its content can sit on the page grid. */
+.lab-measure {
+  position: relative;
+  max-width: min(34rem, 46vw);
+}
+
 /* The mark drifts and the vignette is not dark enough under it to guarantee a
    readable line, so the copy brings its own ground. A gradient rather than a
    panel: an edge anywhere near the text would read as a card sitting on the
    composition instead of light falling off it. */
-.lab-copy::before {
+.lab-measure::before {
   content: "";
   position: absolute;
   inset: -18% -12% -140% -12%;
@@ -306,17 +324,19 @@
     --lab-copy-shift: 0px;
     top: auto;
     bottom: max(clamp(2.5rem, 7vh, 5rem), calc(env(safe-area-inset-bottom) + 2rem));
+  }
+
+  .lab-measure {
     max-width: 34rem;
   }
 }
 
 @media (max-width: 640px) {
-  /* 9vw of a phone is nothing, so the clamp floor is what applies here — this
-     just nudges the mark in from the edge a little more than the fluid inset
-     would on its own. */
+  /* Vertical only. The horizontal inset used to live here too, and once the
+     masthead moved onto the page grid it was adding to the shell's padding
+     instead of replacing it, putting the lockup 22px right of the text below. */
   .lab-header {
     top: max(1.35rem, env(safe-area-inset-top));
-    left: max(1.35rem, env(safe-area-inset-left));
   }
 }
 
