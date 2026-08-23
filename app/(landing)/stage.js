@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Environment, Lightformer } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
+import { isCoarsePointer } from "./device";
 
 export const GOLD = "#cba75f";
 
@@ -72,67 +74,129 @@ export function pointerLive(pointer) {
 
 
 /**
- * Fine grain for the faces, generated rather than fetched.
+ * Brushed gold, generated rather than fetched.
  *
- * The reference render is sandblasted: the faces are not a flat matte, they have
- * a visible micro-texture that breaks the reflection up at close range. A
- * roughness map does that, and three multiplies `roughness` by this texture's
- * green channel, so the values are deliberately kept high and narrow (0.82 to
- * 1.0). Wider than that and the face starts to look dirty rather than machined.
+ * The reference is not a sandblasted finish, it is a *turned* one: fine grooves
+ * running in concentric arcs across the faces, the way a spun metal dial is
+ * finished. That difference is the whole character of the surface. Isotropic
+ * speckle scatters light evenly and reads as stone or cork; grooves scatter it
+ * along one axis, which is what produces the soft sweeping highlight that moves
+ * across the face as the mark turns.
  *
- * Built on a canvas at runtime for the same reason the mark's geometry is inline
- * rather than loaded: nothing about the hero should wait on a network round trip
- * before it can draw.
+ * Two maps come out of this, because a brushed surface needs both:
+ *
+ * - a bump map of the grooves themselves, so the geometry of the finish is
+ *   visible at close range;
+ * - an anisotropy map giving the groove *direction* per texel. Three reads the
+ *   red and green channels as a [-1, 1] direction in tangent space and the blue
+ *   as strength. A single `anisotropyRotation` can only describe a straight
+ *   brush; concentric arcs need the direction to rotate with the angle, which is
+ *   exactly what a map is for.
  */
-function useGoldGrain() {
-  const texture = useMemo(() => {
-    const size = 512;
+function useBrushedGold() {
+  // Fine directional grooves are the worst case for mipmapping: at a grazing
+  // angle they blur into flat grey, which is how the last attempt disappeared.
+  // Texture-filtering anisotropy is what keeps them legible there.
+  const maxAnisotropy = useThree((state) => state.gl.capabilities.getMaxAnisotropy());
 
-    // Noise at full resolution, then blurred slightly, rather than low-res noise
-    // scaled up. Both give the correlation a height field needs, and they do not
-    // look the same: a bilinear upscale of 200px noise produces blobs four or
-    // five pixels wide, which renders as cork. Blurring full-res noise keeps the
-    // grain at roughly a pixel, which is the scale the reference has and the
-    // smallest that survives without shimmering when the mark turns.
-    const source = document.createElement("canvas");
-    source.width = source.height = size;
-    const sctx = source.getContext("2d");
-    const image = sctx.createImageData(size, size);
-    for (let i = 0; i < image.data.length; i += 4) {
-      const v = 110 + Math.random() * 145;
-      image.data[i] = image.data[i + 1] = image.data[i + 2] = v;
-      image.data[i + 3] = 255;
-    }
-    sctx.putImageData(image, 0, 0);
+  const maps = useMemo(() => {
+    // Half resolution on a phone. Building this costs 20ms on a desktop, and a
+    // mid-range handset is several times slower: that is a main-thread stall
+    // landing exactly as the hero tries to appear. A quarter of the pixels puts
+    // it back under the noise floor, and the mark is smaller there anyway, so
+    // the grooves are still around a texel wide on screen.
+    const size = isCoarsePointer() ? 256 : 512;
+    const half = size / 2;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    ctx.filter = "blur(0.7px)";
-    ctx.drawImage(source, 0, 0);
-
-    const map = new THREE.CanvasTexture(canvas);
-    map.wrapS = map.wrapT = THREE.RepeatWrapping;
-
-    // Scaled against the geometry's UV range, which is not 0..1 here.
-    // ExtrudeGeometry's default UV generator writes raw shape coordinates
-    // straight into uv, so a probe put this mark's range at about -22 to 158.
-    // The first version set repeat to 18, which tiled the noise roughly 2,700
-    // times across the mark: far under one pixel per texel, so mipmapping
-    // averaged it to flat grey and the faces rendered perfectly smooth.
+    // The groove profile, as 1D noise along the radius. A spun finish is
+    // constant along any circle and varies across radii, so this is sampled by
+    // distance from the centre and nothing else.
     //
-    // One tile across the whole span, deliberately. At three tiles the wrap seam
-    // showed as a hairline straight down the face, because the noise does not
-    // meet itself at the edges.
-    map.repeat.set(1 / MARK_UV_SPAN, 1 / MARK_UV_SPAN);
-    return map;
-  }, []);
+    // Smoothed with a three-tap pass because raw per-radius noise is a step
+    // function: it aliases into a shimmer the moment the mark moves.
+    const span = Math.ceil(Math.SQRT2 * half) + 2;
+    const raw = new Float32Array(span);
+    for (let i = 0; i < span; i += 1) raw[i] = Math.random();
+    const groove = new Float32Array(span);
+    for (let i = 0; i < span; i += 1) {
+      const a = raw[Math.max(0, i - 1)];
+      const b = raw[i];
+      const c = raw[Math.min(span - 1, i + 1)];
+      groove[i] = (a + b + b + c) / 4;
+    }
 
-  // CanvasTexture allocates a GPU buffer React knows nothing about, and the
+    const bumpCanvas = document.createElement("canvas");
+    const anisoCanvas = document.createElement("canvas");
+    bumpCanvas.width = bumpCanvas.height = size;
+    anisoCanvas.width = anisoCanvas.height = size;
+    const bumpCtx = bumpCanvas.getContext("2d");
+    const anisoCtx = anisoCanvas.getContext("2d");
+    const bumpData = bumpCtx.createImageData(size, size);
+    const anisoData = anisoCtx.createImageData(size, size);
+
+    for (let y = 0; y < size; y += 1) {
+      for (let x = 0; x < size; x += 1) {
+        const dx = x - half;
+        const dy = y - half;
+        const r = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+
+        // Wobble the radius with the angle so the rings are not machine-perfect
+        // circles. Real turning wanders, and a flawless concentric pattern reads
+        // as a moiré artefact rather than as metal.
+        const wobble = Math.sin(angle * 9) * 1.3 + Math.sin(angle * 23 + 1.7) * 0.7;
+        const i = Math.min(span - 1, Math.max(0, Math.round(r + wobble)));
+
+        const o = (y * size + x) * 4;
+        const v = 150 + groove[i] * 105;
+        bumpData.data[o] = bumpData.data[o + 1] = bumpData.data[o + 2] = v;
+        bumpData.data[o + 3] = 255;
+
+        // The groove runs along the circle, so its direction is the tangent:
+        // perpendicular to the radius. Packed from [-1, 1] into [0, 255].
+        const tx = -Math.sin(angle);
+        const ty = Math.cos(angle);
+        anisoData.data[o] = (tx * 0.5 + 0.5) * 255;
+        anisoData.data[o + 1] = (ty * 0.5 + 0.5) * 255;
+        // Strength eases in from the centre. At r=0 the tangent is undefined and
+        // every direction meets, which shows as a pinch if it is left at full.
+        anisoData.data[o + 2] = Math.min(1, r / (size / 20)) * 255;
+        anisoData.data[o + 3] = 255;
+      }
+    }
+    bumpCtx.putImageData(bumpData, 0, 0);
+    anisoCtx.putImageData(anisoData, 0, 0);
+
+    const bump = new THREE.CanvasTexture(bumpCanvas);
+    const anisotropy = new THREE.CanvasTexture(anisoCanvas);
+
+    for (const map of [bump, anisotropy]) {
+      map.wrapS = map.wrapT = THREE.RepeatWrapping;
+      map.anisotropy = maxAnisotropy;
+      // Scaled against the geometry's UV range, which is not 0..1 here.
+      // ExtrudeGeometry's default UV generator writes raw shape coordinates
+      // straight into uv, and a probe put this mark's range at about -22 to 158.
+      // One tile across that span puts the centre of the spin near the middle of
+      // the lockup and leaves no wrap seam inside the geometry.
+      map.repeat.set(1 / MARK_UV_SPAN, 1 / MARK_UV_SPAN);
+    }
+    // Direction data, not colour. Three will decode it wrongly otherwise.
+    anisotropy.colorSpace = THREE.NoColorSpace;
+
+    return { bump, anisotropy };
+  }, [maxAnisotropy]);
+
+  // CanvasTexture allocates GPU buffers React knows nothing about, and the
   // variant switcher unmounts whole Canvases.
-  useEffect(() => () => texture.dispose(), [texture]);
+  useEffect(() => {
+    const { bump, anisotropy } = maps;
+    return () => {
+      bump.dispose();
+      anisotropy.dispose();
+    };
+  }, [maps]);
 
-  return texture;
+  return maps;
 }
 
 /**
@@ -148,28 +212,30 @@ function useGoldGrain() {
  * the highlight along one axis was fighting the look the reference actually has.
  */
 export function GoldFaceMaterial(props) {
-  const grain = useGoldGrain();
+  const { bump, anisotropy } = useBrushedGold();
   return (
     <meshPhysicalMaterial
       color={GOLD_FACE}
       metalness={1}
-      roughness={0.58}
-      // Both maps, from the same noise, because they do different jobs and only
-      // one of them was ever going to be visible.
+      // Down from 0.58. Anisotropy needs a reasonably tight base lobe to smear
+      // in one direction: at 0.58 the reflection is already so diffuse that
+      // stretching it changes nothing visible.
+      roughness={0.42}
+      // The grooves, and the direction they run in.
       //
-      // A roughness map widens the specular lobe. Against a smooth gradient
-      // environment that is almost invisible: roughness 0.41 and 0.58 both
-      // reflect a soft blur, so the surface stayed perfectly flat no matter how
-      // the map was scaled. Measured as high-frequency energy, the faces sat at
-      // 0.57 against the reference's 1.65 whether the map was tiled 2,700 times
-      // or twice.
-      //
-      // A bump map perturbs the normals instead, which scatters the reflection
-      // itself, and that is what actually reads as a machined surface. Kept low:
-      // this is a finish, and at any strength it starts to look hammered.
-      roughnessMap={grain}
-      bumpMap={grain}
-      bumpScale={1.3}
+      // A roughness map alone was invisible here and is gone: it only widens the
+      // specular lobe, and against a smooth gradient environment 0.42 and 0.58
+      // both reflect a soft blur. The bump map perturbs normals, which scatters
+      // the reflection itself. The anisotropy map is what makes it *brushed*
+      // rather than merely rough, by telling each texel which way its groove
+      // runs.
+      // 8 was legible and overdone, 0.55 was invisible. Worth knowing the range
+      // is this wide: bumpScale is a derivative multiplier, so a groove one
+      // texel across needs a far larger number than a broad dent would.
+      bumpMap={bump}
+      bumpScale={4.5}
+      anisotropyMap={anisotropy}
+      anisotropy={0.85}
       envMapIntensity={1.45}
       // The mark is mirrored on Y to convert SVG's y-down space to three's y-up.
       // A mirror inverts winding, so backface culling would eat the front faces;
@@ -192,6 +258,7 @@ export function GoldFaceMaterial(props) {
  * the split is free.
  */
 export function GoldBevelMaterial(props) {
+  const { bump } = useBrushedGold();
   return (
     <meshPhysicalMaterial
       color={GOLD_BEVEL}
@@ -201,9 +268,16 @@ export function GoldBevelMaterial(props) {
       // chamfer's width, which is what reads as a rounded edge rather than a
       // painted line.
       roughness={0.17}
-      // A little anisotropy left on the edge only. It stretches the highlight
-      // along the chamfer instead of pooling it in one spot, which is what makes
-      // the rim read as a continuous line around the shape.
+      // The side walls are brushed too, at a fraction of the faces' strength.
+      // The reference shows it clearly on the extruded edge, and without it the
+      // walls read as glass next to a machined face. Light, because a chamfer is
+      // narrow and anything stronger turns it to corrugation.
+      bumpMap={bump}
+      bumpScale={1.4}
+      // A little anisotropy on the edge, without a map. The side wall's UVs are
+      // generated from world position rather than the shape outline, so the
+      // faces' radial direction field does not describe it: a fixed rotation
+      // along the chamfer is the honest approximation.
       anisotropy={0.45}
       anisotropyRotation={Math.PI / 2}
       // Was 1.9. The bevel also feeds the bloom pass, so a long strip of it far
