@@ -11,6 +11,13 @@ export const GOLD = "#cba75f";
 // peaks at #F4EEDA. With metalness 1 these are reflectance tints rather than
 // diffuse colours, so the brighter bevel tint is what makes the rim read hot
 // against a face that stays quiet.
+// Comfortably wider than the mark's UVs actually run. ExtrudeGeometry writes
+// shape coordinates into uv, and a probe put this mark's range at about -22 to
+// 158, so anything mapped onto it is scaled against that rather than 0..1.
+// Rounding up to 200 leaves room for the bevel's negative coordinates, which is
+// what keeps a single tile covering the whole surface with no wrap inside it.
+const MARK_UV_SPAN = 200;
+
 export const GOLD_FACE = "#ac9267";
 // Brighter than the face and still unmistakably gold. This was #F4EEDA, which is
 // the brightest *highlight* on the reference render rather than the bevel's own
@@ -79,23 +86,45 @@ export function pointerLive(pointer) {
  */
 function useGoldGrain() {
   const texture = useMemo(() => {
-    const size = 256;
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    const image = ctx.createImageData(size, size);
+    const size = 512;
+
+    // Noise at full resolution, then blurred slightly, rather than low-res noise
+    // scaled up. Both give the correlation a height field needs, and they do not
+    // look the same: a bilinear upscale of 200px noise produces blobs four or
+    // five pixels wide, which renders as cork. Blurring full-res noise keeps the
+    // grain at roughly a pixel, which is the scale the reference has and the
+    // smallest that survives without shimmering when the mark turns.
+    const source = document.createElement("canvas");
+    source.width = source.height = size;
+    const sctx = source.getContext("2d");
+    const image = sctx.createImageData(size, size);
     for (let i = 0; i < image.data.length; i += 4) {
-      const v = 209 + Math.random() * 46; // 0.82 to 1.0 of full roughness
+      const v = 110 + Math.random() * 145;
       image.data[i] = image.data[i + 1] = image.data[i + 2] = v;
       image.data[i + 3] = 255;
     }
-    ctx.putImageData(image, 0, 0);
+    sctx.putImageData(image, 0, 0);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    ctx.filter = "blur(0.7px)";
+    ctx.drawImage(source, 0, 0);
 
     const map = new THREE.CanvasTexture(canvas);
     map.wrapS = map.wrapT = THREE.RepeatWrapping;
-    // The mark is roughly 150 units across, so this lands the grain at a size
-    // that reads as texture rather than as noise.
-    map.repeat.set(18, 18);
+
+    // Scaled against the geometry's UV range, which is not 0..1 here.
+    // ExtrudeGeometry's default UV generator writes raw shape coordinates
+    // straight into uv, so a probe put this mark's range at about -22 to 158.
+    // The first version set repeat to 18, which tiled the noise roughly 2,700
+    // times across the mark: far under one pixel per texel, so mipmapping
+    // averaged it to flat grey and the faces rendered perfectly smooth.
+    //
+    // One tile across the whole span, deliberately. At three tiles the wrap seam
+    // showed as a hairline straight down the face, because the noise does not
+    // meet itself at the edges.
+    map.repeat.set(1 / MARK_UV_SPAN, 1 / MARK_UV_SPAN);
     return map;
   }, []);
 
@@ -125,7 +154,22 @@ export function GoldFaceMaterial(props) {
       color={GOLD_FACE}
       metalness={1}
       roughness={0.58}
+      // Both maps, from the same noise, because they do different jobs and only
+      // one of them was ever going to be visible.
+      //
+      // A roughness map widens the specular lobe. Against a smooth gradient
+      // environment that is almost invisible: roughness 0.41 and 0.58 both
+      // reflect a soft blur, so the surface stayed perfectly flat no matter how
+      // the map was scaled. Measured as high-frequency energy, the faces sat at
+      // 0.57 against the reference's 1.65 whether the map was tiled 2,700 times
+      // or twice.
+      //
+      // A bump map perturbs the normals instead, which scatters the reflection
+      // itself, and that is what actually reads as a machined surface. Kept low:
+      // this is a finish, and at any strength it starts to look hammered.
       roughnessMap={grain}
+      bumpMap={grain}
+      bumpScale={1.3}
       envMapIntensity={1.45}
       // The mark is mirrored on Y to convert SVG's y-down space to three's y-up.
       // A mirror inverts winding, so backface culling would eat the front faces;

@@ -27,7 +27,7 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
  * spilled across the faces and hid the matte texture that was the point of the
  * change. Same effect, less of the frame feeding it.
  */
-export default function Post({ intensity = 0.34, multisampling = 4 }) {
+export default function Post({ intensity = 0.2, multisampling = 4 }) {
   return (
     <EffectComposer multisampling={multisampling}>
       <Bloom
