@@ -6,16 +6,21 @@ unlisted reference sheet for the brand tokens.
 
 Type is Space Grotesk (the brand face, confirmed off the brand file) with five
 stylistic sets on, applied site-wide from `app/layout.js`. Colour tokens live in
-the `@theme` block at the top of `globals.css` and were sampled off real renders
-rather than a spec page, which does not exist yet.
+the `@theme` block at the top of `globals.css` and come from the brand file's own
+"Our colors." board, names and roles included — Vulcan Gold is an accent for
+buttons and active indicators, not a fill, and Dark Silver is the one secondary
+text value. Follow the role, not the vibe.
 
-The hero lives in the `app/(landing)/` route group. The group is not decoration:
-its layout carries the zoom lock and `themeColor`, and those must not reach
-`/work`, which scrolls. `/lab` — where the hero was built — 307s to `/` from
-`next.config.mjs`.
+The hero lives in the `app/(landing)/` route group, which carries the homepage's
+`themeColor` and its title and description. `/lab` — where the hero was built —
+307s to `/` from `next.config.mjs`.
 
 Stack: React 19, plain CSS + Tailwind v4, `@react-three/fiber` + `drei` for the
-3D, Inter via `next/font/google`, deployed on Netlify. Package manager is `bun`.
+3D, Space Grotesk via `next/font/google`, Cal.com for booking, deployed on
+Netlify. Package manager is `bun`.
+
+`bun run dev` needs `NODE_OPTIONS` cleared (`NODE_OPTIONS= bun run dev`) or it
+dies on a stale preload.
 
 ## Commands
 
@@ -57,19 +62,37 @@ Consequences to keep in mind:
   classes rather than elements.
 - Where an element rule in `globals.css` and a utility set the same property on
   the same element, **the element rule wins**. Add a plain class rather than
-  fighting it. The live example: `globals.css` styles bare `p`, so
-  `<p className="text-sm">` renders at the `globals.css` size, not `text-sm`.
-  Verified, not theoretical. Wrap it or use a `span`/class instead.
+  fighting it.
 - **Never reintroduce a bare `* { margin: 0; padding: 0 }`.** Preflight already
   does it. An unlayered copy outranks `@layer utilities`, which silently
   resolves every `p-*` and `m-*` in the project to 0 — no error, no warning,
   the classes are simply inert.
+- **A scoped reset is the same trap, just harder to see.** `landing.css` once
+  carried `.landing-root :where(h1, h2, h3, p, …) { margin: 0 }` for tidiness.
+  Nothing needed it (preflight already zeroes margins from `@layer base`), and
+  because it was unlayered it killed every `mt-*` on a `p`, `h2` or `h3` on the
+  page: twenty-odd utilities computing to `0px`, with divs and buttons unaffected
+  because they were not in the selector. Grid gaps masked most of it. If you find
+  yourself writing a reset, ask what is actually imposing the thing you are
+  resetting.
+- **When you replace a bare element rule, keep its weight.** A bare `p` weighs
+  (0,0,1) and *loses* to any class, which is often exactly why the classes
+  around it work. Rewriting it as `.work-root p` weighs (0,1,1), beats those
+  classes, and silently changes the page — this blew every `/work` card summary
+  from 15px to 18px. Use `:where()` (`.work-root :where(p)`) to match a class's
+  weight and lose on source order, the way the element rule did.
 - `html, body` pins `line-height: normal`. Preflight sets the root to `1.5`,
   which silently moved existing pages (the work login card grew 17px, the home
   hero shifted 3px). New components should set their own leading explicitly
   instead of relying on either default.
 - Preflight makes form controls inherit the page font. That is wanted — the
   login input and button rendered in Arial before and now match the site.
+- **`animation-fill-mode: both` holds the final keyframe forever.** An entrance
+  ending on `transform: none` will quietly cancel any `transform` the element
+  needs for layout. Centring `.lab-copy` with `translateY(-50%)` did nothing
+  until the offset moved into a custom property that the keyframes compose
+  against. If a transform "does not apply", check for an animation on the same
+  property before checking anything else.
 
 ### Tailwind conventions
 
@@ -110,6 +133,47 @@ record a specific failure.
   CDN fetch on first paint, and the highlights are aimed deliberately.
 - `app/(landing)/variants/solid.js` — the `Canvas` and the mark.
 
+See `docs/handoff-3d.md` for where the material work stands and what is next.
+
+### The mark's material
+
+Hard-won, and every one of these looked like something else first.
+
+- **`ExtrudeGeometry` emits two material groups.** Group 0 is the flat caps,
+  group 1 is the side walls and bevel, so the mark takes an array of two
+  materials (`attach="material-0"` / `"material-1"` in `solid.js`). This is what
+  lets the faces be matte while the bevel stays polished — a difference between
+  two surfaces, not a lighting trick, which is why it survives the mark turning.
+- **Its UVs are not 0..1.** `generateTopUV` writes raw shape coordinates into
+  `uv`, so a face's UVs are its artwork coordinates: the mark's viewBox is
+  `0 0 150 139`, centre near (75, 70). Any map has to be scaled *and centred*
+  against that (`MARK_UV_SPAN`, `MARK_UV_CENTRE` in `stage.js`). A texture left
+  at default tiling lands ~2,700 times across the mark and mipmaps to flat grey.
+- **Side-wall UVs are generated from world position**, not the outline, so a map
+  meant for the faces means nothing there. Fixing that properly needs a custom
+  `UVGenerator`.
+- **A roughness map alone is invisible on this material.** It only widens the
+  specular lobe, and against a smooth gradient environment 0.42 and 0.58 both
+  reflect a soft blur. Visible micro-texture needs a **bump map**, which perturbs
+  normals and scatters the reflection itself.
+- **`bumpScale` has a far wider range than it looks.** 0.55 rendered a perfectly
+  smooth face; 8 rendered legible grooves. It multiplies a derivative, so a
+  groove one texel across needs a large number. "No visible effect" is not
+  evidence the map is disconnected — test at an absurd value to prove the wiring,
+  then come down.
+- **At `metalness: 1`, `color` is what the surface reflects.** Setting the bevel
+  to the reference's brightest *highlight* turned the whole chamfer into a solid
+  white band with a haze around it. The white belongs where the edge catches the
+  key light, not in the tint.
+- **The finish is brushed, not sandblasted.** Fine grooves in concentric arcs,
+  centred on the mark. Directional grooves need an `anisotropyMap` (R/G are a
+  [-1,1] tangent-space direction, B is strength); a single `anisotropyRotation`
+  can only describe a straight brush. Isotropic speckle reads as stone and no
+  amount of tuning gets it there.
+- Textures are generated on a canvas at runtime and **half resolution on a coarse
+  pointer** — building one costs ~20ms on a desktop and several times that on a
+  phone, landing exactly as the hero appears.
+
 ### Load sequencing
 
 The renderer is ~250–300KB gzipped behind `dynamic(ssr: false)`, so on a phone
@@ -120,7 +184,7 @@ it lands seconds after the page shell. Rules that follow from that:
   `Solid` takes an `onReady` callback that fires on its first painted frame.
 - Anything gated on the renderer needs a timeout fallback, because a lost
   context or a failed chunk must not strand it forever. See
-  `STAGE_READY_TIMEOUT_MS` in `app/(landing)/page.js`.
+  `STAGE_READY_TIMEOUT_MS` in `app/(landing)/hero.js`.
 - The mark's entrance swing (damping out of an off-target start rotation) is the
   page's only cue that it responds to movement. It is held until the canvas is
   revealed and must stay that way — frame counting alone isn't enough, since
@@ -128,12 +192,28 @@ it lands seconds after the page shell. Rules that follow from that:
 
 ### Layout
 
-The landing page is a fixed single viewport — no scroll, no zoom, no selection
-callout.
+The landing page **scrolls**. It was a single locked viewport for most of its
+life and several things still read as though it were, so check before assuming.
+Three consequences that were each a bug first:
+
+- `touch-action` on `.lab` and `.lab-stage` is **`pan-y`, not `none`**. `none`
+  was right when the hero was the whole page and every touch was meant for the
+  mark. On a scrolling page it swallows the vertical swipe too, so a thumb
+  starting anywhere on the first screen cannot scroll at all.
+- There is **no zoom lock**. It was correct for a fixed viewport and is an
+  accessibility failure on a page with body copy.
+- Anything hanging off "the first touch" has to distinguish a tap from a scroll.
+  See the gyroscope permission grab in `hero.js`: a `pointerdown` listener with
+  `{ once: true }` gets burned by the first swipe.
+
 Conditional content (the gyroscope prompt) must be **out of the flow** of
 anything that anchors other elements, or showing and hiding it moves the page.
-The prompt is anchored to the viewport bottom with a safe-area inset for exactly
-this reason. Any new conditional element gets the same treatment.
+
+**One page grid.** `--page-max` and `--page-pad` in `globals.css`, used by
+`.ln-shell` for sections and `.lab-shell` inside the hero. The hero used to inset
+from the viewport edge while the sections sat in a centred container: identical
+on a phone, and 332px apart on a 16in laptop. If a new surface needs to sit on
+the page's left edge, use the shared grid rather than a fresh inset.
 
 ## Showing work to a human
 
@@ -160,6 +240,24 @@ chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/c
 - Prefer **computed styles and bounding boxes** over screenshot diffing. The hero
   renders live, so no two frames ever match byte-for-byte — a size comparison
   proves nothing.
+- **Measure the right thing.** Several confident, wrong readings came from
+  measuring something adjacent to the question:
+  - `innerText` **excludes collapsed `<details>` content**. A check for a string
+    on the page reported clean while the string was sitting in a closed
+    accordion. Use `innerHTML` when asking whether something shipped.
+  - A `display: block` element's `getBoundingClientRect()` returns the
+    **container**, not the glyphs. Comparing font rendering needs a `Range` over
+    the text node, or every font measures identically.
+  - Contrast has to be **composited**, not parsed. Hand-parsing `rgb()` silently
+    returned ratios in the billions for every `color(srgb … / alpha)` value —
+    exactly the colours most likely to fail. Paint the ground and the text into
+    a 1×1 canvas and read back the result.
+- **For surface and material work, zoom in.** Aggregate statistics (mean, peak,
+  saturation, high-frequency energy) repeatedly failed to distinguish a broken
+  render from a fixed one, because both had, say, a bright edge — what differed
+  was whether that edge was white or gold. A 2–3× crop of the actual surface
+  found in seconds what histograms missed for several rounds. Some problems are
+  only visible at the size they are wrong.
 - For before/after work, build each side cleanly. Starting a server and then
   rebuilding underneath it serves a `.next` whose hashed CSS no longer exists,
   and the page comes back **unstyled** — which looks like a catastrophic
@@ -171,6 +269,37 @@ chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/c
   nothing about a real phone. Load *ordering* is trustworthy; timings are not.
   Say which is which when reporting.
 
+## Things that will catch you out
+
+Infrastructure facts that are invisible until they cost an hour.
+
+- **Everything under `/work` is behind the password gate, including its static
+  images.** `middleware.js` matches `/work/:path*`, so a case study cover 307s to
+  the login page for anyone not signed in, and Next's image optimizer fails on
+  the HTML it gets back. They render on `/work` only because you are already
+  authenticated. Any `/work` image needed on a public page must be copied to
+  `public/` — the three featured covers live in `public/home/`.
+- **Next merges metadata by replacing whole keys, not deep merging.** A nested
+  layout declaring `twitter: { title, description }` drops the root layout's
+  `card: "summary_large_image"` and silently falls back to `summary`, which
+  frames a wide OG image as a small square crop. Restate what you need. Only
+  visible in the rendered meta tags, never in the source.
+- **Two files claiming the same icon route means one is ignored.** `app/icon.png`
+  and `app/icon.svg` both existing emits a single link tag, and the PNG wins, so
+  the SVG is built and never served.
+- **`process.cwd` is not a function** in the context Next prerenders server
+  components. A filesystem lookup fails the build with "Failed to collect
+  configuration for /", which reads like a routing problem and is not one.
+- **Space Grotesk has no Greek glyphs**, and `next/font` builds its metric-matched
+  fallback out of Times New Roman, so `καλός` rendered as a serif beside a
+  grotesk. `app/layout.js` names a sans stack in `fallback` with
+  `adjustFontFallback: false`.
+- **Copy lives in `app/(landing)/content.js`** and `bun run lint:copy` fails the
+  build on an em dash in it. The guard imports the module and walks the exported
+  *values*, deliberately: reading the file as text flagged source comments, which
+  are not shipped and which this codebase writes with em dashes by convention. A
+  lint rule that fires when you write a comment is one people learn to ignore.
+
 ## Code style
 
 - JavaScript, not TypeScript. No semicolon or formatter config — match the file.
@@ -179,7 +308,11 @@ chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/c
   make safely. A comment that restates the code is worse than none.
 - Entrances are CSS rather than JS where possible, so a slow hydration still
   resolves to a readable page.
-- Respect `prefers-reduced-motion` in anything that animates.
+- Respect `prefers-reduced-motion` in anything that animates — but it silences
+  motion **the page starts by itself**, never motion the visitor is causing.
+  Pinning the mark's rotation under reduced motion killed the gyroscope outright:
+  the page asked for the sensor, was granted it, and then discarded every
+  reading. `still` in `solid.js` now suppresses only the idle drift and float.
 
 ## Git
 
