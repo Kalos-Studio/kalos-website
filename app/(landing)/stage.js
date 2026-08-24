@@ -13,6 +13,12 @@ export const GOLD = "#cba75f";
 // peaks at #F4EEDA. With metalness 1 these are reflectance tints rather than
 // diffuse colours, so the brighter bevel tint is what makes the rim read hot
 // against a face that stays quiet.
+// Where the spin is centred, in the same units. The artwork's viewBox is
+// 0 0 150 139 and ExtrudeGeometry writes those coordinates straight into uv, so
+// this is simply the middle of the lockup: the gap between the triangle and the
+// diamond, which is where the reference's arcs converge.
+const MARK_UV_CENTRE = [75, 70];
+
 // Comfortably wider than the mark's UVs actually run. ExtrudeGeometry writes
 // shape coordinates into uv, and a probe put this mark's range at about -22 to
 // 158, so anything mapped onto it is scaled against that rather than 0..1.
@@ -141,14 +147,19 @@ function useBrushedGold() {
         const r = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx);
 
-        // Wobble the radius with the angle so the rings are not machine-perfect
-        // circles. Real turning wanders, and a flawless concentric pattern reads
-        // as a moiré artefact rather than as metal.
-        const wobble = Math.sin(angle * 9) * 1.3 + Math.sin(angle * 23 + 1.7) * 0.7;
-        const i = Math.min(span - 1, Math.max(0, Math.round(r + wobble)));
+        // Rings are true circles. An earlier version perturbed the radius by
+        // angle, on the theory that real turning wanders: shifting a ring's
+        // *position* by a couple of texels breaks it into something closer to
+        // wood grain, which is what made the finish read as abstract rather than
+        // machined. Variation belongs in the groove's depth, not its path.
+        const i = Math.min(span - 1, Math.round(r));
+
+        // A slow sweep around the circle, so one side of a ring catches more
+        // than the other. Modulates depth only, so the ring stays circular.
+        const sweep = 0.76 + 0.24 * (0.5 + 0.5 * Math.sin(angle * 2 + r * 0.01));
 
         const o = (y * size + x) * 4;
-        const v = 150 + groove[i] * 105;
+        const v = 150 + groove[i] * 105 * sweep;
         bumpData.data[o] = bumpData.data[o + 1] = bumpData.data[o + 2] = v;
         bumpData.data[o + 3] = 255;
 
@@ -173,12 +184,22 @@ function useBrushedGold() {
     for (const map of [bump, anisotropy]) {
       map.wrapS = map.wrapT = THREE.RepeatWrapping;
       map.anisotropy = maxAnisotropy;
-      // Scaled against the geometry's UV range, which is not 0..1 here.
-      // ExtrudeGeometry's default UV generator writes raw shape coordinates
-      // straight into uv, and a probe put this mark's range at about -22 to 158.
-      // One tile across that span puts the centre of the spin near the middle of
-      // the lockup and leaves no wrap seam inside the geometry.
+      // Scaled and centred against the geometry's UVs, which are not 0..1 here.
+      // ExtrudeGeometry's generateTopUV writes raw shape coordinates straight
+      // into uv, so a face's UVs are just its artwork coordinates: the mark's
+      // viewBox is 0 0 150 139, which puts its centre at about (75, 70).
+      //
+      // Without the offset the texture's own centre sits at UV (100, 100),
+      // which is off the artwork entirely, so the spin was centred somewhere
+      // past the diamond and every arc crossing the mark was a section of a
+      // circle whose middle you could not see. That is most of why it read as
+      // abstract: a turned finish is only legible when you can tell where it was
+      // turned from.
       map.repeat.set(1 / MARK_UV_SPAN, 1 / MARK_UV_SPAN);
+      map.offset.set(
+        0.5 - MARK_UV_CENTRE[0] / MARK_UV_SPAN,
+        0.5 - MARK_UV_CENTRE[1] / MARK_UV_SPAN
+      );
     }
     // Direction data, not colour. Three will decode it wrongly otherwise.
     anisotropy.colorSpace = THREE.NoColorSpace;
