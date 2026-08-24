@@ -19,11 +19,15 @@ export const GOLD = "#cba75f";
 // diamond, which is where the reference's arcs converge.
 const MARK_UV_CENTRE = [75, 70];
 
-// Comfortably wider than the mark's UVs actually run. ExtrudeGeometry writes
-// shape coordinates into uv, and a probe put this mark's range at about -22 to
-// 158, so anything mapped onto it is scaled against that rather than 0..1.
-// Rounding up to 200 leaves room for the bevel's negative coordinates, which is
-// what keeps a single tile covering the whole surface with no wrap inside it.
+// Comfortably wider than the caps' UVs actually run. ExtrudeGeometry writes
+// shape coordinates into uv, so this mark's caps span roughly its own artwork:
+// 0 to 150 across and 3 to 136 down, pulled in by the bevel at every edge.
+// Anything mapped onto them is scaled against that rather than against 0..1,
+// and rounding the span up to 200 keeps a single tile covering the whole
+// surface with no wrap inside it.
+//
+// This only describes the caps. The side walls are parameterised separately by
+// contourUVGenerator in kalos-mark.js and take a map of their own.
 const MARK_UV_SPAN = 200;
 
 export const GOLD_FACE = "#ac9267";
@@ -79,6 +83,26 @@ export function pointerLive(pointer) {
 }
 
 
+// One run of grooves, as 1D noise.
+//
+// Smoothed with a three-tap pass because raw per-step noise is a step function:
+// it aliases into a shimmer the moment the mark moves. Both surfaces want the
+// same profile — the faces sample it by radius and the walls by depth — so the
+// smoothing lives here rather than being written out twice.
+function grooveProfile(length) {
+  const raw = new Float32Array(length);
+  for (let i = 0; i < length; i += 1) raw[i] = Math.random();
+
+  const smoothed = new Float32Array(length);
+  for (let i = 0; i < length; i += 1) {
+    const a = raw[Math.max(0, i - 1)];
+    const b = raw[i];
+    const c = raw[Math.min(length - 1, i + 1)];
+    smoothed[i] = (a + b + b + c) / 4;
+  }
+  return smoothed;
+}
+
 /**
  * Brushed gold, generated rather than fetched.
  *
@@ -89,7 +113,7 @@ export function pointerLive(pointer) {
  * along one axis, which is what produces the soft sweeping highlight that moves
  * across the face as the mark turns.
  *
- * Two maps come out of this, because a brushed surface needs both:
+ * Two maps come out of this for the faces, because a brushed surface needs both:
  *
  * - a bump map of the grooves themselves, so the geometry of the finish is
  *   visible at close range;
@@ -98,6 +122,13 @@ export function pointerLive(pointer) {
  *   as strength. A single `anisotropyRotation` can only describe a straight
  *   brush; concentric arcs need the direction to rotate with the angle, which is
  *   exactly what a map is for.
+ *
+ * And a third for the side walls, which are a different surface in a different
+ * space: brushed *along the outline* rather than turned about a centre. They
+ * used to be given the faces' map, which meant sampling a pattern of concentric
+ * rings through UVs that know nothing about where the centre is. See
+ * `contourUVGenerator` in kalos-mark.js for the parameterisation this one is
+ * drawn against.
  */
 function useBrushedGold() {
   // Fine directional grooves are the worst case for mipmapping: at a grazing
@@ -114,22 +145,11 @@ function useBrushedGold() {
     const size = isCoarsePointer() ? 256 : 512;
     const half = size / 2;
 
-    // The groove profile, as 1D noise along the radius. A spun finish is
-    // constant along any circle and varies across radii, so this is sampled by
-    // distance from the centre and nothing else.
-    //
-    // Smoothed with a three-tap pass because raw per-radius noise is a step
-    // function: it aliases into a shimmer the moment the mark moves.
+    // The faces' profile runs along the radius. A spun finish is constant along
+    // any circle and varies across radii, so this is sampled by distance from
+    // the centre and nothing else.
     const span = Math.ceil(Math.SQRT2 * half) + 2;
-    const raw = new Float32Array(span);
-    for (let i = 0; i < span; i += 1) raw[i] = Math.random();
-    const groove = new Float32Array(span);
-    for (let i = 0; i < span; i += 1) {
-      const a = raw[Math.max(0, i - 1)];
-      const b = raw[i];
-      const c = raw[Math.min(span - 1, i + 1)];
-      groove[i] = (a + b + b + c) / 4;
-    }
+    const groove = grooveProfile(span);
 
     const bumpCanvas = document.createElement("canvas");
     const anisoCanvas = document.createElement("canvas");
@@ -178,8 +198,46 @@ function useBrushedGold() {
     bumpCtx.putImageData(bumpData, 0, 0);
     anisoCtx.putImageData(anisoData, 0, 0);
 
+    // The walls. u runs around the perimeter and v through the extrusion, so
+    // the grooves are rows: one profile across the depth, held all the way
+    // round. Nothing here is centred on anything, because an outline has no
+    // centre — which is exactly what the faces' map was wrongly assuming it had.
+    //
+    // A quarter of the faces' resolution across the depth. The wall is 22 units
+    // of a mark 150 across and it is mostly seen at a grazing angle, so at 512
+    // the grooves would land several to the pixel and average back to flat. The
+    // width is small on purpose: nothing varies quickly along the perimeter.
+    const wallSpan = size / 4;
+    const wallWidth = 64;
+    const wallGroove = grooveProfile(wallSpan);
+
+    const wallCanvas = document.createElement("canvas");
+    wallCanvas.width = wallWidth;
+    wallCanvas.height = wallSpan;
+    const wallCtx = wallCanvas.getContext("2d");
+    const wallData = wallCtx.createImageData(wallWidth, wallSpan);
+
+    for (let y = 0; y < wallSpan; y += 1) {
+      for (let x = 0; x < wallWidth; x += 1) {
+        // Groove depth varies slowly along the perimeter, so an edge is not one
+        // even corrugation from corner to corner. Periodic in x, so it still
+        // meets itself where the outline closes, and sheared by y so the
+        // variation does not read as a band running through the extrusion.
+        const sweep =
+          0.72 +
+          0.28 * (0.5 + 0.5 * Math.sin((x / wallWidth) * Math.PI * 4 + y * 0.07));
+
+        const o = (y * wallWidth + x) * 4;
+        const v = 150 + wallGroove[y] * 105 * sweep;
+        wallData.data[o] = wallData.data[o + 1] = wallData.data[o + 2] = v;
+        wallData.data[o + 3] = 255;
+      }
+    }
+    wallCtx.putImageData(wallData, 0, 0);
+
     const bump = new THREE.CanvasTexture(bumpCanvas);
     const anisotropy = new THREE.CanvasTexture(anisoCanvas);
+    const wall = new THREE.CanvasTexture(wallCanvas);
 
     for (const map of [bump, anisotropy]) {
       map.wrapS = map.wrapT = THREE.RepeatWrapping;
@@ -204,16 +262,28 @@ function useBrushedGold() {
     // Direction data, not colour. Three will decode it wrongly otherwise.
     anisotropy.colorSpace = THREE.NoColorSpace;
 
-    return { bump, anisotropy };
+    // No repeat or offset, unlike the pair above: contourUVGenerator hands the
+    // walls a u already counted in whole repeats and a v already normalised
+    // across the depth, so the map is used exactly as it is drawn.
+    //
+    // Clamped through the depth. It tiles around the perimeter and never tiles
+    // across the wall, so wrapping there could only ever produce a seam along
+    // the chamfer, where it would be most visible.
+    wall.wrapS = THREE.RepeatWrapping;
+    wall.wrapT = THREE.ClampToEdgeWrapping;
+    wall.anisotropy = maxAnisotropy;
+
+    return { bump, anisotropy, wall };
   }, [maxAnisotropy]);
 
   // CanvasTexture allocates GPU buffers React knows nothing about, and the
   // variant switcher unmounts whole Canvases.
   useEffect(() => {
-    const { bump, anisotropy } = maps;
+    const { bump, anisotropy, wall } = maps;
     return () => {
       bump.dispose();
       anisotropy.dispose();
+      wall.dispose();
     };
   }, [maps]);
 
@@ -279,7 +349,7 @@ export function GoldFaceMaterial(props) {
  * the split is free.
  */
 export function GoldBevelMaterial(props) {
-  const { bump } = useBrushedGold();
+  const { wall } = useBrushedGold();
   return (
     <meshPhysicalMaterial
       color={GOLD_BEVEL}
@@ -293,14 +363,21 @@ export function GoldBevelMaterial(props) {
       // The reference shows it clearly on the extruded edge, and without it the
       // walls read as glass next to a machined face. Light, because a chamfer is
       // narrow and anything stronger turns it to corrugation.
-      bumpMap={bump}
+      //
+      // Its own map, not the faces'. This one is a straight run of grooves in
+      // the space contourUVGenerator sets up, so the brushing follows the
+      // outline instead of sampling arcs of a circle centred somewhere off the
+      // edge of the shape.
+      bumpMap={wall}
       bumpScale={1.4}
-      // A little anisotropy on the edge, without a map. The side wall's UVs are
-      // generated from world position rather than the shape outline, so the
-      // faces' radial direction field does not describe it: a fixed rotation
-      // along the chamfer is the honest approximation.
+      // A little anisotropy on the edge, and now without a map for the right
+      // reason rather than as an approximation: u runs along the perimeter
+      // everywhere on the wall, so the tangent three derives from the UVs is
+      // already the brush direction and no rotation off it is wanted. This was
+      // a quarter turn, which was the best guess available while the UVs were
+      // built out of world position and pointed at nothing in particular.
       anisotropy={0.45}
-      anisotropyRotation={Math.PI / 2}
+      anisotropyRotation={0}
       // Was 1.9. The bevel also feeds the bloom pass, so a long strip of it far
       // past the luminance threshold turned a rim light into a haze that washed
       // across the faces and hid the matte finish that was the point.

@@ -149,9 +149,15 @@ Hard-won, and every one of these looked like something else first.
   `0 0 150 139`, centre near (75, 70). Any map has to be scaled *and centred*
   against that (`MARK_UV_SPAN`, `MARK_UV_CENTRE` in `stage.js`). A texture left
   at default tiling lands ~2,700 times across the mark and mipmaps to flat grey.
-- **Side-wall UVs are generated from world position**, not the outline, so a map
-  meant for the faces means nothing there. Fixing that properly needs a custom
-  `UVGenerator`.
+- **Side-wall UVs used to be generated from world position**, not the outline, so
+  a map meant for the faces meant nothing there. `contourUVGenerator` in
+  `kalos-mark.js` replaces them: u is distance around the contour, v is position
+  through the extrusion. Two traps if you touch it. The indices `generateSideWallUV`
+  receives point into the output triangle soup, not the outline, so there is no
+  contour index to recover and the parameterisation has to come from the vertex
+  position. And bevel layers are inset from the outline by up to `bevelSize`, so
+  matching one to its nearest contour *point* lands on a neighbour at every
+  rounded corner — project onto the polyline instead.
 - **A roughness map alone is invisible on this material.** It only widens the
   specular lobe, and against a smooth gradient environment 0.42 and 0.58 both
   reflect a soft blur. Visible micro-texture needs a **bump map**, which perturbs
@@ -165,11 +171,16 @@ Hard-won, and every one of these looked like something else first.
   to the reference's brightest *highlight* turned the whole chamfer into a solid
   white band with a haze around it. The white belongs where the edge catches the
   key light, not in the tint.
-- **The finish is brushed, not sandblasted.** Fine grooves in concentric arcs,
-  centred on the mark. Directional grooves need an `anisotropyMap` (R/G are a
-  [-1,1] tangent-space direction, B is strength); a single `anisotropyRotation`
-  can only describe a straight brush. Isotropic speckle reads as stone and no
-  amount of tuning gets it there.
+- **The finish is brushed, not sandblasted.** Fine grooves in concentric arcs on
+  the faces, centred on the mark; a straight run along the outline on the walls.
+  Directional grooves need an `anisotropyMap` (R/G are a [-1,1] tangent-space
+  direction, B is strength); a single `anisotropyRotation` can only describe a
+  straight brush, which is why the walls can use one and the faces cannot.
+  Isotropic speckle reads as stone and no amount of tuning gets it there.
+- **Without a normal map, three takes the anisotropy tangent frame from `vUv`.**
+  `normal_fragment_begin` falls back to `getTangentFrame(..., vUv)`, so
+  `anisotropyRotation` is measured from whatever the UVs happen to do. It only
+  says something once they say something.
 - Textures are generated on a canvas at runtime and **half resolution on a coarse
   pointer** — building one costs ~20ms on a desktop and several times that on a
   phone, landing exactly as the hero appears.

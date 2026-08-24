@@ -23,9 +23,33 @@ export const MARK_SCALE = 0.016;
 // middle of the page, with the lockup up in the corner as a masthead.
 export const MARK_LIFT = 0;
 
+// The chamfer, in geometry units. This was 2.6 with eight segments, which on a
+// mark 150 units across is a fillet a full 3.5% of the width and smooth all the
+// way over: it rounds the edge rather than cutting it, and the reference is
+// unambiguously cut. 1.2 is narrow enough that the key light lands on it as one
+// tight line instead of a gradient.
+//
+// Two segments rather than one, deliberately. A single facet is a hard crease:
+// it has no width to catch anything at small sizes, so it drops to a dark line,
+// and as the mark turns the highlight jumps from face to face instead of
+// travelling across the edge. Two keeps just enough rounding for it to travel.
+export const MARK_BEVEL = 1.2;
+export const MARK_DEPTH = 20;
+
+// Shared with the side-wall UV generator, which has to walk the same polyline
+// ExtrudeGeometry does. Different values there would put the brushing slightly
+// out of step with the surface it is on.
+const MARK_CURVE_SEGMENTS = 32;
+
+// Measured off the paths rather than read off the viewBox: the two shapes
+// occupy 149.6 x 133.1 of a 150 x 139 box, and the six units of air under the
+// triangle are not part of the mark. The bevel then adds its size to every edge.
+const MARK_ARTWORK_WIDTH = 149.6;
+const MARK_ARTWORK_HEIGHT = 133.1;
+
 // Size of the lockup in geometry units, bevel included.
-const MARK_WIDTH = 155;
-const MARK_HEIGHT = 145;
+const MARK_WIDTH = MARK_ARTWORK_WIDTH + MARK_BEVEL * 2;
+const MARK_HEIGHT = MARK_ARTWORK_HEIGHT + MARK_BEVEL * 2;
 
 /**
  * Fits the mark to the viewport.
@@ -49,9 +73,15 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
     // underneath it. Height is what actually binds in landscape.
     const widthFit = (width * (portrait ? 0.66 : 0.44)) / (MARK_WIDTH * baseScale);
     // Height is the tighter constraint in landscape, where a mark fitted on
-    // width alone grows tall enough to fill the window edge to edge. 0.38 keeps
+    // width alone grows tall enough to fill the window edge to edge. This keeps
     // clear air above and below it at every aspect ratio.
-    const heightFit = (height * 0.38) / (MARK_HEIGHT * baseScale);
+    //
+    // 0.362, and it was 0.38 for as long as MARK_HEIGHT was a hand-typed 145
+    // against a true 138.3 — so the fraction has never been the fraction it
+    // claimed, and 0.362 is what the page has actually been rendering all along.
+    // Correcting the bounds and leaving 0.38 alone would have grown the mark 5%
+    // as a side effect of a change to the bevel, which nobody asked for.
+    const heightFit = (height * 0.362) / (MARK_HEIGHT * baseScale);
 
     // Only ever scale down — baseScale is the intended size, not a target to
     // grow into on a big screen.
@@ -83,6 +113,134 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
   }, [width, height, baseScale, lift]);
 }
 
+// How much perimeter one repeat of the side-wall map covers, in geometry units.
+// The map is nearly constant along the perimeter, because that is the direction
+// the grooves run in, so this only sets the wavelength of the slow variation in
+// groove depth along an edge. 120 puts about three repeats around the triangle,
+// long enough that the repeat never reads as a pattern.
+const WALL_TILE_LENGTH = 120;
+
+/**
+ * Side-wall UVs parameterised by the outline itself: u around the contour, v
+ * through the extrusion.
+ *
+ * ExtrudeGeometry's default generator builds side-wall UVs out of world
+ * position — u is whichever of x or y is changing faster along the edge, v is
+ * the depth. That is serviceable for a checkerboard and useless for a finish:
+ * u restarts at an arbitrary value on every edge and swaps axis at the corners,
+ * so nothing mapped through it can follow the shape. The faces' spun texture
+ * sampled that way came out as unrelated slices of a circle, which is why the
+ * walls read as random streaks rather than as a brushed edge.
+ *
+ * With this, u is distance travelled around the outline and v is position
+ * through the extrusion, which is the parameterisation a brushed edge actually
+ * has: the grooves run along u, and the surface is the same all the way round.
+ * A fixed anisotropy direction on the wall material also starts meaning
+ * something, because the tangent now points along the perimeter everywhere
+ * instead of along whichever world axis happened to win.
+ *
+ * u is normalised per contour and multiplied up to a whole number of repeats,
+ * so the map meets itself exactly where the outline closes and there is no seam
+ * to hide.
+ *
+ * Distance comes from projecting each vertex onto the contour polyline rather
+ * than from counting vertices along it. The bevel layers are inset from the
+ * outline by up to `bevel`, so their vertices are not contour points at all,
+ * and matching them to the nearest one lands on a neighbour at any corner tight
+ * enough for the difference to show.
+ */
+function contourUVGenerator(shapes, { depth, bevel }) {
+  const contours = [];
+  for (const shape of shapes) {
+    const { shape: outline, holes } = shape.extractPoints(MARK_CURVE_SEGMENTS);
+    for (const points of [outline, ...holes]) {
+      const count = points.length;
+      const starts = new Float64Array(count);
+      const lengths = new Float64Array(count);
+      let total = 0;
+      for (let i = 0; i < count; i += 1) {
+        const a = points[i];
+        const b = points[(i + 1) % count];
+        starts[i] = total;
+        lengths[i] = Math.hypot(b.x - a.x, b.y - a.y);
+        total += lengths[i];
+      }
+      contours.push({
+        points,
+        starts,
+        lengths,
+        total,
+        repeats: Math.max(1, Math.round(total / WALL_TILE_LENGTH)),
+      });
+    }
+  }
+
+  // ExtrudeGeometry hangs the bevel off both ends of the extrusion rather than
+  // insetting it, so the wall runs from -bevelThickness to depth + bevelThickness
+  // and v covers the chamfer, the wall and the far chamfer as one surface.
+  const zMin = -bevel;
+  const zSpan = depth + bevel * 2;
+
+  // Each vertex is visited once per quad corner it belongs to, and each visit
+  // costs a pass over the whole outline. Caching turns that back into one pass
+  // per vertex.
+  const arcs = new Map();
+
+  function arcAt(x, y) {
+    const key = `${x},${y}`;
+    const cached = arcs.get(key);
+    if (cached !== undefined) return cached;
+
+    let nearest = Infinity;
+    let arc = 0;
+    for (const contour of contours) {
+      const { points, starts, lengths, total, repeats } = contour;
+      for (let i = 0, il = points.length; i < il; i += 1) {
+        const a = points[i];
+        const b = points[(i + 1) % il];
+        const ex = b.x - a.x;
+        const ey = b.y - a.y;
+        const span = ex * ex + ey * ey;
+        // Clamped, so a vertex sitting off the end of a segment measures to its
+        // endpoint rather than to a point on the segment's infinite extension.
+        const t =
+          span > 0
+            ? Math.min(1, Math.max(0, ((x - a.x) * ex + (y - a.y) * ey) / span))
+            : 0;
+        const dx = x - (a.x + ex * t);
+        const dy = y - (a.y + ey * t);
+        const distance = dx * dx + dy * dy;
+        if (distance < nearest) {
+          nearest = distance;
+          arc = ((starts[i] + lengths[i] * t) / total) * repeats;
+        }
+      }
+    }
+
+    arcs.set(key, arc);
+    return arc;
+  }
+
+  return {
+    // The caps keep the default parameterisation — raw shape coordinates — which
+    // is what the faces' maps in stage.js are scaled and centred against.
+    generateTopUV(geometry, vertices, indexA, indexB, indexC) {
+      return [indexA, indexB, indexC].map(
+        (i) => new THREE.Vector2(vertices[i * 3], vertices[i * 3 + 1])
+      );
+    },
+    generateSideWallUV(geometry, vertices, indexA, indexB, indexC, indexD) {
+      return [indexA, indexB, indexC, indexD].map(
+        (i) =>
+          new THREE.Vector2(
+            arcAt(vertices[i * 3], vertices[i * 3 + 1]),
+            (vertices[i * 3 + 2] - zMin) / zSpan
+          )
+      );
+    },
+  };
+}
+
 /**
  * Extrudes the two mark shapes into beveled slabs.
  *
@@ -94,7 +252,10 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
  * own, so the pair stays in its designed relationship while the lockup as a whole
  * sits on the origin.
  */
-export function useMarkGeometries({ depth = 20, bevel = 2.6 } = {}) {
+export function useMarkGeometries({
+  depth = MARK_DEPTH,
+  bevel = MARK_BEVEL,
+} = {}) {
   const geometries = useMemo(() => {
     const paths = new SVGLoader().parse(MARK_SVG).paths;
 
@@ -108,9 +269,10 @@ export function useMarkGeometries({ depth = 20, bevel = 2.6 } = {}) {
         bevelOffset: 0,
         // The bevel is doing most of the work here: it's the narrow chamfer that
         // catches the key light and produces the hot rim in the Figma renders.
-        // Too few segments and that rim breaks into visible facets.
-        bevelSegments: 8,
-        curveSegments: 32,
+        // See MARK_BEVEL for why two rather than one or eight.
+        bevelSegments: 2,
+        curveSegments: MARK_CURVE_SEGMENTS,
+        UVGenerator: contourUVGenerator(shapes, { depth, bevel }),
       });
     });
 

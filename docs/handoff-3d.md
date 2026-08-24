@@ -7,7 +7,11 @@ Working notes for continuing the hero work in a fresh session. Written 2026-08-2
 ## Where things are
 
 Repo `/Users/omar.anees/Projects/kalos-website`, branch `new-landing-page`, all
-committed and pushed, tree clean at `8f6ac74`. Draft PR #4.
+committed and pushed. Draft PR #4.
+
+The two jobs below are **done** — the side walls are brushed along the outline
+and the bevel is a narrow chamfer. What is left is the list under **Then stop
+and ask**, which is the owner's to choose from.
 
 Run it: `NODE_OPTIONS= bun run dev`. Clearing `NODE_OPTIONS` is required, the dev
 server dies on a stale preload otherwise. `bun run lint`, `bun run lint:copy` and
@@ -16,47 +20,44 @@ server dies on a stale preload otherwise. `bun run lint`, `bun run lint:copy` an
 The mission for this whole effort: make the landing page genuinely good, not
 merely finished.
 
-## The two jobs, in order
+## The two jobs, done
 
-### 1. Brush the side walls along the perimeter
+### 1. The side walls are brushed along the perimeter
 
-Currently wrong, and knowingly so. `GoldBevelMaterial` in
-`app/(landing)/stage.js` gets `bumpMap={bump}` where `bump` is the faces' spun
-texture: concentric rings meant to be sampled by distance from the mark's centre.
-Side walls do not have UVs that mean anything for that. `ExtrudeGeometry`'s
-`WorldUVGenerator.generateSideWallUV` builds side UVs out of world position, so
-the walls end up sampling arbitrary slices of a circular pattern. It reads as
-random streaks rather than as a brushed edge.
+`contourUVGenerator` in `app/(landing)/kalos-mark.js` is passed to
+`ExtrudeGeometry` as its `UVGenerator`. Side-wall UVs are now u = distance
+travelled around the outline, v = position through the extrusion. The caps keep
+the default parameterisation, raw shape coordinates, because the faces' maps are
+scaled and centred against exactly that.
 
-Wanted: straight brushing that follows the shape's outline, wrapping around the
-perimeter, like the machined edge in the reference. That needs custom side-wall
-UVs, which means passing a `UVGenerator` into `ExtrudeGeometry` in
-`app/(landing)/kalos-mark.js`. `generateSideWallUV` receives the geometry, the
-vertex array and four indices, and can return whatever parameterisation is
-wanted: distance along the contour for one axis, position through the extrusion
-depth for the other. With that, a simple linear streak texture maps correctly and
-the existing anisotropy story becomes honest rather than an approximation.
+`useBrushedGold` grew a third map, `wall`: a straight run of grooves varying only
+across the depth, with a slow modulation along the perimeter so an edge is not
+one even corrugation. `GoldBevelMaterial` takes that instead of the faces' spun
+texture, and its `anisotropyRotation` is now 0 for a real reason rather than
+`PI/2` as a guess — see the tangent-frame note below.
 
-### 2. Make the bevel a crisp narrow chamfer
+Verified against the reference by zooming: the streaks run parallel to the edge
+all the way round, and bracketing `bumpScale` at 0 and 7 proved the wiring and
+put 1.4 between "invisible" and "corrugated".
 
-Currently `bevelSize` and `bevelThickness` are both `2.6` with `bevelSegments: 8`
-(see `useMarkGeometries`, `app/(landing)/kalos-mark.js`). On a mark about 150
-units wide that is a wide smooth fillet, and it reads as rounded. The reference
-shows a narrow machined chamfer catching a single tight specular line.
+### 2. The bevel is a narrow chamfer
 
-Decided: cut the bevel to roughly `1.2` and the segments to about `2`. Keep a
-little rounding rather than going to a single hard facet, so the edge does not
-alias into a black line at small sizes or flicker as the mark turns. Both numbers
-want checking by eye, not just set.
+`MARK_BEVEL` is 1.2 with `bevelSegments: 2`, down from 2.6 with 8. The edge is a
+single tight specular line that travels rather than jumps: swept through the
+cursor's whole range at 4x device scale, the highlight stays continuous and does
+not break into facets. At 390x844 it is a fine bright line and never the black
+line that one hard facet would have given.
 
-Note the bevel size interacts with `MARK_WIDTH`/`MARK_HEIGHT` in the same file
-(currently 155/145, "bevel included"), which feed `useMarkFit`. Shrinking the
-bevel shrinks the real bounds slightly.
+`MARK_WIDTH`/`MARK_HEIGHT` are now derived from measured artwork bounds plus the
+bevel rather than hand-typed. Worth knowing: `MARK_HEIGHT` was 145 against a true
+138.3, so `useMarkFit`'s height fraction had never been the fraction it claimed.
+It reads 0.362 now, which is what the page was actually rendering — correcting
+the bounds and leaving 0.38 would have grown the mark 5% as a side effect.
 
-### Then stop and ask
+### Now stop and ask
 
-Once those two land and are verified, do not pick the next thing unilaterally.
-Lay out the options with what each would cost and what it would buy, and let the
+Both have landed and been verified. Do not pick the next thing unilaterally:
+lay out the options with what each would cost and what it would buy, and let the
 owner choose. The known candidates, in no order:
 
 - **The sunrise entrance.** Owner's designer asked for it: page loads with the
@@ -97,12 +98,18 @@ Faces (`GoldFaceMaterial`): `#ac9267`, metalness 1, roughness 0.42, `bumpMap` at
 1.45, `DoubleSide`.
 
 Bevel and sides (`GoldBevelMaterial`): `#d9b782`, metalness 1, roughness 0.17,
-`bumpMap` at `bumpScale={1.4}`, `anisotropy={0.45}` with a fixed
-`anisotropyRotation`, envMapIntensity 1.35.
+the `wall` map at `bumpScale={1.4}`, `anisotropy={0.45}` with
+`anisotropyRotation={0}`, envMapIntensity 1.35.
 
-`useBrushedGold()` generates both maps on a canvas at runtime, 512px on desktop
-and 256 on a coarse pointer. Nothing is fetched: the hero must never wait on a
-network round trip before it can draw.
+`useBrushedGold()` generates all three maps on a canvas at runtime, 512px on
+desktop and 256 on a coarse pointer, with the wall map at a quarter of that
+across the depth. Nothing is fetched: the hero must never wait on a network round
+trip before it can draw.
+
+One number to revisit: the wall's `bumpScale` was judged against a wall that the
+current lighting leaves nearly black in every pose. It is right for what is on
+screen today and it will want a second look the moment the environment rig
+changes, because that is what decides whether the wall is legible at all.
 
 `Post` (`app/(landing)/post.js`) is bloom only, intensity 0.2, threshold 0.99. It
 is dynamically imported and phones never load it.
@@ -134,6 +141,26 @@ else first.
   to the reference's brightest *highlight* (`#f4eeda`) made the whole chamfer a
   solid white band with a haze around it. The white belongs where the edge
   catches the key, not in the tint.
+- **`UVGenerator` gets indices into the output triangle soup, not the contour.**
+  `generateSideWallUV(geometry, vertices, a, b, c, d)` looks like it should let
+  you recover which contour point you are on, and it does not: `f4` passes
+  offsets into the flat vertex array it is building, which has no relationship to
+  the outline's indexing. The parameterisation has to come from the *position*.
+- **Bevel layers are inset from the contour**, by up to `bevelSize` along the
+  miter, so their vertices are not contour points. Matching one to its nearest
+  contour point lands on a neighbour wherever `curveSegments` puts points closer
+  together than the bevel is wide, which is every rounded corner on this mark.
+  Projecting onto the polyline and taking the parameter along it is exact and
+  costs nothing at this scale.
+- **The wall spans `-bevelThickness` to `depth + bevelThickness`.**
+  `ExtrudeGeometry` hangs the bevel off both ends of the extrusion rather than
+  insetting it, so v has to be normalised against `depth + bevel * 2` and the
+  chamfers are the first and last few percent of it.
+- **Without a normal map, three derives the anisotropy tangent frame from
+  `vUv`.** `normal_fragment_begin` falls back to `getTangentFrame(..., vUv)` when
+  there is no `USE_NORMALMAP`, which means `anisotropyRotation` on the wall was
+  measured from whichever world axis `WorldUVGenerator` happened to pick. Fixing
+  the UVs is what makes a fixed rotation describe anything at all.
 - **Aggregate image statistics were repeatedly useless here.** Mean, peak and
   saturation barely moved between a broken render and a fixed one. Zooming into
   the surface at 2x or 3x found in seconds what histograms missed for several
