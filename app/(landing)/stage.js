@@ -368,8 +368,14 @@ export function GoldBevelMaterial(props) {
       // the space contourUVGenerator sets up, so the brushing follows the
       // outline instead of sampling arcs of a circle centred somewhere off the
       // edge of the shape.
+      //
+      // 0.6, down from 1.4. 1.4 was judged against a wall that was effectively
+      // unlit, where it was the difference between seeing the finish and seeing
+      // nothing; once the back wash gave the wall something to reflect the same
+      // number read as corrugation. Worth remembering for the faces too: bump
+      // amplitude can only be judged on a surface that is actually lit.
       bumpMap={wall}
-      bumpScale={1.4}
+      bumpScale={0.6}
       // A little anisotropy on the edge, and now without a map for the right
       // reason rather than as an approximation: u runs along the perimeter
       // everywhere on the wall, so the tangent three derives from the UVs is
@@ -478,6 +484,51 @@ export function GoldEnvironment({ frames = 1, resolution = 256, children }) {
         color="#c0905c"
         position={[4.5, -3, 3]}
         scale={[7, 7, 1]}
+      />
+
+      {/* The back wash, and the reason the mark reads as a solid rather than a
+          sheet.
+
+          Every source above sits in front of the mark, which is right for the
+          faces and leaves the walls with nothing at all. At metalness 1 a wall
+          reflects whatever lies along its mirror direction, and for a slab
+          turned only a little that direction is very nearly straight backwards
+          — the mark drifts about 0.26rad on its own, so at rest the walls were
+          mirroring empty space behind the scene. Measured on the diamond's edge:
+          the wall came out at luminance 12 against a background of 16. The side
+          of the object was darker than the backdrop it sat on, so the silhouette
+          had no thickness and the whole thing read flat at a glance.
+
+          Broad and well behind, because that mirror direction sweeps from
+          straight back towards the sides as the mark turns, and one panel
+          spanning the whole arc keeps the edge lit through the entire range
+          rather than lighting up at one angle. The smaller, brighter one off to
+          the left gives the band a gradient across it; a single source leaves
+          the wall one flat value, which reads as a printed outline.
+
+          Dim on purpose, and this is the number most worth arguing with: the
+          wall now measures 69 against a face at 122, a little under 60%. The
+          reference render sits nearer 22% — but that is what was already here,
+          and it is what "flat" looked like, because the reference is tilted hard
+          over with a wide wall and a floor under it while ours sits nearly
+          face-on. Raise or lower these two to move it.
+
+          The faces do not move: 122 with these off, 122 with them on. They are
+          nearly edge-on to a face, so a face gathers almost nothing from them
+          even at its wider cone. */}
+      <Lightformer
+        form="rect"
+        intensity={0.25}
+        color="#b59470"
+        position={[0, 0, -6.5]}
+        scale={[20, 14, 1]}
+      />
+      <Lightformer
+        form="rect"
+        intensity={0.5}
+        color="#e0b47a"
+        position={[-5, 1.5, -5]}
+        scale={[5, 8, 1]}
       />
 
       {children}

@@ -68,10 +68,10 @@ owner choose. The known candidates, in no order:
   should play once per session, with a short version on return visits and under
   `prefers-reduced-motion`, because a five second intro every time someone comes
   back for the pricing is a tax.
-- **The environment rig.** The last measurable gap against the reference: ours is
-  warmer and its faces are lit more evenly than ours. This is lighting, not
-  material. Worth knowing the sunrise rebuilds the lighting anyway, so doing both
-  means tuning it twice.
+- **The environment rig.** Partly done — see the back wash below — but ours is
+  still warmer than the reference and lights its faces less evenly. This is
+  lighting, not material. Worth knowing the sunrise rebuilds the lighting anyway,
+  so doing both means tuning it twice.
 - **The black sand background.** `Gold_Sand` in the brand file: black granular
   field with gold specks. Recommendation on record was procedural (a GPU point
   field in the scene, so it parallaxes against the mark and reacts to tilt)
@@ -106,10 +106,23 @@ desktop and 256 on a coarse pointer, with the wall map at a quarter of that
 across the depth. Nothing is fetched: the hero must never wait on a network round
 trip before it can draw.
 
-One number to revisit: the wall's `bumpScale` was judged against a wall that the
-current lighting leaves nearly black in every pose. It is right for what is on
-screen today and it will want a second look the moment the environment rig
-changes, because that is what decides whether the wall is legible at all.
+The environment gained a **back wash**: a broad dim warm panel at `z = -6.5` and
+a smaller brighter one off to the left. Without it the walls had nothing to
+reflect — at metalness 1 a wall mirrors along its own normal, and a slab turned
+only 0.26rad by the idle drift mirrors very nearly straight backwards, where
+nothing was. Measured on the diamond's edge, the wall came out at luminance 12
+against a background of 16: the side of the object was darker than the backdrop,
+so the mark had no thickness and read flat. It is 69 against a face of 122 now.
+
+The reference sits nearer 22% of its face rather than our 60%, and that is
+deliberate: 22% is roughly where this already was, and it is what looked flat,
+because the reference is tilted hard over with a wide wall and a floor under it
+while ours sits nearly face-on at rest. Those two intensities are the dial if the
+owner wants it further either way.
+
+The wall's `bumpScale` came down from 1.4 to 0.6 in the same pass. 1.4 was judged
+against a wall that was effectively unlit; once there was something to reflect,
+the same number read as corrugation.
 
 `Post` (`app/(landing)/post.js`) is bloom only, intensity 0.2, threshold 0.99. It
 is dynamically imported and phones never load it.
@@ -161,6 +174,20 @@ else first.
   there is no `USE_NORMALMAP`, which means `anisotropyRotation` on the wall was
   measured from whichever world axis `WorldUVGenerator` happened to pick. Fixing
   the UVs is what makes a fixed rotation describe anything at all.
+- **Pin the pose before measuring anything.** Three separate wrong readings came
+  from comparing shots at different angles. The idle float moves the mark about
+  60 screen pixels at 3x, so fixed sample coordinates land on a different
+  surface between runs; and after a hot reload the mark is still damping out of
+  its entrance pose for a second or two, which looks exactly like a lighting
+  change. `page.emulateMedia({ reducedMotion: "reduce" })` stops the drift and
+  the float while deliberately leaving pointer input driving, so the pose is
+  reproducible to the pixel. Verify by shooting the same frame twice.
+- **A repeated `mouse.move` to identical coordinates dispatches nothing**, so the
+  2200ms pointer-idle timeout expires and the mark wanders back to its drift.
+  Nudge by a pixel to hold it.
+- **Scan a line across the edge rather than sampling a point.** Wall, chamfer and
+  face are a few pixels apart; a point sample cannot tell you which one it hit,
+  and a luminance profile across the edge shows all three as plateaus.
 - **Aggregate image statistics were repeatedly useless here.** Mean, peak and
   saturation barely moved between a broken render and a fixed one. Zooming into
   the surface at 2x or 3x found in seconds what histograms missed for several
