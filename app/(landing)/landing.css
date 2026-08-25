@@ -59,7 +59,7 @@
      the sand is a flat field and all it can do is fade, which at full range
      turned the opening into a page-wide crossfade that out-shouted the object it
      was supposed to be behind. */
-  opacity: calc(0.1 + 0.9 * var(--dawn, 1));
+  opacity: calc(var(--sand-floor, 0.1) + (1 - var(--sand-floor, 0.1)) * var(--dawn, 1));
   /* Only the transform is animated, and only from a rAF, so this stays on the
      compositor rather than repainting six million pixels per scroll event. */
   will-change: transform;
@@ -506,4 +506,90 @@ a.ln-card-media:hover {
   .ln-sand {
     aspect-ratio: 16 / 10;
   }
+}
+
+/* ---------- the variant switch ----------
+ *
+ * A dev tool. See variant-switch.js; it comes out before launch along with
+ * sunrise-variants.js.
+ *
+ * Deliberately hard to find and easy to reach: a small target in the corner the
+ * masthead already occupies, invisible until hovered or tabbed to. z-index above
+ * the grain overlay, which is the topmost thing on the page at 4. */
+.ln-variants {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  padding: 0.5rem;
+  font-size: var(--type-micro);
+}
+
+.ln-variants-tab {
+  display: block;
+  width: 4.5rem;
+  height: 2.5rem;
+  opacity: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-dark-silver);
+  transition: opacity 160ms ease;
+}
+
+.ln-variants:hover .ln-variants-tab,
+.ln-variants:focus-within .ln-variants-tab {
+  opacity: 0.5;
+}
+
+.ln-variants-menu {
+  display: none;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 15rem;
+  padding: 0.4rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--color-eerie-gray);
+  /* Opaque, because it sits over a moving 3D object and a translucent panel
+     over that is unreadable. */
+  background: var(--color-obsidian-black);
+}
+
+.ln-variants:hover .ln-variants-menu,
+.ln-variants:focus-within .ln-variants-menu {
+  display: flex;
+}
+
+.ln-variants-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--color-dark-silver);
+  cursor: pointer;
+}
+
+.ln-variants-option:hover {
+  border-color: var(--color-eerie-gray);
+  color: var(--color-snow-white);
+}
+
+.ln-variants-option.is-current {
+  border-color: color-mix(in srgb, var(--color-vulcan-gold) 55%, transparent);
+  color: var(--color-vulcan-gold);
+}
+
+.ln-variants-name {
+  display: block;
+  font-weight: 500;
+}
+
+.ln-variants-note {
+  display: block;
+  margin-top: 0.15rem;
+  line-height: 1.4;
+  opacity: 0.7;
 }

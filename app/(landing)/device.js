@@ -170,6 +170,6 @@ export const SUNRISE_FULL_SECONDS = 5.6;
 // actually about.
 export const SUNRISE_SHORT_SECONDS = 2;
 
-export function sunriseSeconds() {
-  return prefersReducedMotion() ? SUNRISE_SHORT_SECONDS : SUNRISE_FULL_SECONDS;
+export function sunriseSeconds(fullSeconds = SUNRISE_FULL_SECONDS) {
+  return prefersReducedMotion() ? SUNRISE_SHORT_SECONDS : fullSeconds;
 }

@@ -47,6 +47,29 @@ what actually happened to each item, including the parts that were undone.
 | 4a Second mark | Done, desktop only. |
 | 4b The two OR decisions | Taken. See below. |
 
+### Two variants, and a switch to compare them
+
+`app/(landing)/sunrise-variants.js` holds both: **soft**, which is the version
+approved at `8ec14aa` (gentler sky, a point light, the full-amplitude finish), and
+**drastic**, which came out of aiming at the Robinhood card page (darker room, a
+rectAreaLight blade, sharper curve, flatter finish). They differ in duration,
+starting floor, sky tilt, easing, light type and shape, sand floor, and face bump
+and anisotropy.
+
+Hover the top-left corner of the hero for the menu, or use `?v=soft` / `?v=drastic`,
+which is remembered and is shareable as a link. Switching reloads, because the two
+differ in which light element exists in the scene and in material values built
+inside a `useMemo`.
+
+**This is a dev tool and it must not survive launch.** It is deliberately not
+gated on `NODE_ENV`, because the place it most needs to work is a Netlify deploy
+preview, which is a production build. Delete `sunrise-variants.js`,
+`variant-switch.js`, the `.ln-variants` rules, and the `V.` lookups in `solid.js`,
+`stage.js` and `sand.js`, then inline whichever one won.
+
+The ring pitch is deliberately **not** varied. That was a sampling bug, and a bug
+does not get a variant; both drive the same fixed generator.
+
 ### The sunrise plays on every load
 
 It used to be once a session, on the argument that a three second overture is a

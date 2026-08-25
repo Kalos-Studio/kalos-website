@@ -5,6 +5,7 @@ import CallToAction from "./cta";
 import Reveal from "./reveal";
 import Sand from "./sand";
 import MarkSlot from "./mark-slot";
+import VariantSwitch from "./variant-switch";
 import { caseStudies } from "../work/data";
 import { featuredWork, finalCta, story } from "./content";
 import "./landing.css";
@@ -52,6 +53,8 @@ export default function Landing() {
   return (
     <main className="landing-root">
       <Sand />
+      {/* Dev only, and it comes out before launch. See variant-switch.js. */}
+      <VariantSwitch />
       <Hero />
 
       {/* The word. In the mock this is the first thing under the hero and the

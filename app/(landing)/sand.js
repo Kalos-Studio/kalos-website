@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { isCoarsePointer, prefersReducedMotion } from "./device";
+import { activeVariant } from "./sunrise-variants";
 
 /**
  * The black sand the page sits on, generated rather than tiled.
@@ -172,6 +173,9 @@ export default function Sand() {
     const dpr = Math.min(window.devicePixelRatio || 1, isCoarsePointer() ? 1.5 : 2);
     const scroller = el.closest(".landing-root");
     const still = prefersReducedMotion();
+    // How dark the field goes at the bottom of the sunrise. See
+    // sunrise-variants.js; the CSS reads it as --sand-floor.
+    document.documentElement.style.setProperty("--sand-floor", String(activeVariant().sandFloor));
 
     let travel = 0;
 

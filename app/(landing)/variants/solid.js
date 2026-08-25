@@ -18,6 +18,7 @@ import {
   pointerLive,
   usePointer,
 } from "../stage";
+import { activeVariant } from "../sunrise-variants";
 import {
   getTilt,
   isCoarsePointer,
@@ -50,26 +51,14 @@ const Post = dynamic(() => import("../post"), { ssr: false });
  * frame for the whole intro, on the frames where a phone is already busiest.
  * Moving one light costs nothing and looks like more.
  */
-// 0.22. Pure black was tried and is wrong: the mark has to be in the room before
-// the light finds it, or the first second reads as a page that has not loaded
-// rather than as a dark room. There is a difference between an object you cannot
-// see yet and an object that is not there.
-const SUNRISE_START = 0.22;
 
 // How much of the sunrise the sun itself occupies. The rest is the sky alone,
 // which is what keeps something changing all the way to the end.
 const SUN_OVER = 0.62;
 
-// How far the sky is tipped over at the start, in radians. Large on purpose: the
-// environment's bright sources sit high and in front, so this has to swing them
-// well below the mark for there to be anywhere for the light to rise from.
-// 1.0, arrived at by measuring rather than by taste. 2.4 was tried first and the
-// mark came out brighter a third of the way through than at half: the environment
-// is hand-built from a handful of lightformers with dark gaps between them, and a
-// long swing drags the reflection straight through a gap. Measured mean luminance
-// at 1.7 still dipped 107, 50, 104 across the middle. At 1.0 the sweep stays
-// inside the lit part of the sky and the ramp climbs the whole way.
-const SKY_TILT = 1.0;
+// Read once. See sunrise-variants.js — this is a dev switch, not a feature.
+const V = activeVariant();
+
 
 // What stage.js sets on the faces, and what the sunrise ramps back up to.
 
@@ -77,8 +66,13 @@ function applySunrise(scene, sun, t) {
   // Ease-in-out cubic rather than smoothstep. Sharper through the middle, which
   // is what makes this read as a sweep rather than a fade: the sky is nearly
   // still for the first third, crosses fast, then settles.
-  const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  const lift = SUNRISE_START + (1 - SUNRISE_START) * eased;
+  const eased =
+    V.ease === "sharp"
+      ? t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2
+      : t * t * (3 - 2 * t);
+  const lift = V.start + (1 - V.start) * eased;
 
   // The sun finishes before the sky does, on its own copy of the same curve, so
   // it clears the mark and goes out while the environment is still filling in.
@@ -98,7 +92,7 @@ function applySunrise(scene, sun, t) {
   // Cheap, and the reason this is possible: scene.environmentRotation is applied
   // at draw time to materials with no envMap of their own, which is exactly these
   // two. Nothing is re-baked.
-  scene.environmentRotation.x = -SKY_TILT * (1 - eased);
+  scene.environmentRotation.x = -V.tilt * (1 - eased);
   scene.environmentIntensity = lift;
 
   // And the world the object is standing in. The sand is a 2D canvas outside the
@@ -116,11 +110,20 @@ function applySunrise(scene, sun, t) {
   // It rises and holds rather than pulsing. A sine peaks in the middle of its
   // window and falls through exactly the stretch where the sky is still climbing,
   // so the two cancelled and the mark measured 110, 95, 92 across the middle.
-  const bladeRise = Math.min(1, sunEased * 2.2);
-  const bladeFade = t > 0.82 ? Math.max(0, 1 - (t - 0.82) / 0.18) : 1;
-  sun.position.set(-1.8, -4.2 + sunEased * 9, 5.4);
-  sun.lookAt(0, 0, 0);
-  sun.intensity = bladeRise * bladeFade * 4.2;
+  if (V.light === "blade") {
+    sun.position.set(-1.8, -4.2 + sunEased * 9, 5.4);
+    sun.lookAt(0, 0, 0);
+  } else {
+    sun.position.set(-2.2, -3.4 + sunEased * 8, 3.6);
+  }
+
+  if (V.lightShape === "hold") {
+    const rise = Math.min(1, sunEased * 2.2);
+    const fade = t > 0.82 ? Math.max(0, 1 - (t - 0.82) / 0.18) : 1;
+    sun.intensity = rise * fade * V.lightIntensity;
+  } else {
+    sun.intensity = Math.sin(Math.PI * sunEased) * V.lightIntensity;
+  }
 
   // The finish is deliberately not ramped here any more.
   //
@@ -200,7 +203,7 @@ function Lockup({ still, started, onLit, onDocked }) {
 
   const sunrise = useRef({ elapsed: 0, seconds: 0, done: false, pinned: null });
   if (sunrise.current.seconds === 0) {
-    sunrise.current.seconds = sunriseSeconds();
+    sunrise.current.seconds = sunriseSeconds(V.seconds);
     // ?dawn=0.4 pins the sunrise at a point instead of playing it, the same
     // affordance ?hint=1 gives the gyroscope prompt. Judging a three second
     // entrance from screenshots is otherwise a fight with shutter latency: the
@@ -387,14 +390,18 @@ function Lockup({ still, started, onLit, onDocked }) {
       {/* The sun, as a blade rather than a point. Starts under the mark and dark,
           and is switched off entirely once it has passed over: leaving it in the
           scene at zero intensity still costs a light slot in every compile. */}
-      <rectAreaLight
-        ref={sun}
-        intensity={0}
-        color="#ffe6bd"
-        width={1.6}
-        height={8}
-        position={[-1.8, -4.2, 5.4]}
-      />
+      {V.light === "blade" ? (
+        <rectAreaLight
+          ref={sun}
+          intensity={0}
+          color="#ffe6bd"
+          width={1.6}
+          height={8}
+          position={[-1.8, -4.2, 5.4]}
+        />
+      ) : (
+        <directionalLight ref={sun} intensity={0} color="#ffdca8" position={[-2.2, -3.4, 3.6]} />
+      )}
       <group ref={inner} scale={[scale, -scale, scale]}>
         {/* Two materials, in the order ExtrudeGeometry declares its groups:
             0 is the flat caps, 1 is the side walls and the bevel. */}

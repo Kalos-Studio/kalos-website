@@ -5,6 +5,10 @@ import * as THREE from "three";
 import { Environment, Lightformer } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { isCoarsePointer } from "./device";
+import { activeVariant } from "./sunrise-variants";
+
+// Read once. See sunrise-variants.js — a dev switch, not a feature.
+const V = activeVariant();
 
 export const GOLD = "#cba75f";
 
@@ -376,9 +380,9 @@ export function GoldFaceMaterial(props) {
       // The owner's judgement on the flatter surface was "a tad flatter, but
       // thats alright" — so the amplitude is where the give is.
       bumpMap={bump}
-      bumpScale={1.5}
+      bumpScale={V.faceBump}
       anisotropyMap={anisotropy}
-      anisotropy={0.42}
+      anisotropy={V.faceAnisotropy}
       // The mark is mirrored on Y to convert SVG's y-down space to three's y-up.
       // A mirror inverts winding, so backface culling would eat the front faces;
       // DoubleSide keeps them and lets the shader flip normals per-face instead.
