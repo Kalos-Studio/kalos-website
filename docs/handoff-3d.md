@@ -1,17 +1,29 @@
 # Handoff: the 3D mark
 
-Working notes for continuing the hero work in a fresh session. Written 2026-08-24.
+Working notes for continuing the hero work in a fresh session. Written
+2026-08-24, last updated 2026-08-25.
 
 ---
 
 ## Where things are
 
-Repo `/Users/omar.anees/Projects/kalos-website`, branch `new-landing-page`, all
-committed and pushed. Draft PR #4.
+Repo `/Users/omar.anees/Projects/kalos-website`, branch `new-landing-page`, tree
+clean and pushed at `52d81f4`. Draft PR #4. There is a second worktree at
+`../kalos-website-page` on `new-page`, cut from `origin/main` for unrelated work;
+nothing here depends on it.
 
 The two jobs below are **done** — the side walls are brushed along the outline
-and the bevel is a narrow chamfer. What is left is the list under **Then stop
-and ask**, which is the owner's to choose from.
+and the bevel is a narrow chamfer — and so is a third that came out of the owner
+looking at them: the walls are lit. What is left is the list under **Now stop and
+ask**, which is the owner's to choose from.
+
+### One question outstanding
+
+The owner has not yet said whether the wall brightness is right. It sits at about
+60% of the face's luminance; the reference render is nearer 22%, but 22% is
+roughly where this already was and it is what the owner called flat. The dial is
+the two `intensity` values on the back wash in `stage.js`, and the reasoning is
+written beside them. Do not treat 60% as settled.
 
 Run it: `NODE_OPTIONS= bun run dev`. Clearing `NODE_OPTIONS` is required, the dev
 server dies on a stale preload otherwise. `bun run lint`, `bun run lint:copy` and

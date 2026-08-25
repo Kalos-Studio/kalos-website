@@ -248,6 +248,36 @@ behaviour is visual, so drive a real browser instead of assuming:
 chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" })
 ```
 
+That path is the sandbox's. On the owner's Mac there is no `/opt/pw-browsers`:
+drive the real Chrome at
+`/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`, with
+`playwright-core` from `~/.cache/kalos-tools/node_modules`. Worth the check,
+because it is a real GPU there and SwiftShader in the sandbox, and the hero looks
+materially different on the two.
+
+**Pin the mark's pose before measuring anything about it.** Three separate
+confident, wrong readings this session came from comparing shots taken at
+different angles rather than under different code:
+
+- The idle float moves the mark about 60 screen pixels at 3x device scale, so a
+  fixed sample coordinate lands on the wall in one run and the face in the next.
+- After a hot reload the mark spends a second or two damping out of its entrance
+  pose, which looks exactly like the change you just made having done something.
+- A repeated `mouse.move` to *identical* coordinates dispatches no event, so the
+  2200ms pointer-idle timeout expires and the mark wanders back to its drift
+  mid-measurement. Nudge by a pixel to hold it.
+
+`page.emulateMedia({ reducedMotion: "reduce" })` fixes the first two: `still`
+stops the drift and the float while deliberately leaving pointer input driving,
+so the pose is reproducible to the pixel. Shoot the same frame twice and diff
+before trusting any number.
+
+**Scan a line across an edge rather than sampling a point.** Wall, chamfer and
+face are a few pixels apart on this mark, and a point sample cannot tell you
+which of the three it hit. A luminance profile across the edge shows all three as
+plateaus, and that is what turned "the sides look too dark" into "the wall is at
+12 against a background of 16".
+
 - Prefer **computed styles and bounding boxes** over screenshot diffing. The hero
   renders live, so no two frames ever match byte-for-byte — a size comparison
   proves nothing.
