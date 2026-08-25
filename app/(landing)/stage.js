@@ -364,10 +364,21 @@ export function GoldFaceMaterial(props) {
       // 8 was legible and overdone, 0.55 was invisible. Worth knowing the range
       // is this wide: bumpScale is a derivative multiplier, so a groove one
       // texel across needs a far larger number than a broad dent would.
+      // 1.5, down from 2.4 and originally 4.5. The settled state reads fine at
+      // 2.4; the dim, grazing phase of the sunrise does not. A light at a shallow
+      // angle exaggerates normal perturbation enormously, so what is a soft
+      // turning at full light becomes a smeared ripple when the sky is tipped
+      // over and dark, and the ripples are the widest thing on the object.
+      //
+      // Lowered rather than ramped. Ramping the finish during the reveal was
+      // tried and rejected: it made the opening look like plastic and left the
+      // settled state unchanged, which was fixing the symptom at the wrong end.
+      // The owner's judgement on the flatter surface was "a tad flatter, but
+      // thats alright" — so the amplitude is where the give is.
       bumpMap={bump}
-      bumpScale={2.4}
+      bumpScale={1.5}
       anisotropyMap={anisotropy}
-      anisotropy={0.55}
+      anisotropy={0.42}
       // The mark is mirrored on Y to convert SVG's y-down space to three's y-up.
       // A mirror inverts winding, so backface culling would eat the front faces;
       // DoubleSide keeps them and lets the shader flip normals per-face instead.

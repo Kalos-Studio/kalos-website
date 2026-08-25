@@ -68,7 +68,15 @@ radius — and the mark renders at roughly one texel per screen pixel. A pattern
 the pixel grid's own frequency cannot be drawn; it beats against it, and what you
 see is concentric moiré. `RING_PITCH` in `stage.js` puts four texels to a groove
 and interpolates between profile samples instead of stepping. `bumpScale` came
-down 4.5 to 2.4 and `anisotropy` 0.85 to 0.55 to suit the wider grooves.
+down 4.5 to 2.4 and then to 1.5, and `anisotropy` 0.85 to 0.42.
+
+That last reduction is a deliberate trade rather than a fix. The settled state was
+fine at 2.4; the dim, grazing phase of the sunrise was not, because a light at a
+shallow angle exaggerates normal perturbation enormously and a soft turning
+becomes a smeared ripple. Lowering the amplitude was chosen over ramping the
+finish during the reveal, which had already been tried and rejected for making
+the opening look like plastic. The surface is meaningfully flatter than it
+started; the owner's call on that was "a tad flatter, but thats alright".
 
 Two dead ends worth not repeating, both of which treated the symptom. Ramping
 `bumpScale` down during the reveal did not fix it, because the anisotropy map is
