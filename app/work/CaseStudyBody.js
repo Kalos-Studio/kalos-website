@@ -20,6 +20,17 @@ function renderBlock(block, key) {
       );
     case "paragraph":
       return <p key={key}>{block.text}</p>;
+    case "quote":
+      // A client saying it is worth more than us saying it, so this is set to
+      // interrupt rather than to decorate: larger than the body, off the prose
+      // measure, and attributed to a named person with their title. An
+      // unattributed pull quote is just our own copy in bigger type.
+      return (
+        <figure className="work-case-quote" key={key}>
+          <blockquote>{block.text}</blockquote>
+          {block.attribution && <figcaption>{block.attribution}</figcaption>}
+        </figure>
+      );
     case "list":
       return (
         <ul key={key}>

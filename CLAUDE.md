@@ -299,10 +299,13 @@ plateaus, and that is what turned "the sides look too dark" into "the wall is at
   was whether that edge was white or gold. A 2–3× crop of the actual surface
   found in seconds what histograms missed for several rounds. Some problems are
   only visible at the size they are wrong.
-- For before/after work, build each side cleanly. Starting a server and then
-  rebuilding underneath it serves a `.next` whose hashed CSS no longer exists,
-  and the page comes back **unstyled** — which looks like a catastrophic
-  regression and is purely an artifact.
+- **Never run `bun run build` while `bun run dev` is up.** They share `.next`,
+  and the production build overwrites what the dev server has open. The mild
+  version is a page that comes back unstyled, because its hashed CSS no longer
+  exists. The severe version is every route 500ing on `MODULE_NOT_FOUND` for
+  `.next/server/pages/_document.js`, which reads exactly like the change you
+  just made broke the app. Stop the dev server, build, restart it. For
+  before/after comparisons, build each side cleanly for the same reason.
 - Throttle when judging load behaviour: CDP `Network.emulateNetworkConditions`
   plus `Emulation.setCPUThrottlingRate`.
 - **Headless here has no GPU** — WebGL runs through SwiftShader, a CPU

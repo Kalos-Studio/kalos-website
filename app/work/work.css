@@ -369,6 +369,37 @@
   max-width: 40rem;
 }
 
+/* A client testimonial, set to interrupt the read rather than sit inside it.
+   Wider than the 40rem prose measure on purpose: the quote is the one thing on
+   the page the studio did not write, and pulling it out of the column is what
+   says so. The rule is Vulcan Gold because the palette gives gold to accents
+   and this is the page's one accent. */
+.work-case-quote {
+  margin: 2.5rem 0 1rem;
+  max-width: 46rem;
+  border-left: 2px solid var(--color-vulcan-gold);
+  padding-left: clamp(1.25rem, 4vw, 2rem);
+}
+
+.work-case-quote blockquote {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+/* The name matters more than the quote does, so it is not whispered. Dark
+   Silver is the palette's one secondary text value. */
+.work-case-quote figcaption {
+  margin-top: 0.85rem;
+  font-size: 0.9375rem;
+  letter-spacing: -0.02em;
+  color: var(--color-dark-silver);
+}
+
 .work-case-body h2 {
   color: #fff;
   font-size: 1.4rem;
