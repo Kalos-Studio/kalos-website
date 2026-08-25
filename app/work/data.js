@@ -48,10 +48,14 @@
 //   ],
 // }
 
-// Shared metadata bits — every /work page is noindex'd and follows the same
-// "<title> — Kalos" convention, so this stays in one place instead of being
-// re-typed at each page's export const metadata / generateMetadata.
-export const WORK_ROBOTS = { index: false, follow: false };
+// Shared metadata bit — every /work page follows the same "<title> — Kalos"
+// convention, so this stays in one place instead of being re-typed at each
+// page's export const metadata / generateMetadata.
+//
+// WORK_ROBOTS went with the password gate. The section was noindex'd because it
+// was unlisted, and it is neither now: the homepage sends people here, so
+// keeping it out of search results would only mean the work is findable by
+// anyone we hand the link to and nobody else.
 
 export function workPageTitle(title) {
   return `${title} — Kalos`;

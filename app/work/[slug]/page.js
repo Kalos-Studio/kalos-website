@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CoverImage from "../CoverImage";
 import CaseStudyBody from "../CaseStudyBody";
-import { WORK_ROBOTS, caseStudies, workPageTitle } from "../data";
+import { caseStudies, workPageTitle } from "../data";
 
 function getCaseStudy(slug) {
   return caseStudies.find((c) => c.slug === slug);
@@ -16,10 +16,12 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const cs = getCaseStudy(slug);
   if (!cs) return {};
+  // Next replaces metadata keys rather than deep-merging them, so anything this
+  // object names is the whole value for that key. `robots` is deliberately absent
+  // now that the section is public, which hands the root layout's default back.
   return {
     title: workPageTitle(cs.title),
     description: cs.summary,
-    robots: WORK_ROBOTS,
   };
 }
 

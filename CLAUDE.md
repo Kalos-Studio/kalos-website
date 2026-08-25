@@ -314,12 +314,15 @@ plateaus, and that is what turned "the sides look too dark" into "the wall is at
 
 Infrastructure facts that are invisible until they cost an hour.
 
-- **Everything under `/work` is behind the password gate, including its static
-  images.** `middleware.js` matches `/work/:path*`, so a case study cover 307s to
-  the login page for anyone not signed in, and Next's image optimizer fails on
-  the HTML it gets back. They render on `/work` only because you are already
-  authenticated. Any `/work` image needed on a public page must be copied to
-  `public/` — the three featured covers live in `public/home/`.
+- **`/work` used to be behind a password gate and is not any more.** Worth
+  knowing because the shape of the code still remembers it. `middleware.js`
+  matched `/work/:path*` including the static images, so a cover 307'd to the
+  login page, Next's image optimizer got HTML back instead of a JPEG, and two
+  workarounds grew out of that: `unoptimized` on every `/work` image, and three
+  featured covers duplicated into `public/home/`. Both are gone with the gate,
+  along with `lib/work-auth.js`, `/work/login` and the section's `noindex`. If
+  you find something in this codebase copying a file into `public/` to dodge
+  middleware, that is the fossil.
 - **Next merges metadata by replacing whole keys, not deep merging.** A nested
   layout declaring `twitter: { title, description }` drops the root layout's
   `card: "summary_large_image"` and silently falls back to `summary`, which

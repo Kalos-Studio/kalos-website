@@ -1,11 +1,10 @@
 import "./work.css";
-import { WORK_ROBOTS, workPageTitle } from "./data";
+import { workPageTitle } from "./data";
 
-// Applies to every /work route, including the login page. This whole section
-// is deliberately kept out of search results — it's unlisted, not indexed.
+// Applies to every /work route. No `robots` here any more: the section was
+// noindex'd while it sat behind a password, and it is public now.
 export const metadata = {
   title: workPageTitle("Work"),
-  robots: WORK_ROBOTS,
 };
 
 export default function WorkLayout({ children }) {

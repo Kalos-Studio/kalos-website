@@ -21,18 +21,18 @@ export default function CoverImage({
 
   return (
     <div className={className}>
-      {/* unoptimized: Next's image optimizer fetches local images via an
-          internal HTTP request that doesn't carry the visitor's cookies, and
-          everything under /work — including its image files — sits behind
-          the password-gate middleware. Skipping optimization means the
-          browser requests the file directly (with its own cookie) instead. */}
+      {/* `unoptimized` used to be here and is gone with the password gate. The
+          optimizer fetches local images through an internal HTTP request that
+          carries no cookies, so while middleware gated /work the optimizer got
+          the login page's HTML instead of a JPEG and the build failed on it.
+          Nothing gates these files now, so they go through the optimizer like
+          every other image on the site. */}
       <Image
         src={cover.src}
         alt={cover.alt || ""}
         fill
         sizes={sizes || "(min-width: 860px) 860px, 100vw"}
         priority={priority}
-        unoptimized
         style={objectPosition ? { objectPosition } : undefined}
       />
       {/* Optional overlay content (e.g. a caption) — rendered inside the

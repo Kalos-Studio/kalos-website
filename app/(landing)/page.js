@@ -58,7 +58,6 @@ function featured() {
       return {
         ...study,
         blurb: featuredWork.blurbs[slug],
-        publicCover: `/home/${slug}.webp`,
       };
     })
     .filter(Boolean);
@@ -138,7 +137,7 @@ export default function Landing() {
           <article className="ln-work-lead mt-9">
             <div className="ln-card-media">
               <Image
-                src={lead.publicCover}
+                src={lead.cover.src}
                 alt={lead.cover?.alt ?? lead.title}
                 width={1200}
                 height={750}
@@ -159,7 +158,7 @@ export default function Landing() {
               <article key={study.slug}>
                 <div className="ln-card-media">
                   <Image
-                    src={study.publicCover}
+                    src={study.cover.src}
                     alt={study.cover?.alt ?? study.title}
                     width={1200}
                     height={750}
