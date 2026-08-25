@@ -3,7 +3,10 @@
   height: 100dvh;
   width: 100%;
   overflow: hidden;
-  background: var(--color-obsidian-black);
+  /* No background. It used to paint the page ground, which was correct while the
+     ground was flat; the sand is behind the whole page now and an opaque hero
+     would be a black rectangle sitting on top of it. The warm radial in ::before
+     and the vignette in ::after both stay, and both are translucent. */
   display: block;
   /* `pan-y`, not `none`.
    *

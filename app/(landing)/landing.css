@@ -27,6 +27,25 @@
    * It goes here rather than on html because html does not scroll on this page
    * — see the note above about the fixed-viewport holdover. */
   scroll-snap-type: y proximity;
+  /* The sand sits at z-index -1, which paints above this element's own
+     background and below everything in flow — but only if this element is a
+     stacking context. Without `isolate` the negative child escapes into the root
+     context and disappears behind the page ground. */
+  isolation: isolate;
+}
+
+/* The generated black sand. Fixed, viewport sized, and taller than the viewport
+   by the parallax travel so there is always something under the visible area.
+   See sand.js for why it is generated rather than tiled. */
+.ln-sand-field {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  z-index: -1;
+  pointer-events: none;
+  /* Only the transform is animated, and only from a rAF, so this stays on the
+     compositor rather than repainting six million pixels per scroll event. */
+  will-change: transform;
 }
 
 /* There used to be a `.landing-root :where(h1, h2, h3, p, ...)` reset here,

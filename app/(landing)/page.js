@@ -3,6 +3,7 @@ import Link from "next/link";
 import Hero from "./hero";
 import CallToAction from "./cta";
 import Reveal from "./reveal";
+import Sand from "./sand";
 import { caseStudies } from "../work/data";
 import {
   featuredWork,
@@ -69,6 +70,7 @@ export default function Landing() {
 
   return (
     <main className="landing-root">
+      <Sand />
       <Hero />
 
       {/* Proof directly under the hero, before any argument. Someone deciding
