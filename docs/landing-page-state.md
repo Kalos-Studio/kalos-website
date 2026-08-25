@@ -62,6 +62,13 @@ asking.**
 It runs 4.6s. Reduced motion gets a shortened 2s rather than none, because
 cutting straight to the lit state reads as an animation that failed.
 
+**Two independent sources of the ringing, and the second is the one that
+mattered.** The anisotropy map stores a per-texel tangent direction that rotates
+around the mark's centre, and anisotropy stretches the specular lobe along it, so
+under a hard light the stretch itself draws concentric streaks. `bumpScale` has
+no influence over that at all, which is why ramping it alone did not fix
+anything. Both ride the same `finish` factor now.
+
 **A hard raking light and this finish do not coexist.** The faces carry a bump map
 at `bumpScale: 4.5`, tuned so grooves about a texel wide read under the
 environment. Under a bright direct light at a grazing angle each groove's normal

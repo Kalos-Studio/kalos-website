@@ -50,10 +50,11 @@ const Post = dynamic(() => import("../post"), { ssr: false });
  * frame for the whole intro, on the frames where a phone is already busiest.
  * Moving one light costs nothing and looks like more.
  */
-// Pure black. The soft version held a floor at 0.06 so the mark was always a
-// faint object in the room; this one starts with nothing there at all, and the
-// first thing that exists is the light hitting it.
-const SUNRISE_START = 0;
+// 0.22. Pure black was tried and is wrong: the mark has to be in the room before
+// the light finds it, or the first second reads as a page that has not loaded
+// rather than as a dark room. There is a difference between an object you cannot
+// see yet and an object that is not there.
+const SUNRISE_START = 0.22;
 
 // How much of the sunrise the sun itself occupies. The rest is the sky alone,
 // which is what keeps something changing all the way to the end.
@@ -72,6 +73,7 @@ const SKY_TILT = 1.0;
 
 // What stage.js sets on the faces, and what the sunrise ramps back up to.
 const FACE_BUMP = 4.5;
+const FACE_ANISOTROPY = 0.85;
 
 function applySunrise(group, scene, sun, t) {
   // Smoothstep, slow at both ends.
@@ -190,18 +192,33 @@ function applySunrise(group, scene, sun, t) {
   // alias into concentric moiré. There is no intensity at which a hard raking
   // light and this finish coexist: measured, it was still ringing at 4.2 after
   // starting at 26. Detail the lighting cannot represent should not be asked for.
+  // Squared against the blade rather than scaled linearly by it. Linearly, the
+  // finish was already half back while the blade was still at half strength, and
+  // the handover window became the worst ringing on the whole animation — a
+  // texture visibly snapping on under a light still hard enough to alias it.
+  // Squaring holds the grooves down until the blade has actually left.
+  const away = 1 - blade;
+  const finish = away * away * (0.16 + 0.84 * eased);
   group.traverse((child) => {
     if (!child.isMesh) return;
     const materials = Array.isArray(child.material) ? child.material : [child.material];
     // Group 0 only. The walls' map is a straight run of grooves along the
     // outline, which does not ring.
-    // Two terms. The blade one is above. The second is the sunrise generally:
-    // early on the sky is tipped hard over and dim, which grazes the faces just
-    // as badly as the blade does, so at 0.1 the mark was still ringing with the
-    // blade at only 15%. The finish resolving as the light arrives is also
-    // simply true — you cannot see machining in the dark.
+    // Anisotropy as well as bump, and the anisotropy is the one that mattered.
+    //
+    // Ramping bumpScale alone did not fix the ringing: measured at a close crop,
+    // the faces were still drawing concentric streaks at 0.15, 0.3 and 0.5 with
+    // the bump at effectively zero. The anisotropy map is a second, independent
+    // source of the same artefact — it stores a per-texel tangent direction that
+    // rotates around the mark's centre, and anisotropy stretches the specular
+    // lobe along it, so under a hard light the stretch itself draws the rings.
+    // bumpScale has no influence over that at all.
+    //
+    // Both now ride the same factor: how harsh the light is, and how far into the
+    // sunrise we are.
     if (materials[0]) {
-      materials[0].bumpScale = FACE_BUMP * (1 - 0.82 * blade) * (0.16 + 0.84 * eased);
+      materials[0].bumpScale = FACE_BUMP * finish;
+      materials[0].anisotropy = FACE_ANISOTROPY * finish;
     }
   });
   // The sun itself. Climbs from below the mark to above it, brightest halfway up
