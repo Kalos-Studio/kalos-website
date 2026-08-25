@@ -15,6 +15,18 @@
   background: var(--color-obsidian-black);
   color: var(--color-snow-white);
   line-height: 1.5;
+  /* "Scroll stopping on titles", from the mock's own annotation.
+   *
+   * Proximity, never mandatory. Mandatory snap takes the scroll away from the
+   * reader: on a page whose longest section is 1261px against a 900px viewport,
+   * it means content taller than the screen cannot be stopped inside, and a
+   * trackpad flick that should travel half a page instead lands on a boundary
+   * the reader did not choose. Proximity only pulls when you have already
+   * stopped near one, which is the behaviour the note is asking for.
+   *
+   * It goes here rather than on html because html does not scroll on this page
+   * — see the note above about the fixed-viewport holdover. */
+  scroll-snap-type: y proximity;
 }
 
 /* There used to be a `.landing-root :where(h1, h2, h3, p, ...)` reset here,
@@ -37,6 +49,22 @@
    read as "wordy" rather than the words themselves, which measure at grade 5. */
 .ln-section {
   padding-block: clamp(3.25rem, 7vw, 5.5rem);
+}
+
+/* The snap points. Section start rather than the heading element itself: a
+   section leads with its own padding, so aligning the box puts the heading a
+   comfortable distance down the screen instead of jammed against the top edge.
+ *
+ * The hero is deliberately not one. It was, and it measured badly: Chrome's
+ * proximity threshold is around half a viewport, the hero is exactly one
+ * viewport, so any scroll shorter than about 450px sat inside that threshold
+ * and got pulled back to 0. A reader nudging the page to see what is below it
+ * was returned to where they started. Leaving it out makes the first snap point
+ * the proof strip, far enough down that a short scroll is simply a short
+ * scroll — and it is truer to the note, which asks for stopping on titles, and
+ * the hero has no title. */
+.ln-section {
+  scroll-snap-align: start;
 }
 
 .ln-shell {
