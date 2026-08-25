@@ -47,6 +47,16 @@ what actually happened to each item, including the parts that were undone.
 | 4a Second mark | Done, desktop only. |
 | 4b The two OR decisions | Taken. See below. |
 
+### How to actually see the sunrise
+
+`http://localhost:3000/?sunrise=1` forces the full one. Without it you will
+almost never see it: `sessionStorage` survives a reload, so from your second load
+in a tab onward you get the short version, and everybody working on the page is a
+return visitor by definition. The short version is 1.6s (it was 0.9s, which
+measured as a ramp finishing inside 870ms — not a short sunrise, a flicker).
+
+`?dawn=0.4` pins it at a point instead of playing it, for judging a single frame.
+
 ### The one thing that was genuinely missed
 
 **The sunrise did not reach the background.** The mark rose out of darkness while

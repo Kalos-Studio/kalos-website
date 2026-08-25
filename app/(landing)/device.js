@@ -157,9 +157,31 @@ export function getTilt() {
 // should not.
 const SUNRISE_SEEN_KEY = "kalos:sunrise";
 export const SUNRISE_FULL_SECONDS = 3.4;
-export const SUNRISE_SHORT_SECONDS = 0.9;
+// 1.6, up from 0.9. Measured, 0.9 puts the whole ramp inside about 870ms, which
+// is not a short version of a sunrise, it is a flicker: by the time you have
+// registered that something is happening it has finished. The point of a short
+// version is that a return visit still shows the page arriving rather than
+// snapping on, and that needs long enough to read.
+export const SUNRISE_SHORT_SECONDS = 1.6;
 
 export function sunriseSeconds() {
+  // ?sunrise=1 forces the full one regardless of the session, the same
+  // affordance ?hint=1 and ?dawn= already give.
+  //
+  // This exists because of who the audience for it is. sessionStorage survives a
+  // reload, so everybody working on the page is a return visitor from their
+  // second load onward: the owner asked why they could not see the sunrise, and
+  // the answer was that they had seen it once, hours earlier, and every reload
+  // since had given them the 0.9s version. The one person who most needs to
+  // judge this was the one person guaranteed not to.
+  try {
+    if (new URLSearchParams(window.location.search).get("sunrise") === "1") {
+      return SUNRISE_FULL_SECONDS;
+    }
+  } catch {
+    // No window.location in some render contexts. Fall through.
+  }
+
   if (prefersReducedMotion()) return SUNRISE_SHORT_SECONDS;
   try {
     if (window.sessionStorage.getItem(SUNRISE_SEEN_KEY)) {
