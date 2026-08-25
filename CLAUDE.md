@@ -328,6 +328,9 @@ Infrastructure facts that are invisible until they cost an hour.
 - **Two files claiming the same icon route means one is ignored.** `app/icon.png`
   and `app/icon.svg` both existing emits a single link tag, and the PNG wins, so
   the SVG is built and never served.
+- **`app/opengraph-image.png` is a generated file.** Its vector source is
+  `docs/assets/og-image.svg`, kept out of `app/` deliberately — see the README
+  beside it for the export size and what else moves with the artwork.
 - **`process.cwd` is not a function** in the context Next prerenders server
   components. A filesystem lookup fails the build with "Failed to collect
   configuration for /", which reads like a routing problem and is not one.
