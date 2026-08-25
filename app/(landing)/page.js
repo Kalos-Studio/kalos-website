@@ -181,8 +181,21 @@ export default function Landing() {
           mention inside a paragraph, which is a strange way to treat the thing
           the whole studio is named after and argues from.
 
-          Gold_Sand on the right, as the slide has it. The page's second image,
-          and the studio's own artwork rather than a stock texture. */}
+          Two rows, not one, and the reason is the plate beside it.
+
+          All of this used to be a single left column with the artwork alongside,
+          which worked only while the artwork was tall enough to run the length
+          of the prose. It is not any more: the plate is now the mark's slot at
+          7:6 (see .ln-sand), so a one-column arrangement left about 450px of
+          dead space to the right of the paragraphs. Splitting at the rule fixes
+          that and says something truer about the content — the entry is a
+          self-contained object and the argument that follows is a different
+          thought. It is also how the mock has it: definition block and mark on
+          one line, everything else below.
+
+          The second row borrows the offer section's shape, heading left and
+          prose right, because that pattern already exists on this page and a
+          statement at 60px reads better across two lines than three. */}
       <Section>
         <Reveal>
           <div className="ln-cols">
@@ -197,10 +210,8 @@ export default function Landing() {
               </div>
               <p className="ln-definition">{story.definition}</p>
               <div className="ln-word-rule" />
-              <h2 className="ln-h2 mt-8">{story.heading}</h2>
-              <p className="ln-body mt-5">{story.body}</p>
-              <p className="ln-body mt-5">{mission.body}</p>
             </div>
+            {/* Standing in for the second mark until it is live. */}
             <div className="ln-sand">
               <Image
                 src="/home/gold-sand.webp"
@@ -209,6 +220,15 @@ export default function Landing() {
                 height={795}
                 sizes="(min-width: 860px) 480px, 100vw"
               />
+            </div>
+          </div>
+        </Reveal>
+        <Reveal delay={80}>
+          <div className="ln-cols mt-14">
+            <h2 className="ln-h2">{story.heading}</h2>
+            <div>
+              <p className="ln-body">{story.body}</p>
+              <p className="ln-body mt-5">{mission.body}</p>
             </div>
           </div>
         </Reveal>

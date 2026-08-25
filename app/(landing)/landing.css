@@ -143,11 +143,30 @@
   text-wrap: balance;
 }
 
+/* The step between a section headline and its body, and the one level on this
+   page that is not lifted from the brand file.
+ *
+ * It was a flat 1.125rem, which is exactly .ln-body's maximum: a value title and
+ * the sentence under it were the same size, so every section with sub-parts
+ * flattened into an undifferentiated block. The gap it left was the whole
+ * hierarchy, 60px down to 18px with nothing in between.
+ *
+ * Worth being straight about where this number is from, because the rest of the
+ * scale is sourced and this is not. The file has four sizes (160 / 116 / 26 /
+ * 16) and no intermediate, for the good reason that a deck has no card titles in
+ * it. Neither does the web mock: what sits where a card title would go there is
+ * a client logo, not text. So there was nothing to copy, and 22 to 28px is
+ * derived from the job instead: far enough above .ln-body--tight at 15px to
+ * lead it, far enough under .ln-h2 to stay subordinate to the section it is in.
+ *
+ * Ends at 28px rather than going further because these sit four-up on a wide
+ * screen, in columns around 230px, and a title that wraps to three lines in a
+ * four-column grid costs more than the extra emphasis buys. */
 .ln-h3 {
-  font-size: 1.125rem;
+  font-size: clamp(1.375rem, 2.2vw, 1.75rem);
   font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .ln-body {
@@ -424,11 +443,26 @@
 
 /* The Gold_Sand plate, as the slide has it: the word on the left, the material
    on the right. Second image on the page, and it is the studio's own artwork. */
+/* 7:6, down from 4:5, and it is a slot being held rather than a picture being
+ * cropped. The web mock puts a second 3D mark exactly here, beside the
+ * dictionary entry, at 383x328 — which is this ratio. The plate stands in that
+ * space until the mark is live, so dropping the canvas in later is a swap and
+ * not a reflow. The plate becomes redundant at that point anyway: once the page
+ * ground is sand, a framed photograph of sand on top of it is a picture of the
+ * wall it is hanging on.
+ *
+ * Worth recording that this on its own bought no height, which is what it looked
+ * like it would do. The section is 176px of padding plus whichever column is
+ * taller, and that was never this one: the prose column measured 890px against
+ * the plate's 640. Shortening the plate only opened a void beside the
+ * paragraphs. What actually took 142px out of the section was splitting it into
+ * two rows at the rule (see page.js), and that had to happen because of this
+ * change rather than instead of it. */
 .ln-sand {
   position: relative;
   overflow: hidden;
   border-radius: 1.25rem;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 7 / 6;
   box-shadow: inset 0 0 0 1px var(--color-eerie-gray);
 }
 
