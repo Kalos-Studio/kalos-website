@@ -8,29 +8,21 @@ Working notes for continuing the hero work in a fresh session. Written
 ## Where things are
 
 Repo `/Users/omar.anees/Projects/kalos-website`, branch `new-landing-page`, tree
-clean and pushed at `52d81f4`. Draft PR #4. There is a second worktree at
-`../kalos-website-page` on `new-page`, cut from `origin/main` for unrelated work;
-nothing here depends on it.
+clean and pushed. Draft PR #4. There is a second worktree at
+`../kalos-website-page` on `new-page`, cut from `origin/main` for unrelated work.
 
-The two jobs below are **done** — the side walls are brushed along the outline
-and the bevel is a narrow chamfer — and so is a third that came out of the owner
-looking at them: the walls are lit. What is left is the list under **Now stop and
-ask**, which is the owner's to choose from.
+Everything the mock's annotations asked for is built: the sunrise, the black sand,
+scroll stopping on titles, the second turning mark, and the mark docking into the
+masthead. Both of the designer's OR-decisions were taken rather than left open,
+because the owner asked for the work to be finished without further approval
+rounds. Both are one-line reversals and both are flagged below.
 
-### One question outstanding
+Run it: `NODE_OPTIONS= bun run dev`. **Do not run `bun run build` while it is up** —
+they share `.next` and the dev server starts 500ing on MODULE_NOT_FOUND, which
+reads exactly like your change broke the app.
 
-The owner has not yet said whether the wall brightness is right. It sits at about
-60% of the face's luminance; the reference render is nearer 22%, but 22% is
-roughly where this already was and it is what the owner called flat. The dial is
-the two `intensity` values on the back wash in `stage.js`, and the reasoning is
-written beside them. Do not treat 60% as settled.
-
-Run it: `NODE_OPTIONS= bun run dev`. Clearing `NODE_OPTIONS` is required, the dev
-server dies on a stale preload otherwise. `bun run lint`, `bun run lint:copy` and
-`bun run build` all need to pass before committing.
-
-The mission for this whole effort: make the landing page genuinely good, not
-merely finished.
+Two dev affordances worth knowing: `?dawn=0.4` pins the sunrise at a point rather
+than playing it, and `?hint=1` forces the gyroscope prompt.
 
 ## The two jobs, done
 
@@ -66,78 +58,84 @@ bevel rather than hand-typed. Worth knowing: `MARK_HEIGHT` was 145 against a tru
 It reads 0.362 now, which is what the page was actually rendering — correcting
 the bounds and leaving 0.38 would have grown the mark 5% as a side effect.
 
-### Now stop and ask
+### The decisions that were taken
 
-Both have landed and been verified. Do not pick the next thing unilaterally:
-lay out the options with what each would cost and what it would buy, and let the
-owner choose. The known candidates, in no order:
+**Mark interaction: kept cursor and gyro.** The annotation offered "rotates on the
+vertical axis OR keeps current interaction style". Cursor and gyro stays, because
+it is the page's only demonstration that the object answers to you, and the
+designer offered the rotation as an alternative rather than a correction. The
+page gets both behaviours anyway: the second mark beside the dictionary entry
+turns on its own and has no OR against it, so the hero mark responds and the
+still one does not, which says more about the object than either alone.
 
-- **The sunrise entrance.** Owner's designer asked for it: page loads with the
-  white lockup at the bottom, light rises, and the rising light reveals the gold
-  mark, over 3 to 5 seconds. Constraints already established: it must hang off
-  the existing stage-ready signal rather than a timer, because the renderer lands
-  seconds late on a phone and a timed entrance plays to an empty screen; and it
-  should play once per session, with a short version on return visits and under
-  `prefers-reduced-motion`, because a five second intro every time someone comes
-  back for the pricing is a tax.
-- **The environment rig.** Partly done — see the back wash below — but ours is
-  still warmer than the reference and lights its faces less evenly. This is
-  lighting, not material. Worth knowing the sunrise rebuilds the lighting anyway,
-  so doing both means tuning it twice.
-- **The black sand background.** `Gold_Sand` in the brand file: black granular
-  field with gold specks. Recommendation on record was procedural (a GPU point
-  field in the scene, so it parallaxes against the mark and reacts to tilt)
-  rather than the photographic plate, which reads as pasted the moment the mark
-  moves. The plate is already committed at `public/home/gold-sand.webp`.
-- **Scroll behaviour for the mark.** Owner previously chose docking into the
-  masthead: as the hero scrolls away the mark rotates flat, shrinks and flies to
-  the top-left lockup. The two share identical path data (`kalos-mark.js` and
-  `lockup.js` hold the same `d` strings), so the handoff can be exact rather than
-  approximate. Owner also asked at one point for all three behaviours built
-  behind a switcher on a `/stage` sandbox; that has not been done.
-- **The type scale.** Audit found it runs 68 / 60 / 18px with nothing between, so
-  card titles sit at body size and hierarchy flattens wherever a section has
-  sub-parts. A step around 24 to 28px would fix it.
-- **Section rhythm.** Heights measured 262 / 596 / 1249 / 1067 / 401, so the page
-  reads as two big slabs bracketed by small ones.
+**Mark on scroll: docks into the masthead.** The other option was exiting down and
+to the right. Docking is the one that means something, because the mark and the
+lockup are the same artwork and the object does not leave to make room, it becomes
+the thing in the corner that was standing in for it. It also settles the
+contradiction between the two masthead annotations: the lockup does not vanish
+past the hero, it is what the mark turns into on the way, and then both go.
+
+Building it forced one structural change worth knowing. `.lab-header` is
+`position: fixed` now, not absolute. Measured as an absolute child of `.lab`, the
+lockup's screen top ran 26, -48, -122, -265, -389 across the scroll the mark takes
+to reach it: it left the viewport inside about 56px of scroll, so the mark was
+flying at a target that had been gone for most of the trip. Fixed keeps it there
+to be landed on, and `.lab-header.is-past` takes it away afterwards.
 
 ## The material, as it stands
 
 All in `app/(landing)/stage.js`.
 
 Faces (`GoldFaceMaterial`): `#ac9267`, metalness 1, roughness 0.42, `bumpMap` at
-`bumpScale={4.5}`, `anisotropyMap` with `anisotropy={0.85}`, envMapIntensity
-1.45, `DoubleSide`.
+`bumpScale={4.5}`, `anisotropyMap` with `anisotropy={0.85}`, `DoubleSide`.
 
-Bevel and sides (`GoldBevelMaterial`): `#d9b782`, metalness 1, roughness 0.17,
-the `wall` map at `bumpScale={1.4}`, `anisotropy={0.45}` with
-`anisotropyRotation={0}`, envMapIntensity 1.35.
+Bevel and sides (`GoldBevelMaterial`): `#d9b782`, metalness 1, roughness 0.17, the
+`wall` map at `bumpScale={0.6}`, `anisotropy={0.45}` with `anisotropyRotation={0}`.
+
+**Neither has an `envMapIntensity` any more, and that is the most important thing
+on this page.** They used to declare 1.45 and 1.35, and neither number had ever
+reached the shader. `WebGLRenderer.js` does this every frame, gated on nothing:
+
+```
+if ( ( material.isMeshStandardMaterial || … ) &&
+     material.envMap === null && scene.environment !== null )
+  m_uniforms.envMapIntensity.value = scene.environmentIntensity;
+```
+
+These materials have no `envMap` of their own — the light comes from
+`scene.environment`, which drei's `<Environment>` sets — so both were rendering at
+the scene's flat 1.0 while the source said otherwise. The comment explaining that
+the bevel had come down from 1.9 to stop it hazing the bloom pass was describing a
+change that could not have done anything.
+
+They were removed rather than made real. Handing the materials their own envMap
+does make the numbers work, and measured, it lifts the whole mark about 45% above
+the state that has actually been approved. If you ever want a per-surface
+difference in environment response, that is the mechanism — and it is a visual
+change, not a fix.
 
 `useBrushedGold()` generates all three maps on a canvas at runtime, 512px on
-desktop and 256 on a coarse pointer, with the wall map at a quarter of that
-across the depth. Nothing is fetched: the hero must never wait on a network round
-trip before it can draw.
+desktop and 256 on a coarse pointer. Nothing is fetched.
 
-The environment gained a **back wash**: a broad dim warm panel at `z = -6.5` and
-a smaller brighter one off to the left. Without it the walls had nothing to
-reflect — at metalness 1 a wall mirrors along its own normal, and a slab turned
-only 0.26rad by the idle drift mirrors very nearly straight backwards, where
-nothing was. Measured on the diamond's edge, the wall came out at luminance 12
-against a background of 16: the side of the object was darker than the backdrop,
-so the mark had no thickness and read flat. It is 69 against a face of 122 now.
+`Post` (`app/(landing)/post.js`) is bloom only, intensity 0.2, threshold 0.99,
+dynamically imported, and phones never load it.
 
-The reference sits nearer 22% of its face rather than our 60%, and that is
-deliberate: 22% is roughly where this already was, and it is what looked flat,
-because the reference is tilted hard over with a wide wall and a floor under it
-while ours sits nearly face-on at rest. Those two intensities are the dial if the
-owner wants it further either way.
+## The rest of the page
 
-The wall's `bumpScale` came down from 1.4 to 0.6 in the same pass. 1.4 was judged
-against a wall that was effectively unlit; once there was something to reflect,
-the same number read as corrugation.
-
-`Post` (`app/(landing)/post.js`) is bloom only, intensity 0.2, threshold 0.99. It
-is dynamically imported and phones never load it.
+- **The sunrise** is in `variants/solid.js` (`applySunrise`). It ramps
+  `scene.environmentIntensity` from 0.06 to 1 on a smoothstep and climbs one
+  directional light past the mark. Gated on the reveal, once a session via
+  `sessionStorage`, 0.9s instead of 3.4s on a return visit and under reduced
+  motion. `sunriseSeconds()` in `device.js` owns that rule.
+- **The sand** is `app/(landing)/sand.js`: one fixed canvas, dunes generated at
+  160x110 and drawn up, specks at 1:1 on the crests, parallaxing off
+  `.landing-root`. Generated because the plate cannot tile. Costs 12ms desktop,
+  33ms on a phone at 4x CPU throttle.
+- **The second mark** is `mark-turning.js`, mounted by `mark-slot.js` through an
+  IntersectionObserver, and **not mounted at all on a coarse pointer**: a phone is
+  already running one WebGL context for the hero and this one is decoration beside
+  body copy. That is a judgement made without a real device in hand and it is one
+  condition to change.
 
 ## Things that cost time to learn here
 

@@ -4,6 +4,7 @@ import Hero from "./hero";
 import CallToAction from "./cta";
 import Reveal from "./reveal";
 import Sand from "./sand";
+import MarkSlot from "./mark-slot";
 import { caseStudies } from "../work/data";
 import {
   featuredWork,
@@ -224,16 +225,7 @@ export default function Landing() {
               <p className="ln-definition">{story.definition}</p>
               <div className="ln-word-rule" />
             </div>
-            {/* Standing in for the second mark until it is live. */}
-            <div className="ln-sand">
-              <Image
-                src="/home/gold-sand.webp"
-                alt="Black sand in shallow focus, scattered with grains of gold"
-                width={900}
-                height={795}
-                sizes="(min-width: 860px) 480px, 100vw"
-              />
-            </div>
+            <MarkSlot />
           </div>
         </Reveal>
         <Reveal delay={80}>

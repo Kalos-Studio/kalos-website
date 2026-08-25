@@ -48,7 +48,7 @@ const MARK_ARTWORK_WIDTH = 149.6;
 const MARK_ARTWORK_HEIGHT = 133.1;
 
 // Size of the lockup in geometry units, bevel included.
-const MARK_WIDTH = MARK_ARTWORK_WIDTH + MARK_BEVEL * 2;
+export const MARK_WIDTH = MARK_ARTWORK_WIDTH + MARK_BEVEL * 2;
 const MARK_HEIGHT = MARK_ARTWORK_HEIGHT + MARK_BEVEL * 2;
 
 /**

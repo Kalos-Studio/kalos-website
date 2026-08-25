@@ -71,6 +71,15 @@ export default function Hero() {
   const [lit, setLit] = useState(false);
   const onLit = useCallback(() => setLit(true), []);
 
+  // The mark's flight into the masthead ends with the lockup taking its colour.
+  // One class, set when the dock crosses, not an animation driven from the frame
+  // loop — the gradient and the transition are CSS's job.
+  // The three states of the mark leaving: the copy going, the lockup taking the
+  // mark's colour, and the masthead following it out. One object rather than
+  // three callbacks, and it only changes when a threshold is crossed.
+  const [exit, setExit] = useState({ docked: false, past: false, leaving: false });
+  const onDocked = useCallback((value) => setExit(value), []);
+
   useEffect(() => {
     if (!stageReady || lit) return;
     const id = setTimeout(() => setLit(true), STAGE_READY_TIMEOUT_MS);
@@ -175,7 +184,7 @@ export default function Hero() {
     <section className="lab">
       {webgl && (
         <div className="lab-stage">
-          <Solid onReady={onStageReady} onLit={onLit} />
+          <Solid onReady={onStageReady} onLit={onLit} onDocked={onDocked} />
         </div>
       )}
 
@@ -183,7 +192,7 @@ export default function Hero() {
           way. The 3D mark is the only thing in the middle of the page now, which
           is the point: the composition is the object, and this is the masthead
           around it. */}
-      <header className={`lab-header${lit ? " is-lit" : ""}`}>
+      <header className={`lab-header${lit ? " is-lit" : ""}${exit.docked ? " is-docked" : ""}${exit.past ? " is-past" : ""}`}>
         <div className="lab-shell">
           <Lockup className="lab-lockup" />
         </div>
@@ -193,7 +202,7 @@ export default function Hero() {
           deck's own title slide does: object filling the frame, words in the
           lower left. A scrim under the text does the legibility work, since the
           mark drifts and cannot be relied on to stay out from behind a line. */}
-      <div className="lab-copy">
+      <div className={`lab-copy${exit.leaving ? " is-leaving" : ""}`}>
         <div className="lab-shell">
           <div className="lab-measure">
             <h1 className="lab-h1">{hero.h1}</h1>

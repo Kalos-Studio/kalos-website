@@ -547,6 +547,14 @@
   box-shadow: inset 0 0 0 1px var(--color-eerie-gray);
 }
 
+/* The turning mark, when the slot is live. No background: the sand field behind
+   the whole page shows through, which is the point of the frame being empty. */
+.ln-mark-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .ln-sand img {
   width: 100%;
   height: 100%;

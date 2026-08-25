@@ -100,8 +100,19 @@
    the mark clears the notch and the rounded corner when this is opened on a
    phone in landscape — where a fixed 1.5rem would put it under the sensor
    housing. */
+/* Fixed, not absolute, and this is what makes the dock possible at all.
+ *
+ * Measured: as an absolutely positioned child of .lab, the lockup's screen top
+ * ran 26, -48, -122, -265, -389 over the scroll the mark takes to fly to it. It
+ * left the viewport inside about 56px of scroll, so the mark was landing on a
+ * target that had been off screen for most of the flight and the arrival — the
+ * lockup turning gold, the entire point — happened where nobody could see it.
+ *
+ * Fixed keeps it in place through the hero, which is also what the annotation
+ * asking for it to "disappear once user scrolls past hero" implies: it has to be
+ * there to disappear from. .lab-header.is-past takes it away at the end. */
 .lab-header {
-  position: absolute;
+  position: fixed;
   top: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-top));
   /* Full width with the lockup placed on the page grid, rather than inset from
      the viewport edge. See the note on --page-max in globals.css. */
@@ -127,6 +138,36 @@
   transform: none;
 }
 
+/* Past the hero it goes, per the annotation. Faster than it arrived: an entrance
+   is worth waiting for and an exit is not. */
+/* The hero copy goes out with the mark. Measured, the headline reaches the fixed
+   masthead's line about a quarter of the way through the dock, so without this
+   the gold lockup spends the rest of the flight sitting on top of 60px type. */
+.lab-copy.is-leaving {
+  /* `animation: none` first, and it is not optional. .lab-copy carries
+     `lab-copy-in ... both`, and fill-mode both holds the final keyframe forever:
+     that keyframe sets opacity 1, which outranks anything a class declares. The
+     entrance is long over by the time this class lands, so dropping the
+     animation costs nothing and the base rule's transform is still there to fall
+     back to. CLAUDE.md has this trap written down; it caught this anyway. */
+  animation: none;
+  opacity: 0;
+  transition: opacity 420ms ease;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-copy.is-leaving {
+    transition: none;
+  }
+}
+
+.lab-header.is-past {
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+
 /* The lockup used to be wrapped in an <h1>, from when the hero was the entire
    page and the logo was the only heading on it. The page has a real headline
    now, so that left two h1 elements on one document: bad for a screen reader
@@ -144,6 +185,19 @@
   display: block;
   width: clamp(98px, 9vw, 124px);
   height: auto;
+  /* The lockup is a single <g fill="#F5FEFD"> of six paths, so one colour change
+     carries the whole thing. Transitioned rather than snapped: the mark arrives
+     over about half a screen of scroll and a hard switch at the end of that
+     reads as a bug rather than as a landing. */
+  transition: color 420ms ease;
+  color: var(--color-snow-white);
+}
+
+/* Where the mark lands. It has flown into the lockup and become it, so the
+   lockup takes its colour — this is the whole payoff of the dock, and without it
+   the mark simply shrinks into the corner and vanishes. */
+.lab-header.is-docked .lab-lockup {
+  color: var(--color-vulcan-gold);
 }
 
 /* ---------- hero copy ---------- */

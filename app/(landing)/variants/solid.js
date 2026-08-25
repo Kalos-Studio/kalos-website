@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMarkFit, useMarkGeometries } from "../kalos-mark";
+import { MARK_WIDTH, useMarkFit, useMarkGeometries } from "../kalos-mark";
 import {
   GoldBevelMaterial,
   GoldEnvironment,
@@ -82,10 +82,63 @@ function applySunrise(scene, sun, t) {
   sun.intensity = Math.sin(Math.PI * eased) * 2.6;
 }
 
-function Lockup({ still, started, onLit }) {
+/**
+ * How far into the hero's own height the mark finishes docking.
+ *
+ * Not the whole hero. The flight has to be over well before the hero leaves the
+ * screen, or the reader watches the last of it disappearing off the top edge and
+ * the arrival — which is the whole point, the lockup turning gold — happens
+ * where nobody is looking.
+ */
+const DOCK_OVER = 0.55;
+
+/**
+ * Where the masthead's mark sits, in the canvas' own world units.
+ *
+ * Measured from the DOM rather than guessed, because the lockup is sized with a
+ * clamp() and its position uses env(safe-area-inset-top): there is no arithmetic
+ * that gets this right on every device, and being a few pixels out is visible
+ * when the thing being aligned is a logo landing on itself.
+ *
+ * Measured against .lab every frame rather than cached, because the lockup is
+ * fixed to the viewport and the canvas inside .lab is not: the gap between them
+ * is exactly the scroll distance, so the target moves the whole way through the
+ * flight. Two getBoundingClientRect calls a frame is nothing next to the draw.
+ */
+function dockTarget(viewport) {
+  if (typeof document === "undefined") return null;
+  const lab = document.querySelector(".lab");
+  const lockup = document.querySelector(".lab-lockup");
+  if (!lab || !lockup) return null;
+
+  const labRect = lab.getBoundingClientRect();
+  const rect = lockup.getBoundingClientRect();
+  if (!labRect.width || !labRect.height) return null;
+
+  // The lockup is the full wordmark, 568x139, and only its first 150 units are
+  // the mark. So the mark's own centre is a fraction of the way across the SVG,
+  // not the middle of it.
+  const markCentreX = rect.left - labRect.left + (rect.width * 75) / 568;
+  const markCentreY = rect.top - labRect.top + rect.height / 2;
+
+  return {
+    x: (markCentreX / labRect.width - 0.5) * viewport.width,
+    y: (0.5 - markCentreY / labRect.height) * viewport.height,
+    // 150 of 568 units wide on screen, converted into the world units the mark
+    // is scaled in.
+    scale:
+      (((rect.width * 150) / 568 / labRect.width) * viewport.width) / MARK_WIDTH,
+  };
+}
+
+function Lockup({ still, started, onLit, onDocked }) {
   const geometries = useMarkGeometries();
   const { scale, lift, offsetX } = useMarkFit();
   const group = useRef();
+  // The scaled group, by ref rather than by child index. It was g.children[0],
+  // which stopped being the mark the moment the sunrise added a light above it:
+  // the dock was scaling a directional light and wondering why nothing shrank.
+  const inner = useRef();
   const sun = useRef();
   const pointer = usePointer();
 
@@ -93,6 +146,11 @@ function Lockup({ still, started, onLit }) {
   // must not change under the animation. Held in a ref rather than state because
   // the frame loop is the only reader and re-rendering the tree to carry a
   // number the GPU already has would be waste.
+  // Scroll progress through the dock, written by a listener and read by the
+  // frame loop. A ref rather than state: this changes on every scroll event and
+  // re-rendering the tree for a number the GPU is about to consume is waste.
+  const dock = useRef(0);
+
   const sunrise = useRef({ elapsed: 0, seconds: 0, done: false, pinned: null });
   if (sunrise.current.seconds === 0) {
     sunrise.current.seconds = sunriseSeconds();
@@ -104,6 +162,58 @@ function Lockup({ still, started, onLit }) {
     const pinned = new URLSearchParams(window.location.search).get("dawn");
     if (pinned !== null) sunrise.current.pinned = Math.min(1, Math.max(0, Number(pinned)));
   }
+
+  // The dock listener. Lives here rather than in the page shell because the
+  // measurement it needs (the lockup's place inside the canvas) is a 3D concern.
+  useEffect(() => {
+    const scroller = document.querySelector(".landing-root");
+    const lab = document.querySelector(".lab");
+    if (!scroller || !lab) return;
+
+    let frame = 0;
+    let docked = false;
+    let wasPast = false;
+    let wasLeaving = false;
+    const read = () => {
+      frame = 0;
+      const range = lab.offsetHeight * DOCK_OVER;
+      const p = range > 0 ? Math.min(1, Math.max(0, scroller.scrollTop / range)) : 0;
+      dock.current = p;
+      // Only tells React when it crosses, not on every frame: the lockup turning
+      // gold is one class change, not an animation.
+      const now = p > 0.82;
+      // The hero copy starts leaving as soon as the mark commits. Measured, the
+      // headline reaches the masthead's line at about a quarter of the dock, so
+      // without this the fixed lockup ends up sitting on top of 60px type for
+      // the rest of the flight. It is also simply what should happen: the copy
+      // belongs to the hero and the hero is going.
+      const leaving = p > 0.22;
+      // And the masthead follows it out, per the annotation. Not at the very end
+      // of the hero: by then the gold lockup has been hanging over the section
+      // below for half a screen.
+      const past = p >= 1;
+      if (now !== docked || past !== wasPast || leaving !== wasLeaving) {
+        docked = now;
+        wasPast = past;
+        wasLeaving = leaving;
+        onDocked?.({ docked: now, past, leaving });
+      }
+    };
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(read);
+    };
+    const onResize = onScroll;
+
+    read();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      scroller.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [onDocked]);
 
   useFrame((state, delta) => {
     const g = group.current;
@@ -196,6 +306,41 @@ function Lockup({ still, started, onLit }) {
     // this line also stopped it whenever an input was driving, which quietly made
     // the mark deader the moment you picked the phone up.
     g.position.y = lift + (still ? 0 : Math.sin(t * 0.55) * 0.05);
+
+    // The dock, applied last so it overrides everything above it.
+    //
+    // The designer left this as an OR: the mark either flies into the lockup at
+    // the top left and turns it gold, or it exits down and to the right. Docking
+    // is the one that means something. The mark and the lockup are the same
+    // artwork — kalos-mark.js and lockup.js hold identical path data — so the
+    // object does not fly off to make room, it becomes the thing in the corner
+    // that was standing in for it. It also settles the contradiction between the
+    // two masthead annotations: the lockup does not disappear past the hero, it
+    // is what the mark turns into on the way.
+    const docked = dock.current;
+    if (docked <= 0) return;
+    const to = dockTarget(state.viewport);
+    if (!to) return;
+
+    // Ease in, so the mark holds its place while the reader is still in the hero
+    // and then commits. A linear flight starts moving the instant anyone touches
+    // the wheel, which reads as the page being twitchy.
+    const k = docked * docked;
+    g.position.x = offsetX + (to.x - offsetX) * k;
+    g.position.y = g.position.y + (to.y - g.position.y) * k;
+    // Rotating flat is what makes it stop being an object and start being a
+    // logo, and it has to finish before the scale does or the last frames are a
+    // tilted mark shrinking, which reads as falling away rather than landing.
+    g.rotation.x *= 1 - Math.min(1, k * 1.4);
+    g.rotation.y *= 1 - Math.min(1, k * 1.4);
+    // The handoff. The last stretch shrinks the mark out of existence, because
+    // the two are the same artwork and landing one exactly on top of the other
+    // reads as a doubled logo rather than as an arrival. By the time this
+    // finishes the lockup has already taken the gold, so what is left in the
+    // corner is the thing the mark turned into.
+    const handoff = docked > 0.88 ? 1 - (docked - 0.88) / 0.12 : 1;
+    const s = (scale + (to.scale - scale) * k) * handoff;
+    inner.current?.scale.set(s, -s, s);
   });
 
   return (
@@ -204,7 +349,7 @@ function Lockup({ still, started, onLit }) {
           once it has passed over: leaving it in the scene at zero intensity
           still costs a light slot in every shader compile. */}
       <directionalLight ref={sun} intensity={0} color="#ffdca8" position={[-2.2, -3.4, 3.6]} />
-      <group scale={[scale, -scale, scale]}>
+      <group ref={inner} scale={[scale, -scale, scale]}>
         {/* Two materials, in the order ExtrudeGeometry declares its groups:
             0 is the flat caps, 1 is the side walls and the bevel. */}
         {geometries.map((geometry, i) => (
@@ -246,7 +391,7 @@ function RevealOnFirstFrame({ onReveal }) {
   return null;
 }
 
-export default function Solid({ onReady, onLit }) {
+export default function Solid({ onReady, onLit, onDocked }) {
   // Read once at mount rather than per frame: neither answer changes while the
   // hero is on screen, and both feed props that shouldn't thrash.
   const [coarse] = useState(isCoarsePointer);
@@ -275,7 +420,7 @@ export default function Solid({ onReady, onLit }) {
       }}
     >
       <GoldEnvironment />
-      <Lockup still={still} started={revealed} onLit={onLit} />
+      <Lockup still={still} started={revealed} onLit={onLit} onDocked={onDocked} />
       <RevealOnFirstFrame onReveal={reveal} />
       {!coarse && <Post />}
     </Canvas>
