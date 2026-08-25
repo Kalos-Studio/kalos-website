@@ -73,7 +73,6 @@ export default function Landing() {
                 </span>
               </h1>
               <p className="ln-definition">{story.definition}</p>
-              <div className="ln-word-rule" />
             </div>
             <MarkSlot />
           </div>

@@ -26,7 +26,13 @@
    *
    * It goes here rather than on html because html does not scroll on this page
    * — see the note above about the fixed-viewport holdover. */
-  scroll-snap-type: y proximity;
+  /* No scroll-snap. The mock annotates "scroll stopping on titles" and it was
+     built as proximity snap, which measured fine — nothing trapped, max drift
+     ~180px — and felt janky in the hand, which is the only test that counts for
+     something that intercepts the reader's own scrolling. Proximity is the
+     gentle version already; there is no gentler one, so it goes rather than gets
+     tuned. If it comes back it wants a real device and a trackpad, not a
+     measurement. */
   /* The sand sits at z-index -1, which paints above this element's own
      background and below everything in flow — but only if this element is a
      stacking context. Without `isolate` the negative child escapes into the root
@@ -70,22 +76,6 @@
   padding-block: clamp(3.25rem, 7vw, 5.5rem);
 }
 
-/* The snap points. Section start rather than the heading element itself: a
-   section leads with its own padding, so aligning the box puts the heading a
-   comfortable distance down the screen instead of jammed against the top edge.
- *
- * The hero is deliberately not one. It was, and it measured badly: Chrome's
- * proximity threshold is around half a viewport, the hero is exactly one
- * viewport, so any scroll shorter than about 450px sat inside that threshold
- * and got pulled back to 0. A reader nudging the page to see what is below it
- * was returned to where they started. Leaving it out makes the first snap point
- * the proof strip, far enough down that a short scroll is simply a short
- * scroll — and it is truer to the note, which asks for stopping on titles, and
- * the hero has no title. */
-.ln-section {
-  scroll-snap-align: start;
-}
-
 .ln-shell {
   max-width: var(--page-max);
   margin: 0 auto;
@@ -100,9 +90,9 @@
    hard horizontal line across a field whose whole character is that it has no
    hard horizontals in it.
 
-   The one rule that stays is .ln-word-rule, under the definition, because the
-   mock does draw that one — it closes the dictionary entry rather than dividing
-   two sections. */
+   The rule under the definition went too. The mock does draw one there, closing
+   the dictionary entry rather than dividing two sections, and it still read as a
+   divider on a page that no longer has any. */
 
 /* Heading in one column, prose in the other, instead of a heading stacked on a
    672px paragraph inside a 1080px shell with the right half empty. Uses the
@@ -462,10 +452,6 @@ a.ln-card-media:hover {
   color: var(--color-snow-white);
 }
 
-.ln-word-rule {
-  margin-top: clamp(1.75rem, 4vw, 2.5rem);
-  border-top: 1px solid var(--color-eerie-gray);
-}
 
 /* The Gold_Sand plate, as the slide has it: the word on the left, the material
    on the right. Second image on the page, and it is the studio's own artwork. */
@@ -489,7 +475,6 @@ a.ln-card-media:hover {
   overflow: hidden;
   border-radius: 1.25rem;
   aspect-ratio: 7 / 6;
-  box-shadow: inset 0 0 0 1px var(--color-eerie-gray);
 }
 
 /* The turning mark, when the slot is live. No background: the sand field behind
