@@ -59,10 +59,16 @@ abbreviated one and effectively never the real thing. A rule that hides a featur
 from the people judging it is not restraint. **Do not reintroduce it without
 asking.**
 
-Reduced motion still gets a shortened 1.6s rather than none, because cutting
-straight to the lit state reads as an animation that failed. It was 0.9s, which
-measured as a ramp finishing inside 870ms — a flicker rather than a short
-sunrise.
+It runs 4.6s. Reduced motion gets a shortened 2s rather than none, because
+cutting straight to the lit state reads as an animation that failed.
+
+The sun and the sky are staggered: the sun's sweep finishes at 62% of the
+duration and the environment keeps filling in after it. Both used to run over the
+full time, and the sun's intensity follows a sine that falls through exactly the
+window where the environment is still rising — the two cancelled, and the mark's
+mean luminance measured 129, 129, 127 across the last half. Half the runtime with
+nothing changing, which reads as the animation getting stuck at the top of the
+mark. It now runs 82, 77, 100, 108, 122, 127 across the same span.
 
 `?dawn=0.4` pins it at a point instead of playing it, for judging a single frame.
 

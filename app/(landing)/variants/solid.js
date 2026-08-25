@@ -46,6 +46,10 @@ const Post = dynamic(() => import("../post"), { ssr: false });
  */
 const SUNRISE_START = 0.06;
 
+// How much of the sunrise the sun itself occupies. The rest is the sky alone,
+// which is what keeps something changing all the way to the end.
+const SUN_OVER = 0.62;
+
 function applySunrise(scene, sun, t) {
   // Smoothstep, slow at both ends.
   //
@@ -58,6 +62,19 @@ function applySunrise(scene, sun, t) {
   // slightly less dark.
   const eased = t * t * (3 - 2 * t);
   const lift = SUNRISE_START + (1 - SUNRISE_START) * eased;
+
+  // The sun finishes before the sky does. Its own progress is the same curve run
+  // over the first SUN_OVER of the time, so it has cleared the top of the mark
+  // and gone out while the environment is still filling in.
+  //
+  // This is the fix for the animation appearing to stall near the end. Both
+  // curves used to run over the full duration, and the sun's intensity follows a
+  // sine that is falling through exactly the window where the environment is
+  // still rising: the two cancelled, and measured, the mark's mean luminance sat
+  // at 129, 129, 127 across the last half of the animation. Half the runtime with
+  // nothing visibly changing, which is what "stuck at the top" was.
+  const sunT = Math.min(1, t / SUN_OVER);
+  const sunEased = sunT * sunT * (3 - 2 * sunT);
 
   // The sky filling in, as one number on the scene rather than a value per
   // material. That is not a shortcut, it is the only lever that works here:
@@ -94,8 +111,8 @@ function applySunrise(scene, sun, t) {
   // environment doing all the work — which is the state the material was tuned
   // in. At metalness 1 there is no diffuse term, so a direct light shows up
   // purely as a moving specular, which is the "glisten" the annotation asks for.
-  sun.position.set(-2.2, -3.4 + eased * 8, 3.6);
-  sun.intensity = Math.sin(Math.PI * eased) * 2.6;
+  sun.position.set(-2.2, -3.4 + sunEased * 8, 3.6);
+  sun.intensity = Math.sin(Math.PI * sunEased) * 2.6;
 }
 
 /**

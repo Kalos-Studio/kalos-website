@@ -160,13 +160,15 @@ export function getTilt() {
 //
 // Do not reintroduce the session gate without asking. `?sunrise=1` existed only
 // to defeat it and went with it; `?dawn=` still pins the animation at a point.
-export const SUNRISE_FULL_SECONDS = 3.4;
+// 4.6, up from 3.4. Slower on the owner's ear: at 3.4 the whole thing is over
+// before it has read as a sunrise rather than as a fade.
+export const SUNRISE_FULL_SECONDS = 4.6;
 
 // Reduced motion still gets a short one rather than none. Cutting straight to
 // the lit state reads as an animation that failed rather than as restraint, and
 // this is motion the page starts by itself, which is the kind the setting is
 // actually about.
-export const SUNRISE_SHORT_SECONDS = 1.6;
+export const SUNRISE_SHORT_SECONDS = 2;
 
 export function sunriseSeconds() {
   return prefersReducedMotion() ? SUNRISE_SHORT_SECONDS : SUNRISE_FULL_SECONDS;
