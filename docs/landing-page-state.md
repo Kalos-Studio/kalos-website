@@ -49,15 +49,23 @@ what actually happened to each item, including the parts that were undone.
 
 ### Two variants, and a switch to compare them
 
-`app/(landing)/sunrise-variants.js` holds both: **soft**, which is the version
-approved at `8ec14aa` (gentler sky, a point light, the full-amplitude finish), and
-**drastic**, which came out of aiming at the Robinhood card page (darker room, a
-rectAreaLight blade, sharper curve, flatter finish). They differ in duration,
-starting floor, sky tilt, easing, light type and shape, sand floor, and face bump
-and anisotropy.
+`app/(landing)/sunrise-variants.js` holds three.
 
-Hover the top-left corner of the hero for the menu, or use `?v=soft` / `?v=drastic`,
-which is remembered and is shareable as a link. Switching reloads, because the two
+- **original** is commit `8ec14aa` exactly, including the ring sampling that
+  caused the bullseye. It is there because "save that commit as a variant" means
+  that commit, not an improved version wearing its name.
+- **soft** is `8ec14aa`'s lighting and material amplitude with the ring sampling
+  fixed — a combination that never existed at any commit, and possibly the one
+  worth shipping.
+- **drastic** came out of aiming at the Robinhood card page: darker room, a
+  rectAreaLight blade, sharper curve, flatter finish.
+
+They differ in duration, starting floor, sky tilt, easing, light type and shape,
+sand floor, face bump and anisotropy, and ring pitch. Having all three makes the
+pitch fix's contribution visible on its own.
+
+Hover the top-left corner of the hero and click the tab, or use `?v=original`,
+`?v=soft`, `?v=drastic` — remembered, and shareable as a link. Switching reloads, because the two
 differ in which light element exists in the scene and in material values built
 inside a `useMemo`.
 
@@ -66,9 +74,6 @@ gated on `NODE_ENV`, because the place it most needs to work is a Netlify deploy
 preview, which is a production build. Delete `sunrise-variants.js`,
 `variant-switch.js`, the `.ln-variants` rules, and the `V.` lookups in `solid.js`,
 `stage.js` and `sand.js`, then inline whichever one won.
-
-The ring pitch is deliberately **not** varied. That was a sampling bug, and a bug
-does not get a variant; both drive the same fixed generator.
 
 ### The sunrise plays on every load
 

@@ -2,16 +2,18 @@
  * Two sunrises, side by side, so they can be judged against each other rather
  * than against a memory of the other one.
  *
- * `soft` is the version that was approved at commit 8ec14aa: the sky tips a
- * little, a directional light passes the mark, the surface keeps its full
- * turning. `drastic` is what came out of aiming at the Robinhood card page:
- * darker room, a rectAreaLight blade rather than a point, a sharper curve
- * through the middle, and a flatter finish that survives a grazing light.
+ * `soft` is 8ec14aa's lighting and material amplitude — a gentle sky tilt, a
+ * directional light passing the mark, the full turning — with the ring sampling
+ * fixed. `drastic` is what came out of aiming at the Robinhood card page: darker
+ * room, a rectAreaLight blade rather than a point, a sharper curve through the
+ * middle, and a flatter finish that survives a grazing light.
  *
- * The one thing NOT varied here is the ring pitch. That was a sampling bug —
- * grooves one texel apart on a mark that renders at a texel per pixel, beating
- * against the grid into a bullseye — and a bug does not get a variant. Both use
- * the fixed generator; they differ in how hard they drive it.
+ * `original` is the approved commit exactly, including the ring sampling that
+ * caused the bullseye. It is here because "save that commit as a variant" means
+ * that commit, not an improved version of it wearing its name — `soft` was
+ * originally labelled as 8ec14aa and was not, since it carried the pitch fix.
+ * Keeping all three makes the fix's contribution visible on its own, which is
+ * worth more than hiding it.
  *
  * THIS IS A DEV TOOL AND IT SHOULD NOT SURVIVE LAUNCH. It ships a hidden menu in
  * the corner of the homepage and a second set of values nobody will read again
@@ -20,13 +22,33 @@
  */
 
 export const VARIANTS = {
+  original: {
+    label: "Original (8ec14aa)",
+    note: "Exactly the approved commit, bullseye included.",
+    seconds: 4.6,
+    start: 0.06,
+    tilt: 1.15,
+    ease: "smooth",
+    light: "point",
+    lightIntensity: 2.6,
+    lightShape: "pulse",
+    sandFloor: 0.32,
+    faceBump: 4.5,
+    faceAnisotropy: 0.85,
+    // One groove per texel of radius, indexed with Math.round. This is the
+    // sampling that produced the concentric moiré: the mark renders at roughly a
+    // texel per screen pixel, so the grooves land on the pixel grid's own
+    // frequency and beat against it. It is here because the owner asked to keep
+    // the approved commit comparable, not because it is a candidate.
+    ringPitch: 1,
+    ringStep: true,
+  },
+
   soft: {
     label: "Soft",
-    note: "Approved at 8ec14aa. Gentler sky, point light, full finish.",
+    note: "8ec14aa's light and finish, with the ring sampling fixed.",
     seconds: 4.6,
-    // Where the environment starts, as a fraction of its settled intensity.
     start: 0.06,
-    // How far the sky is tipped over at the beginning, in radians.
     tilt: 1.15,
     // smoothstep: slow at both ends.
     ease: "smooth",
@@ -35,10 +57,12 @@ export const VARIANTS = {
     lightIntensity: 2.6,
     // Rises and falls on a sine across its window.
     lightShape: "pulse",
-    // How dark the sand gets. The floor it fades toward, not the value it holds.
+    // How dark the sand gets: the floor it fades toward.
     sandFloor: 0.32,
     faceBump: 4.5,
     faceAnisotropy: 0.85,
+    ringPitch: 4,
+    ringStep: false,
   },
 
   drastic: {
@@ -57,10 +81,12 @@ export const VARIANTS = {
     lightShape: "hold",
     sandFloor: 0.1,
     // Flatter, because a grazing light exaggerates normal perturbation
-    // enormously and the soft version's amplitude smears into ripples while the
-    // sky is still tipped over.
+    // enormously and the soft amplitude smears into ripples while the sky is
+    // still tipped over.
     faceBump: 1.5,
     faceAnisotropy: 0.42,
+    ringPitch: 4,
+    ringStep: false,
   },
 };
 

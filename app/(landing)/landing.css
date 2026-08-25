@@ -525,25 +525,39 @@ a.ln-card-media:hover {
   font-size: var(--type-micro);
 }
 
+/* A real button, so it can be clicked and tabbed to, and invisible until you go
+   looking. Not `visibility: hidden`, which would take it out of the tab order:
+   the point is that it stays reachable while not being there to look at. */
 .ln-variants-tab {
   display: block;
-  width: 4.5rem;
-  height: 2.5rem;
-  opacity: 0;
+  min-width: 4.5rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: none;
+  font: inherit;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-dark-silver);
+  opacity: 0;
+  cursor: pointer;
   transition: opacity 160ms ease;
 }
 
 .ln-variants:hover .ln-variants-tab,
-.ln-variants:focus-within .ln-variants-tab {
-  opacity: 0.5;
+.ln-variants:focus-within .ln-variants-tab,
+.ln-variants.is-open .ln-variants-tab {
+  opacity: 0.6;
+  border-color: var(--color-eerie-gray);
+  background: var(--color-obsidian-black);
 }
 
+/* Rendered only when open, so there is no hover rule here: hover-only was tried
+   and the panel vanished the moment the pointer left the tab on its way to it. */
 .ln-variants-menu {
-  display: none;
+  display: flex;
   flex-direction: column;
+  margin-top: 0.35rem;
   gap: 0.25rem;
   width: 15rem;
   padding: 0.4rem;
@@ -554,10 +568,6 @@ a.ln-card-media:hover {
   background: var(--color-obsidian-black);
 }
 
-.ln-variants:hover .ln-variants-menu,
-.ln-variants:focus-within .ln-variants-menu {
-  display: flex;
-}
 
 .ln-variants-option {
   display: block;

@@ -37,7 +37,7 @@ const MARK_UV_SPAN = 200;
 // Texels between one groove and the next on the faces. See the note where it is
 // used: at 1 the finish sat on the pixel grid's own frequency and rendered as a
 // bullseye.
-const RING_PITCH = 4;
+const RING_PITCH = V.ringPitch;
 
 export const GOLD_FACE = "#ac9267";
 // Brighter than the face and still unmistakably gold. This was #F4EEDA, which is
@@ -214,10 +214,18 @@ function useBrushedGold() {
         // machined. Variation belongs in the groove's depth, not its path.
         // Interpolated, not rounded. Math.round is a step function: it draws each
         // groove as a hard band a texel wide, which is half of why this aliased.
-        const at = Math.min(rings - 2, r / RING_PITCH);
-        const i0 = Math.floor(at);
-        const f = at - i0;
-        const depth = groove[i0] + (groove[i0 + 1] - groove[i0]) * f * f * (3 - 2 * f);
+        let depth;
+        if (V.ringStep) {
+          // The original sampling, kept only so the approved commit stays
+          // comparable. Math.round draws each groove as a hard band one texel
+          // wide, which is half of why it aliased.
+          depth = groove[Math.min(rings - 1, Math.round(r))];
+        } else {
+          const at = Math.min(rings - 2, r / RING_PITCH);
+          const i0 = Math.floor(at);
+          const f = at - i0;
+          depth = groove[i0] + (groove[i0 + 1] - groove[i0]) * f * f * (3 - 2 * f);
+        }
 
         // A slow sweep around the circle, so one side of a ring catches more
         // than the other. Modulates depth only, so the ring stays circular.
