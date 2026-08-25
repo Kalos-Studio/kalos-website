@@ -386,34 +386,20 @@ a.ln-card-media:hover {
  * more flat black. It is the one full-bleed image moment on the page, and it is
  * the studio's own artwork rather than a stock gradient. The scrim keeps the
  * headline off the brightest part of the shaft. */
+/* No plate behind the close any more.
+ *
+ * There was a gold-ray image at 0.5 opacity with a radial scrim over it, from
+ * when the page ground was flat #040406 and the last screen needed something to
+ * happen on it. The sand does that now, across the whole page, and the plate was
+ * fighting it twice over: it drew a hard horizontal at the section's top edge —
+ * the same thing the hairline rules were doing, removed in the same pass — and
+ * it put a second, differently lit ground under a field that is already lit.
+ *
+ * public/home/gold-ray.webp goes with it. The design system page keeps its own
+ * copy under public/design-system, where it is a reference plate rather than
+ * page furniture. */
 .ln-closing {
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.ln-closing::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background-image: url("/home/gold-ray.webp");
-  background-size: cover;
-  background-position: 50% 40%;
-  opacity: 0.5;
-}
-
-.ln-closing::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(
-    ellipse 70% 70% at 50% 55%,
-    rgba(4, 4, 6, 0.82) 0%,
-    rgba(4, 4, 6, 0.6) 55%,
-    rgba(4, 4, 6, 0.9) 100%
-  );
 }
 
 /* ---------- the kalos entry ----------

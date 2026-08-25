@@ -11,6 +11,19 @@ the `@theme` block at the top of `globals.css` and come from the brand file's ow
 buttons and active indicators, not a fill, and Dark Silver is the one secondary
 text value. Follow the role, not the vibe.
 
+**The type scale is seven `--type-*` tokens in `:root` in `globals.css`**, and
+every `font-size` in every stylesheet resolves to one of them. There are no
+literal sizes left; adding one is how the last scale died, when `work.css` grew
+twenty of them. They are in `:root` rather than `@theme` deliberately, so they
+cannot be reached as `text-*` utilities: classes own type, utilities own layout.
+`/design-system` renders a live specimen of each, read off the tokens.
+
+The landing page is the four sections the web mock has — hero, the word, the
+work, the close — and there are no hairline rules between them. A proof strip, an
+offer section, four principles and a mission paragraph were removed on
+instruction to match the mock; `app/(landing)/page.js` names the commit to
+recover that copy from.
+
 The hero lives in the `app/(landing)/` route group, which carries the homepage's
 `themeColor` and its title and description. `/lab` — where the hero was built —
 307s to `/` from `next.config.mjs`.

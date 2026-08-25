@@ -3,6 +3,10 @@
 Written 2026-08-25. Everything under `/work` is public now, so anything landing
 here is client-facing on a page the homepage links to.
 
+> The landing page shows three of these as full-width rows, with the client's
+> logo where a title would go, and links to the rest. Which three, and the copy in
+> those rows, is `featuredWork` in `app/(landing)/content.js`, not here.
+
 ## The format
 
 Case studies are **stories**, not labelled beats. The owner's call, and the
@@ -114,14 +118,10 @@ is the website.
 
 ## Open across the section
 
-- **Featured three on the homepage.** `app/(landing)/content.js` picks Priority /
-  Allganize / Shell. The web mock shows Shell / EchoCare / MARA. Now that Vital
-  exists and is arguably the strongest, this wants choosing rather than drifting.
-- **Nothing on the homepage links to `/work`.** The mock has a "See more" and the
-  page does not, which is odd on a section that was just opened to the public.
-- **`year`** is documented in the schema, populated on none of the six, and
-  rendered nowhere. Either supply six values and wire it into the facts line, or
-  cut the field.
+- **Featured three on the homepage: settled, and worth arguing with.** It is the
+  mock's set now, Shell / EchoCare / MARA, replacing Priority / Allganize / Shell.
+  Vital Energy is arguably the strongest of the six and is not among them. That is
+  a positioning call, and the mock made it rather than anyone here.
 - **`heroPosition`** is wired end to end and set on no entry. It only matters if a
   cover crops badly in the 16:9 hero, which none currently do.
 - **`ExpandableImage` uses a plain `<img>`**, so body images skip the optimizer.
