@@ -62,6 +62,18 @@ asking.**
 It runs 4.6s. Reduced motion gets a shortened 2s rather than none, because
 cutting straight to the lit state reads as an animation that failed.
 
+The effect that actually reads is `scene.environmentRotation`, not the intensity
+ramp. At metalness 1 the mark is a mirror: what you see on it is the environment,
+so brightening the environment uniformly is a dimmer switch, while rotating it
+drags the reflection of the key light and the hot rim up across the faces. The
+sky is tipped 1.15rad at the start and rotates level, which is what makes the
+light travel bottom to top. Nothing is re-baked; the cubemap is still the single
+`frames={1}` bake, because `environmentRotation` is applied at draw time to
+materials that have no `envMap` of their own.
+
+The sand is floored at 0.32 rather than fading from nothing, so the opening
+happens on the object rather than as a page-wide crossfade.
+
 The sun and the sky are staggered: the sun's sweep finishes at 62% of the
 duration and the environment keeps filling in after it. Both used to run over the
 full time, and the sun's intensity follows a sine that falls through exactly the

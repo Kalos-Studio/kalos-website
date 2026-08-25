@@ -54,7 +54,12 @@
      no WebGL, where the sunrise never runs, gets the lit field rather than a
      black page. Fading toward the page ground rather than filtering brightness,
      because opacity stays on the compositor. */
-  opacity: var(--dawn, 1);
+  /* Floored at 0.32 rather than following --dawn all the way down. The sunrise
+     is meant to read on the mark, which is a mirror and can show light arriving;
+     the sand is a flat field and all it can do is fade, which at full range
+     turned the opening into a page-wide crossfade that out-shouted the object it
+     was supposed to be behind. */
+  opacity: calc(0.32 + 0.68 * var(--dawn, 1));
   /* Only the transform is animated, and only from a rAF, so this stays on the
      compositor rather than repainting six million pixels per scroll event. */
   will-change: transform;

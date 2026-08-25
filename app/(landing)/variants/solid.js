@@ -50,6 +50,11 @@ const SUNRISE_START = 0.06;
 // which is what keeps something changing all the way to the end.
 const SUN_OVER = 0.62;
 
+// How far the sky is tipped over at the start, in radians. Large on purpose: the
+// environment's bright sources sit high and in front, so this has to swing them
+// well below the mark for there to be anywhere for the light to rise from.
+const SKY_TILT = 1.15;
+
 function applySunrise(scene, sun, t) {
   // Smoothstep, slow at both ends.
   //
@@ -75,6 +80,21 @@ function applySunrise(scene, sun, t) {
   // nothing visibly changing, which is what "stuck at the top" was.
   const sunT = Math.min(1, t / SUN_OVER);
   const sunEased = sunT * sunT * (3 - 2 * sunT);
+
+  // The sky itself tips up, and this is the part that actually reads as light
+  // arriving on the object.
+  //
+  // At metalness 1 the mark is a mirror: what you see on it is the environment,
+  // not a shading model. Brightening the environment uniformly makes the whole
+  // surface get lighter at once, which is a dimmer switch. Rotating it drags the
+  // reflection of the key light and the hot rim strip up across the faces, so
+  // the light travels bottom to top the way it does on real metal at dawn.
+  //
+  // Cheap, and the reason this is possible at all: scene.environmentRotation is
+  // applied at draw time to materials that have no envMap of their own, which is
+  // exactly these two. Nothing is re-baked — the cubemap is still the single
+  // frames={1} bake it always was.
+  scene.environmentRotation.x = -SKY_TILT * (1 - eased);
 
   // The sky filling in, as one number on the scene rather than a value per
   // material. That is not a shortcut, it is the only lever that works here:
