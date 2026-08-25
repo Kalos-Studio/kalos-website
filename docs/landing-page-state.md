@@ -47,13 +47,22 @@ what actually happened to each item, including the parts that were undone.
 | 4a Second mark | Done, desktop only. |
 | 4b The two OR decisions | Taken. See below. |
 
-### How to actually see the sunrise
+### The sunrise plays on every load
 
-`http://localhost:3000/?sunrise=1` forces the full one. Without it you will
-almost never see it: `sessionStorage` survives a reload, so from your second load
-in a tab onward you get the short version, and everybody working on the page is a
-return visitor by definition. The short version is 1.6s (it was 0.9s, which
-measured as a ramp finishing inside 870ms — not a short sunrise, a flicker).
+It used to be once a session, on the argument that a three second overture is a
+delight the first time and a toll after. The owner removed that rule directly.
+
+It was also wrong in practice, not just unwanted: `sessionStorage` survives a
+reload, so from the second load in a tab onward everybody got the short version —
+which means every person working on the page, and the owner reviewing it, saw the
+abbreviated one and effectively never the real thing. A rule that hides a feature
+from the people judging it is not restraint. **Do not reintroduce it without
+asking.**
+
+Reduced motion still gets a shortened 1.6s rather than none, because cutting
+straight to the lit state reads as an animation that failed. It was 0.9s, which
+measured as a ramp finishing inside 870ms — a flicker rather than a short
+sunrise.
 
 `?dawn=0.4` pins it at a point instead of playing it, for judging a single frame.
 

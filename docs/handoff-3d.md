@@ -124,9 +124,11 @@ dynamically imported, and phones never load it.
 
 - **The sunrise** is in `variants/solid.js` (`applySunrise`). It ramps
   `scene.environmentIntensity` from 0.06 to 1 on a smoothstep and climbs one
-  directional light past the mark. Gated on the reveal, once a session via
-  `sessionStorage`, 0.9s instead of 3.4s on a return visit and under reduced
-  motion. `sunriseSeconds()` in `device.js` owns that rule.
+  directional light past the mark. Gated on the reveal, and it plays in full on
+  every load including a refresh: the once-a-session rule this file used to
+  describe was removed on the owner's instruction. Reduced motion still gets a
+  shortened 1.6s rather than none. `sunriseSeconds()` in `device.js` owns that,
+  and says why the session gate is not to come back without asking.
 - **The sand** is `app/(landing)/sand.js`: one fixed canvas, dunes generated at
   160x110 and drawn up, specks at 1:1 on the crests, parallaxing off
   `.landing-root`. Generated because the plate cannot tile. Costs 12ms desktop,

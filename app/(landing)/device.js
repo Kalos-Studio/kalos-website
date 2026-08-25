@@ -142,56 +142,32 @@ export function getTilt() {
   return tilt;
 }
 
-// How long the opening sunrise should run, in seconds, and whether it has
-// already been seen.
+// How long the opening sunrise should run, in seconds.
 //
-// The designer's note asks for light rising over the mark as the page opens. The
-// constraint that goes with it is that a three second overture is a delight the
-// first time and a toll every time after, so this is once a session. A return
-// visit inside the same tab still gets a short version rather than nothing:
-// cutting straight to the lit state makes the mark look like it failed to
-// animate, which reads as broken rather than as restraint.
+// It plays in full on every load, including a refresh. That is a reversal of a
+// rule this codebase had carried from the start — once a session, via
+// sessionStorage, on the argument that a three second overture is a delight the
+// first time and a toll every time after, and that somebody coming back for the
+// pricing should not have to sit through it. The owner overruled it directly:
+// "dont do once per session, it should work on refresh too."
 //
-// sessionStorage rather than localStorage on purpose. A week later it should
-// play again; ten minutes later, when someone has come back for the pricing, it
-// should not.
-const SUNRISE_SEEN_KEY = "kalos:sunrise";
+// Worth recording why the old rule was wrong in practice as well as unwanted.
+// sessionStorage survives a reload, so from the second load in a tab onward
+// everybody got the short version — which means every person working on this
+// page, and the owner reviewing it, saw the abbreviated one and effectively
+// never the real thing. A rule that hides a feature from the people judging it
+// is not restraint.
+//
+// Do not reintroduce the session gate without asking. `?sunrise=1` existed only
+// to defeat it and went with it; `?dawn=` still pins the animation at a point.
 export const SUNRISE_FULL_SECONDS = 3.4;
-// 1.6, up from 0.9. Measured, 0.9 puts the whole ramp inside about 870ms, which
-// is not a short version of a sunrise, it is a flicker: by the time you have
-// registered that something is happening it has finished. The point of a short
-// version is that a return visit still shows the page arriving rather than
-// snapping on, and that needs long enough to read.
+
+// Reduced motion still gets a short one rather than none. Cutting straight to
+// the lit state reads as an animation that failed rather than as restraint, and
+// this is motion the page starts by itself, which is the kind the setting is
+// actually about.
 export const SUNRISE_SHORT_SECONDS = 1.6;
 
 export function sunriseSeconds() {
-  // ?sunrise=1 forces the full one regardless of the session, the same
-  // affordance ?hint=1 and ?dawn= already give.
-  //
-  // This exists because of who the audience for it is. sessionStorage survives a
-  // reload, so everybody working on the page is a return visitor from their
-  // second load onward: the owner asked why they could not see the sunrise, and
-  // the answer was that they had seen it once, hours earlier, and every reload
-  // since had given them the 0.9s version. The one person who most needs to
-  // judge this was the one person guaranteed not to.
-  try {
-    if (new URLSearchParams(window.location.search).get("sunrise") === "1") {
-      return SUNRISE_FULL_SECONDS;
-    }
-  } catch {
-    // No window.location in some render contexts. Fall through.
-  }
-
-  if (prefersReducedMotion()) return SUNRISE_SHORT_SECONDS;
-  try {
-    if (window.sessionStorage.getItem(SUNRISE_SEEN_KEY)) {
-      return SUNRISE_SHORT_SECONDS;
-    }
-    window.sessionStorage.setItem(SUNRISE_SEEN_KEY, "1");
-  } catch {
-    // Safari in private mode throws on setItem. A visitor who cannot be
-    // remembered gets the full sunrise every time, which is the failure worth
-    // having of the two.
-  }
-  return SUNRISE_FULL_SECONDS;
+  return prefersReducedMotion() ? SUNRISE_SHORT_SECONDS : SUNRISE_FULL_SECONDS;
 }
