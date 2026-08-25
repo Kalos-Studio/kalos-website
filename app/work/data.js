@@ -9,11 +9,16 @@
 // each beat pinned to a heading, and that structure is what a reader skims past
 // rather than reads. `shell-tapup` below is the reference for the new voice.
 //
-// Consequences for the fields under it: leave `bodyLayout` off, so the body
-// renders as a single reading column capped at a 40rem measure. Use `heading`
-// and `section` blocks sparingly if at all — every one of them is a place the
-// story stops. Drop images in where the narrative reaches something worth
-// seeing, not at fixed intervals.
+// Consequences for the fields under it: the body is one reading column capped at
+// a 40rem measure, which is the only layout there is now — the opt-in columns
+// layout went when the last entry stopped using it. Use `heading` and `section`
+// blocks sparingly if at all, since every one of them is a place the story
+// stops. Drop images in where the narrative reaches something worth seeing, not
+// at fixed intervals.
+//
+// `year` is gone too. It was documented from the beginning, populated on none of
+// the entries and rendered nowhere, and a field in that state is a standing
+// invitation to wonder whether it broke.
 //
 // No em dashes in any string here. `bun run lint:copy` only walks
 // app/(landing)/content.js, so nothing enforces it on this file, but it is a
@@ -25,8 +30,6 @@
 //   summary: "One line describing the project.", // required — shown on the
 //                                                  // listing card and at the
 //                                                  // top of the case study
-//   year: "2026",              // optional — not currently displayed anywhere,
-//                               // kept for reference/future use
 //   client: "Client name",     // optional — shown as a fact on the case study
 //   role: "What we did",       // optional — shown as a fact on the case study
 //   cover: {                   // optional — omit to show a placeholder
@@ -47,11 +50,6 @@
 //                               // near an edge, e.g. "30% center" to keep
 //                               // more of the left side in frame.
 //   },
-//   bodyLayout: "columns",     // optional — lays the body out as label +
-//                               // content rows (each heading pinned to the
-//                               // left of the paragraphs/images that follow
-//                               // it) instead of one full-width column.
-//                               // Images inside a row still span full width.
 //   body: [                    // optional — the content blocks on the case
 //                               // study page, rendered top to bottom
 //     { type: "paragraph", text: "..." },
@@ -82,55 +80,13 @@ export function workPageTitle(title) {
   return `${title} — Kalos`;
 }
 
+// Array order is render order on /work, so it is a decision rather than a
+// side effect of when things were added. Deepest engagements first, then the
+// range: Vital and Shell are the two multi-phase product builds, Priority is
+// the brand-from-nothing story the homepage sells, EchoCare is product design
+// under time pressure, MARA is design at portfolio scale, Allganize is the web
+// build. Reorder by moving entries, not by adding a sort.
 export const caseStudies = [
-  {
-    slug: "shell-tapup",
-    title: "Shell TapUp",
-    summary: "Native iOS and Android app design for Shell's global refueling service.",
-    client: "Shell",
-    role: "Mobile App Design & Development",
-    cover: {
-      src: "/work/shell-tapup/cover.jpg",
-      alt: "A Shell TapUp driver app screenshot, showing tank levels and fueling controls, composited over a photo of the Shell pecten logo at a refueling station",
-    },
-    body: [
-      {
-        type: "paragraph",
-        text: "Shell came to us with a pilot programme and a question about it. TapUp brings the fuel to the vehicle rather than the vehicle to the station, and for a business running a fleet that is the difference between a driver losing an hour and never leaving the yard. The idea worked. What it ran on was people, paper, and a set of tools that had never been designed to work together.",
-      },
-      {
-        type: "paragraph",
-        text: "Every job passed through several of them. A driver took an order in one place, operated the pump in another, and closed out the invoice somewhere else again, and each handoff between those steps was somewhere a mistake could enter. Shell was seeing the results across the operation: inconsistent records, data that did not reconcile, and more time spent at each vehicle than the work actually needed.",
-      },
-      {
-        type: "paragraph",
-        text: "We started with the drivers, because they were the ones absorbing the problem. Through interviews, working sessions and on-site visits we built up a picture of how fuel actually moves through Shell's delivery ecosystem, which turned out to be a good deal messier than any process document described. The errors were not carelessness. They were what happens when a job has more steps than a person can hold while standing next to a running pump.",
-      },
-      {
-        type: "image",
-        src: "/work/shell-tapup/orders.webp",
-        alt: "The Shell TapUp orders screen, showing two tank gauges, begin and stop fueling controls, and the next order on the route",
-        caption: "Tank levels, the pump control and the next stop, on one screen.",
-      },
-      {
-        type: "paragraph",
-        text: "So the app was built around that rather than around the org chart. Fewer steps to complete a job. Status legible at a glance instead of recalled from memory. Wetstock tracked in real time, vehicles found and fueled through a guided flow, invoicing wired straight into billing and reconciliation, and safety reporting for incidents, spills and inspections put where a driver would actually reach for it. Even truck-to-truck transfers, the kind of edge case that usually lives in somebody's notebook, got a place in the product.",
-      },
-      {
-        type: "paragraph",
-        text: "The last phase was the one that is easy to skip and expensive to skip. Rather than shipping a working app and calling the pilot proven, we spent the end of the engagement on industrialisation: a universal data framework underneath it, so that what Shell had was something they could grow into new regions and new vehicle types rather than a good prototype that would need rebuilding the first time it met a market it was not designed for.",
-      },
-      {
-        type: "paragraph",
-        text: "What shipped is a pair of native iOS and Android apps, running globally, where a driver manages orders, operates the pump remotely and submits the invoice without leaving the screen. The separate tools and the paperwork between them are gone. For Shell's customers the visible change is smaller and more useful: the fuel arrives, the numbers are right, and nobody has to sort it out afterwards.",
-      },
-      {
-        type: "quote",
-        text: "Very strong at managing product delivery, great at adapting to curve balls, and re-prioritizing.",
-        attribution: "Humza Saleem, Global Product Manager, Shell TapUp",
-      },
-    ],
-  },
   {
     slug: "vital-energy",
     title: "Vital Energy",
@@ -192,6 +148,99 @@ export const caseStudies = [
     ],
   },
   {
+    slug: "shell-tapup",
+    title: "Shell TapUp",
+    summary: "Native iOS and Android app design for Shell's global refueling service.",
+    client: "Shell",
+    role: "Mobile App Design & Development",
+    cover: {
+      src: "/work/shell-tapup/cover.jpg",
+      alt: "A Shell TapUp driver app screenshot, showing tank levels and fueling controls, composited over a photo of the Shell pecten logo at a refueling station",
+    },
+    body: [
+      {
+        type: "paragraph",
+        text: "Shell came to us with a pilot programme and a question about it. TapUp brings the fuel to the vehicle rather than the vehicle to the station, and for a business running a fleet that is the difference between a driver losing an hour and never leaving the yard. The idea worked. What it ran on was people, paper, and a set of tools that had never been designed to work together.",
+      },
+      {
+        type: "paragraph",
+        text: "Every job passed through several of them. A driver took an order in one place, operated the pump in another, and closed out the invoice somewhere else again, and each handoff between those steps was somewhere a mistake could enter. Shell was seeing the results across the operation: inconsistent records, data that did not reconcile, and more time spent at each vehicle than the work actually needed.",
+      },
+      {
+        type: "paragraph",
+        text: "We started with the drivers, because they were the ones absorbing the problem. Through interviews, working sessions and on-site visits we built up a picture of how fuel actually moves through Shell's delivery ecosystem, which turned out to be a good deal messier than any process document described. The errors were not carelessness. They were what happens when a job has more steps than a person can hold while standing next to a running pump.",
+      },
+      {
+        type: "image",
+        src: "/work/shell-tapup/orders.webp",
+        alt: "The Shell TapUp orders screen, showing two tank gauges, begin and stop fueling controls, and the next order on the route",
+        caption: "Tank levels, the pump control and the next stop, on one screen.",
+      },
+      {
+        type: "paragraph",
+        text: "So the app was built around that rather than around the org chart. Fewer steps to complete a job. Status legible at a glance instead of recalled from memory. Wetstock tracked in real time, vehicles found and fueled through a guided flow, invoicing wired straight into billing and reconciliation, and safety reporting for incidents, spills and inspections put where a driver would actually reach for it. Even truck-to-truck transfers, the kind of edge case that usually lives in somebody's notebook, got a place in the product.",
+      },
+      {
+        type: "paragraph",
+        text: "The last phase was the one that is easy to skip and expensive to skip. Rather than shipping a working app and calling the pilot proven, we spent the end of the engagement on industrialisation: a universal data framework underneath it, so that what Shell had was something they could grow into new regions and new vehicle types rather than a good prototype that would need rebuilding the first time it met a market it was not designed for.",
+      },
+      {
+        type: "paragraph",
+        text: "What shipped is a pair of native iOS and Android apps, running globally, where a driver manages orders, operates the pump remotely and submits the invoice without leaving the screen. The separate tools and the paperwork between them are gone. For Shell's customers the visible change is smaller and more useful: the fuel arrives, the numbers are right, and nobody has to sort it out afterwards.",
+      },
+      {
+        type: "quote",
+        text: "Very strong at managing product delivery, great at adapting to curve balls, and re-prioritizing.",
+        attribution: "Humza Saleem, Global Product Manager, Shell TapUp",
+      },
+    ],
+  },
+  {
+    slug: "priority-ambulance-transfer",
+    title: "Priority Ambulance Transfer",
+    summary:
+      "Texas-based medical transport company providing ambulance and wheelchair transport across the greater Houston area and beyond.",
+    client: "Priority Ambulance Transfer",
+    role: "Head of Design",
+    cover: {
+      src: "/work/priority-ambulance-transfer/cover.jpg",
+      alt: "The Priority Ambulance Transfer homepage hero, \"When every minute matters, we're already moving.\"",
+      cardPosition: "left center",
+    },
+    body: [
+      {
+        type: "paragraph",
+        text: "Priority Ambulance Transfer launched with nothing. No name recognition, no logo, no website, nothing a hospital discharge planner could use to tell them apart from any other transport provider in Houston. That is a harder starting position than it sounds, because the people they needed to win over are making a decision about whether a patient will be moved safely, and they are making it fast, from whatever is in front of them. A company with no visible identity reads as a risk.",
+      },
+      {
+        type: "paragraph",
+        text: "So everything had to exist at once, and it had to be credible to facility partners on day one. We built the identity from the ground up: logo and wordmark, colour system, typography, and the visual language that would carry across every touchpoint a partner might encounter.",
+      },
+      {
+        type: "paragraph",
+        text: "Then we put it on the largest object the company owns. The ambulance fleet is the brand's most visible asset by an enormous margin, seen by more people in a week than the website will reach in a year, and a wrap is unforgiving: it is read at speed, at an angle, in the dark. Designing for that is a different discipline from designing for a screen.",
+      },
+      {
+        type: "paragraph",
+        text: "Underneath the visual work we authored the brand and content strategy, which is what stops an identity from being decoration. Positioning pillars, the verticals worth pursuing, how the audience segments between hospitals, care facilities and families, and a phased rollout so a company launching from zero was not trying to be everywhere in month one.",
+      },
+      {
+        type: "image",
+        src: "/work/priority-ambulance-transfer/services-page.jpg",
+        alt: "The Priority Ambulance Transfer services page, showing the ambulance transport hero and a carousel of service types with photography of EMTs and patients",
+        caption: "The services page, priorityat.com/services/ambulance.",
+      },
+      {
+        type: "paragraph",
+        text: "We designed and built the website end to end in Next.js and Tailwind, including the responsive architecture, the technical SEO, and the production deployment. And we produced the collateral that does the work in rooms we are not in: employee credentialing, facility-facing sales materials, service overviews, branded stationery.",
+      },
+      {
+        type: "paragraph",
+        text: "Priority went to market with one identity across the fleet, the site, and every piece of paper a partner would see before ever booking a transport. Holding the brand, the strategy and the build under one roof is what made the phased plan possible at all: there were no vendors to align, so the schedule was a decision rather than a negotiation.",
+      },
+    ],
+  },
+  {
     slug: "echocare",
     title: "EchoCare",
     summary:
@@ -235,51 +284,6 @@ export const caseStudies = [
       {
         type: "paragraph",
         text: "The last part of the work is the part nobody puts on a portfolio and everybody needs. We sat between product and engineering translating operational requirements into patterns that could actually ship, and we checked the marketing against the software. When a claim on the website and the behaviour of the platform disagree, the platform is not the thing that gets fixed first, and someone has to be willing to say so.",
-      },
-    ],
-  },
-  {
-    slug: "allganize-website-redesign",
-    title: "Allganize Website Redesign",
-    summary: "Pushing the future of workforce AI further.",
-    client: "Allganize",
-    role: "Development, Web Design",
-    cover: {
-      src: "/work/allganize-website-redesign/cover.webp",
-      alt: "The Allganize homepage hero, \"The All-In-One LLM Enabler For Enterprise,\" shown on a laptop screen",
-    },
-    body: [
-      {
-        type: "paragraph",
-        text: "Allganize sells enterprise AI in the most crowded category in software, and their site was not helping. It had gone dated in the way sites do when a company grows faster than its marketing: not badly built, just anonymous. Nothing on it said which company you were looking at. In a market where every competitor is making the same promise in the same words, that is the whole problem.",
-      },
-      {
-        type: "paragraph",
-        text: "Underneath the styling was a structural issue. Three genuinely different products were sharing one paragraph. On-premise LLM infrastructure, the no-code Alli App Builder, and the App Market are bought by different people for different reasons, and the site folded them into a single long features page. A visitor could not tell them apart, and had no way to work out where to start.",
-      },
-      {
-        type: "paragraph",
-        text: "So we restructured the information architecture around the suite as it actually exists, and gave each product a section of its own. Comparable, distinct, and possible to arrive at directly. That change alone does something competitors bundling everything into one pitch cannot easily answer.",
-      },
-      {
-        type: "image",
-        src: "/work/allganize-website-redesign/detail-1.webp",
-        alt: "The Allganize homepage's Alli App Builder section, \"AI-Powered Business Automation,\" showing a no-code workflow canvas",
-        caption: "The App Builder section, showing the canvas rather than describing it.",
-      },
-      {
-        type: "paragraph",
-        text: "For the products where the value is in the doing, we designed the visuals instead of writing another paragraph. Workflow canvases, chat mockups, the skill builder mid-build. An enterprise buyer evaluating an AI platform has read the paragraph already, on four other sites this week. What they have not seen is the thing running.",
-      },
-      {
-        type: "image",
-        src: "/work/allganize-website-redesign/detail-2.webp",
-        alt: "The Allganize homepage's \"Build LLM Enabled AI Apps\" section, showing a skill-builder workflow canvas in the Alli Suite",
-        caption: "The Alli Suite section: a skill being built, not a bullet list.",
-      },
-      {
-        type: "paragraph",
-        text: "We built and shipped it end to end, from responsive page templates through to production deployment, so the redesign went live without a handoff in the middle of it. The site reads clearly now whether the visitor is a first-time prospect working out what Allganize does, or a customer who knows exactly which product they came for.",
       },
     ],
   },
@@ -334,47 +338,47 @@ export const caseStudies = [
     ],
   },
   {
-    slug: "priority-ambulance-transfer",
-    title: "Priority Ambulance Transfer",
-    summary:
-      "Texas-based medical transport company providing ambulance and wheelchair transport across the greater Houston area and beyond.",
-    client: "Priority Ambulance Transfer",
-    role: "Head of Design",
+    slug: "allganize-website-redesign",
+    title: "Allganize Website Redesign",
+    summary: "Pushing the future of workforce AI further.",
+    client: "Allganize",
+    role: "Development, Web Design",
     cover: {
-      src: "/work/priority-ambulance-transfer/cover.jpg",
-      alt: "The Priority Ambulance Transfer homepage hero, \"When every minute matters, we're already moving.\"",
-      cardPosition: "left center",
+      src: "/work/allganize-website-redesign/cover.webp",
+      alt: "The Allganize homepage hero, \"The All-In-One LLM Enabler For Enterprise,\" shown on a laptop screen",
     },
     body: [
       {
         type: "paragraph",
-        text: "Priority Ambulance Transfer launched with nothing. No name recognition, no logo, no website, nothing a hospital discharge planner could use to tell them apart from any other transport provider in Houston. That is a harder starting position than it sounds, because the people they needed to win over are making a decision about whether a patient will be moved safely, and they are making it fast, from whatever is in front of them. A company with no visible identity reads as a risk.",
+        text: "Allganize sells enterprise AI in the most crowded category in software, and their site was not helping. It had gone dated in the way sites do when a company grows faster than its marketing: not badly built, just anonymous. Nothing on it said which company you were looking at. In a market where every competitor is making the same promise in the same words, that is the whole problem.",
       },
       {
         type: "paragraph",
-        text: "So everything had to exist at once, and it had to be credible to facility partners on day one. We built the identity from the ground up: logo and wordmark, colour system, typography, and the visual language that would carry across every touchpoint a partner might encounter.",
+        text: "Underneath the styling was a structural issue. Three genuinely different products were sharing one paragraph. On-premise LLM infrastructure, the no-code Alli App Builder, and the App Market are bought by different people for different reasons, and the site folded them into a single long features page. A visitor could not tell them apart, and had no way to work out where to start.",
       },
       {
         type: "paragraph",
-        text: "Then we put it on the largest object the company owns. The ambulance fleet is the brand's most visible asset by an enormous margin, seen by more people in a week than the website will reach in a year, and a wrap is unforgiving: it is read at speed, at an angle, in the dark. Designing for that is a different discipline from designing for a screen.",
-      },
-      {
-        type: "paragraph",
-        text: "Underneath the visual work we authored the brand and content strategy, which is what stops an identity from being decoration. Positioning pillars, the verticals worth pursuing, how the audience segments between hospitals, care facilities and families, and a phased rollout so a company launching from zero was not trying to be everywhere in month one.",
+        text: "So we restructured the information architecture around the suite as it actually exists, and gave each product a section of its own. Comparable, distinct, and possible to arrive at directly. That change alone does something competitors bundling everything into one pitch cannot easily answer.",
       },
       {
         type: "image",
-        src: "/work/priority-ambulance-transfer/services-page.jpg",
-        alt: "The Priority Ambulance Transfer services page, showing the ambulance transport hero and a carousel of service types with photography of EMTs and patients",
-        caption: "The services page, priorityat.com/services/ambulance.",
+        src: "/work/allganize-website-redesign/detail-1.webp",
+        alt: "The Allganize homepage's Alli App Builder section, \"AI-Powered Business Automation,\" showing a no-code workflow canvas",
+        caption: "The App Builder section, showing the canvas rather than describing it.",
       },
       {
         type: "paragraph",
-        text: "We designed and built the website end to end in Next.js and Tailwind, including the responsive architecture, the technical SEO, and the production deployment. And we produced the collateral that does the work in rooms we are not in: employee credentialing, facility-facing sales materials, service overviews, branded stationery.",
+        text: "For the products where the value is in the doing, we designed the visuals instead of writing another paragraph. Workflow canvases, chat mockups, the skill builder mid-build. An enterprise buyer evaluating an AI platform has read the paragraph already, on four other sites this week. What they have not seen is the thing running.",
+      },
+      {
+        type: "image",
+        src: "/work/allganize-website-redesign/detail-2.webp",
+        alt: "The Allganize homepage's \"Build LLM Enabled AI Apps\" section, showing a skill-builder workflow canvas in the Alli Suite",
+        caption: "The Alli Suite section: a skill being built, not a bullet list.",
       },
       {
         type: "paragraph",
-        text: "Priority went to market with one identity across the fleet, the site, and every piece of paper a partner would see before ever booking a transport. Holding the brand, the strategy and the build under one roof is what made the phased plan possible at all: there were no vendors to align, so the schedule was a decision rather than a negotiation.",
+        text: "We built and shipped it end to end, from responsive page templates through to production deployment, so the redesign went live without a handoff in the middle of it. The site reads clearly now whether the visitor is a first-time prospect working out what Allganize does, or a customer who knows exactly which product they came for.",
       },
     ],
   },

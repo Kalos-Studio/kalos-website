@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import Hero from "./hero";
 import CallToAction from "./cta";
 import Reveal from "./reveal";
@@ -171,6 +172,17 @@ export default function Landing() {
               </article>
             ))}
           </div>
+        </Reveal>
+        {/* The one link out of this section. Nothing on the homepage pointed at
+            /work at all while /work was behind a password, which was consistent
+            if unhelpful; it is public now, and three of six projects is a reason
+            to keep going rather than a complete answer. Kept as a text link
+            rather than a second button: the page has one primary action and the
+            note above about three buttons reading as pestering still holds. */}
+        <Reveal delay={160}>
+          <Link href="/work" className="ln-more mt-10">
+            See all work
+          </Link>
         </Reveal>
       </Section>
 

@@ -33,8 +33,14 @@ export default function ExpandableImage({ src, alt }) {
         onClick={() => setOpen(true)}
         aria-label={`Expand image${alt ? `: ${alt}` : ""}`}
       >
+        {/* Still a plain <img>, and deliberately. next/image needs intrinsic
+            dimensions for a string src, either width and height or `fill` inside
+            a sized parent, and a body image block carries neither: these run at
+            their natural aspect ratio down the column, which is the point. Lazy
+            and async decoding are the parts of the benefit that do not need the
+            dimensions. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt || ""} />
+        <img src={src} alt={alt || ""} loading="lazy" decoding="async" />
       </button>
 
       {open &&

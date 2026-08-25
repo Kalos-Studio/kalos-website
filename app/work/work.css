@@ -391,54 +391,12 @@
   margin-top: 0;
 }
 
-/* --- Columns body layout (opt-in via bodyLayout: "columns") ------------ */
-
-/* Each heading becomes a row: pinned as a label to the left, with the
-   paragraphs/images that followed it in the flat block list to the right.
-   Row-level margin-top replaces the plain layout's per-heading margin-top,
-   since the label's own h2 sits flush at the top of its row instead. */
-.work-case-body--columns .work-case-row {
-  display: grid;
-  grid-template-columns: 10rem 1fr;
-  gap: 0.75rem 2rem;
-  margin-top: 2.5rem;
-}
-
-.work-case-body--columns .work-case-row:first-child {
-  margin-top: 0;
-}
-
-.work-case-row-label {
-  grid-column: 1;
-  align-self: start;
-}
-
-.work-case-row-label h2,
-.work-case-row-label .work-case-section-header {
-  margin-top: 0;
-}
-
-.work-case-row-text {
-  grid-column: 2;
-}
-
-/* Images still get the full row width, not just the content column —
-   the whole point of widening the shell was bigger images. */
-.work-case-row-full {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 640px) {
-  .work-case-body--columns .work-case-row {
-    grid-template-columns: 1fr;
-  }
-
-  .work-case-row-label,
-  .work-case-row-text,
-  .work-case-row-full {
-    grid-column: 1;
-  }
-}
+/* The columns body layout is gone. It pinned each heading to the left of its
+   content and started a new row at every one, which is a spine made visible, and
+   the case studies are stories now. Every entry had opted into it and every
+   entry has dropped it, so the rules, the grouping pass in CaseStudyBody, and
+   the bodyLayout field went together rather than sitting here as an option the
+   format doc tells you not to use. */
 
 .work-case-body figure {
   margin: 0.5rem 0;

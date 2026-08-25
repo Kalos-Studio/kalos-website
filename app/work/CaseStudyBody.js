@@ -51,55 +51,8 @@ function renderBlock(block, key) {
   }
 }
 
-// Splits a flat block list into { label, content } groups, one per heading —
-// used by the "columns" layout, where each heading becomes a label pinned
-// to the left of the paragraphs/images that follow it, instead of a
-// full-width line above them.
-function groupIntoSections(blocks) {
-  const sections = [];
-  let current = null;
-  for (const block of blocks) {
-    if (block.type === "heading" || block.type === "section") {
-      current = { label: block, content: [] };
-      sections.push(current);
-    } else if (current) {
-      current.content.push(block);
-    } else {
-      current = { label: null, content: [block] };
-      sections.push(current);
-    }
-  }
-  return sections;
-}
-
-export default function CaseStudyBody({ blocks, columns }) {
+export default function CaseStudyBody({ blocks }) {
   if (!blocks?.length) return null;
-
-  if (columns) {
-    return (
-      <div className="work-case-body work-case-body--columns">
-        {groupIntoSections(blocks).map((section, i) => (
-          <div className="work-case-row" key={i}>
-            {section.label && (
-              <div className="work-case-row-label">
-                {renderBlock(section.label, `label-${i}`)}
-              </div>
-            )}
-            {section.content.map((block, j) => (
-              <div
-                className={
-                  block.type === "image" ? "work-case-row-full" : "work-case-row-text"
-                }
-                key={j}
-              >
-                {renderBlock(block, `content-${i}-${j}`)}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="work-case-body">

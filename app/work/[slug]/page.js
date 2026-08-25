@@ -66,21 +66,25 @@ export default async function CaseStudyPage({ params }) {
       <CoverImage
         cover={cs.cover}
         className="work-case-cover"
+        sizes="(min-width: 1200px) 1200px, 100vw"
         objectPosition={cs.cover?.heroPosition}
         priority
       />
 
-      <CaseStudyBody blocks={cs.body} columns={cs.bodyLayout === "columns"} />
+      <CaseStudyBody blocks={cs.body} />
 
-      <div className="work-more">
-        <div className="work-more-header">
-          <h2 className="work-more-heading">More case studies</h2>
-          <Link href="/work" className="work-more-view-all">
-            View all work →
-          </Link>
-        </div>
+      {/* The whole block is conditional, not just the grid. Only the <ul> was
+          guarded before, so a section with one case study rendered "More case
+          studies" and "View all work" over nothing at all. */}
+      {otherCaseStudies.length > 0 && (
+        <div className="work-more">
+          <div className="work-more-header">
+            <h2 className="work-more-heading">More case studies</h2>
+            <Link href="/work" className="work-more-view-all">
+              View all work →
+            </Link>
+          </div>
 
-        {otherCaseStudies.length > 0 && (
           <ul className="work-more-grid">
             {otherCaseStudies.map((other) => (
               <li key={other.slug}>
@@ -88,6 +92,7 @@ export default async function CaseStudyPage({ params }) {
                   <CoverImage
                     cover={other.cover}
                     className="work-more-cover"
+                    sizes="(min-width: 640px) 33vw, 100vw"
                     objectPosition={other.cover?.cardPosition}
                   >
                     <div className="work-more-overlay">
@@ -98,8 +103,8 @@ export default async function CaseStudyPage({ params }) {
               </li>
             ))}
           </ul>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

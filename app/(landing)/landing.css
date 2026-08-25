@@ -321,6 +321,40 @@
   object-fit: cover;
 }
 
+/* The one text link on the page. Gold, because the palette gives gold to
+   accents and active indicators and this is the page's only secondary action;
+   the arrow is a pseudo-element so it can move without the text moving with it. */
+.ln-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--color-vulcan-gold);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.ln-more::after {
+  content: "\2192";
+  transition: transform 200ms ease;
+}
+
+.ln-more:hover {
+  color: color-mix(in srgb, var(--color-vulcan-gold) 55%, var(--gold-render-rim));
+}
+
+.ln-more:hover::after {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-more::after {
+    transition: none;
+  }
+}
+
 /* ---------- texture ----------
  *
  * A whisper of film grain over the whole page. The old spotlight homepage

@@ -26,6 +26,7 @@ export default function WorkIndexPage() {
                 <CoverImage
                   cover={cs.cover}
                   className="work-card-cover"
+                  sizes="(min-width: 640px) 50vw, 100vw"
                   objectPosition={cs.cover?.cardPosition}
                   priority={i === 0}
                 />
