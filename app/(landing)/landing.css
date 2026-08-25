@@ -94,9 +94,15 @@
   padding-inline: max(var(--page-pad), env(safe-area-inset-left));
 }
 
-.ln-rule {
-  border-top: 1px solid var(--color-eerie-gray);
-}
+/* The hairline between sections is gone. The mock has no rules on it at all:
+   sections are separated by the space around them and by the sand moving behind
+   them, which is what a rule would otherwise be doing less well. It also drew a
+   hard horizontal line across a field whose whole character is that it has no
+   hard horizontals in it.
+
+   The one rule that stays is .ln-word-rule, under the definition, because the
+   mock does draw that one — it closes the dictionary entry rather than dividing
+   two sections. */
 
 /* Heading in one column, prose in the other, instead of a heading stacked on a
    672px paragraph inside a 1080px shell with the right half empty. Uses the
@@ -148,7 +154,7 @@
    is quieter than the brand is anywhere. Leading loosens toward the `normal`
    the file uses, rather than the 1.08 that came from web habit. */
 .ln-h2 {
-  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-size: var(--type-title);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.14;
@@ -156,7 +162,7 @@
 }
 
 .ln-body {
-  font-size: clamp(1rem, 1.6vw, 1.125rem);
+  font-size: var(--type-body);
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.6;
@@ -184,7 +190,7 @@
   border-radius: 999px;
   border: 1px solid transparent;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--type-small);
   font-weight: 500;
   letter-spacing: -0.02em;
   /* Between Vulcan Gold and the lit rim, which is where the pill's own label
@@ -291,7 +297,7 @@ a.ln-card-media:hover {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1rem;
+  font-size: var(--type-small);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--color-vulcan-gold);
@@ -438,7 +444,7 @@ a.ln-card-media:hover {
      measures about 620px against a 600px column and breaks after the slash,
      which puts the slash at the end of a line where it reads as punctuation
      rather than as the join between two names for the same thing. */
-  font-size: clamp(2.5rem, 5.6vw, 5rem);
+  font-size: var(--type-display);
   font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 1.05;
@@ -463,7 +469,7 @@ a.ln-card-media:hover {
 
 .ln-definition {
   margin-top: 1.25rem;
-  font-size: clamp(1.0625rem, 2vw, 1.375rem);
+  font-size: var(--type-lead);
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.45;

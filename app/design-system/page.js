@@ -84,10 +84,24 @@ const PLATES = [
   },
 ];
 
+// The seven steps, named by the job they do. Read straight off the tokens in
+// globals.css so this sheet cannot drift from the site: if a size changes there,
+// the specimen below changes with it.
+const TYPE = [
+  { token: "--type-display", name: "Display", px: "40 - 80", use: "The word. Nothing else on the site is set at this size." },
+  { token: "--type-title", name: "Title", px: "32 - 60", use: "Section headlines and case study titles." },
+  { token: "--type-heading", name: "Heading", px: "22 - 28", use: "Sub-headings and pull quotes. Anything leading a paragraph." },
+  { token: "--type-lead", name: "Lead", px: "17 - 22", use: "A first sentence: the definition, a case study summary." },
+  { token: "--type-body", name: "Body", px: "16 - 18", use: "Reading size." },
+  { token: "--type-small", name: "Small", px: "15", use: "Secondary text that is still meant to be read." },
+  { token: "--type-micro", name: "Micro", px: "13", use: "Captions, facts, credits. The floor: below this a display grotesk gets brittle." },
+];
+
 const OPEN = [
-  "Client logos for the proof strip. The repo has case study covers and nothing else.",
-  "Booking URL for the primary call to action.",
-  "Price anchor and timeline range for the FAQ.",
+  "Booking URL for the primary call to action. content.js still points at a placeholder Cal.com path.",
+  "MARA case study imagery. The story leads on the Exaion brand kit and the hackathon and there is art for neither.",
+  "Priority Ambulance Transfer imagery. The copy argues the ambulance fleet is the brand's most visible asset and then does not show it.",
+  "A role for the Vital Energy case study. Every other entry has one.",
 ];
 
 function Section({ label, title, children }) {
@@ -193,10 +207,48 @@ export default function DesignSystem() {
             </span>
             <p className="ds-body max-w-2xl">
               Body copy at reading size. Space Grotesk is a display-leaning
-              grotesk, so this is the size worth judging: if a long FAQ answer
-              reads poorly here, the honest fix is a pairing rather than forcing
-              the brand face down to twelve pixels.
+              grotesk, so this is the size worth judging: if a long answer reads
+              poorly here, the honest fix is a pairing rather than forcing the
+              brand face down to twelve pixels.
             </p>
+          </div>
+
+          <h3 className="ds-h2 mt-14">The scale</h3>
+          <p className="ds-body mt-3 max-w-2xl">
+            Seven steps, each with a job, roughly a 1.25 ratio apart. They live in
+            {" "}
+            <span className="ds-mono ds-mono--gold">:root</span> in globals.css
+            rather than in <span className="ds-mono ds-mono--gold">@theme</span>,
+            deliberately: theme tokens generate{" "}
+            <span className="ds-mono ds-mono--gold">text-*</span> utilities, and a
+            scale that can be applied ad hoc from markup is a scale that drifts.
+            It had drifted. work.css alone carried twenty sizes that were not a
+            scale but a list of numbers that each looked right on the day.
+          </p>
+          <p className="ds-note mt-3 max-w-2xl">
+            The brand file has four sizes and no intermediates, because a deck has
+            no card titles, captions or facts lines. Display and body are its
+            numbers brought onto a 1080 grid; the rest are derived from what the
+            site has to set.
+          </p>
+
+          <div className="mt-8 space-y-8">
+            {TYPE.map((t) => (
+              <div key={t.token} className="border-t border-white/10 pt-6">
+                <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <span className="ds-swatch-name">{t.name}</span>
+                  <code className="ds-mono ds-mono--gold">{t.token}</code>
+                  <code className="ds-mono ds-mono--dim">{t.px}px</code>
+                </div>
+                <p
+                  className="ds-specimen-line"
+                  style={{ fontSize: `var(${t.token})` }}
+                >
+                  Beautiful because it is made well
+                </p>
+                <p className="ds-note mt-2 max-w-2xl">{t.use}</p>
+              </div>
+            ))}
           </div>
         </Section>
 

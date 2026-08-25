@@ -31,7 +31,7 @@
  * Tailwind is still doing the grids, spacing and borders throughout the page. */
 
 .ds-h1 {
-  font-size: clamp(2.25rem, 5vw, 3rem);
+  font-size: var(--type-title);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -40,7 +40,7 @@
 }
 
 .ds-h2 {
-  font-size: 1.75rem;
+  font-size: var(--type-heading);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.15;
@@ -53,7 +53,7 @@
    See the note in landing.css. */
 .ds-kicker {
   display: block;
-  font-size: 1rem;
+  font-size: var(--type-body);
   font-weight: 400;
   letter-spacing: -0.02em;
   text-transform: none;
@@ -70,28 +70,28 @@
 }
 
 .ds-lead {
-  font-size: 1rem;
+  font-size: var(--type-body);
   color: rgba(245, 254, 253, 0.62);
 }
 
 .ds-body {
-  font-size: 0.9375rem;
+  font-size: var(--type-small);
   color: rgba(245, 254, 253, 0.62);
 }
 
 .ds-note {
-  font-size: 0.875rem;
+  font-size: var(--type-small);
   color: rgba(245, 254, 253, 0.48);
 }
 
 .ds-swatch-name {
-  font-size: 0.875rem;
+  font-size: var(--type-small);
   color: var(--color-snow-white);
 }
 
 .ds-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.75rem;
+  font-size: var(--type-micro);
   letter-spacing: normal;
 }
 
@@ -107,7 +107,7 @@
 
 .ds-specimen {
   display: block;
-  font-size: clamp(2rem, 6vw, 3rem);
+  font-size: var(--type-title);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -115,7 +115,7 @@
 
 .ds-quote {
   display: block;
-  font-size: clamp(2rem, 5.5vw, 3.5rem);
+  font-size: var(--type-title);
   font-weight: 500;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -123,7 +123,7 @@
 
 .ds-quote-sub {
   display: block;
-  font-size: 1.375rem;
+  font-size: var(--type-lead);
   font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1.35;
@@ -148,7 +148,19 @@
 /* globals.css colours bare <li> nothing, but it does set <p>, and the open
    questions list reads as body copy — keep it consistent with .ds-body. */
 .ds-list li {
-  font-size: 0.9375rem;
+  font-size: var(--type-small);
   line-height: 1.6;
   color: rgba(245, 254, 253, 0.62);
+}
+
+/* One line of the scale, set at whatever size the token it is demonstrating
+   resolves to. No font-size here on purpose: the page passes it inline from the
+   token, so a change in globals.css shows up on this sheet without anyone having
+   to remember to come and update it. */
+.ds-specimen-line {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--color-snow-white);
+  text-wrap: balance;
 }

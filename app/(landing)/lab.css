@@ -218,7 +218,7 @@
   z-index: 3;
   /* Matched to the deck's label treatment like the rest: Regular, sentence
      case, negative tracking. It was 0.72rem uppercase at +0.2em. */
-  font-size: 1rem;
+  font-size: var(--type-small);
   font-weight: 400;
   letter-spacing: -0.02em;
   /* An earlier pass sat at #4c4132, which made the one line on the page that's

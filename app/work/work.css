@@ -71,7 +71,7 @@
  * and /work has been rendering in sentence case because this rule outranks
  * them. Changing that is a design decision, not a cleanup. */
 .work-root :where(p) {
-  font-size: clamp(0.875rem, 2vw, 1.125rem);
+  font-size: var(--type-body);
 }
 
 .work-root p {
@@ -123,7 +123,7 @@
 /* Set at the page's own headline size rather than as a label, because it is the
    page's headline. */
 .work-title {
-  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-size: var(--type-title);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.14;
@@ -205,28 +205,28 @@
   align-items: center;
   justify-content: center;
   color: #444;
-  font-size: 0.8rem;
+  font-size: var(--type-micro);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   background: radial-gradient(circle at 30% 20%, #1a1a1a, #050505);
 }
 
 .work-card-title {
-  font-size: 1.25rem;
+  font-size: var(--type-lead);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .work-card-summary {
   color: #b8b8b8;
-  font-size: 0.95rem;
+  font-size: var(--type-small);
   line-height: 1.5;
   margin-top: 0.4rem;
 }
 
 .work-empty {
   color: #9a9a9a;
-  font-size: 0.95rem;
+  font-size: var(--type-small);
   border: 1px dashed #2a2a2a;
   border-radius: 0.75rem;
   padding: 2rem;
@@ -240,7 +240,7 @@
   gap: 0.4rem;
   color: #b8b8b8;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: var(--type-small);
   margin-bottom: 2.5rem;
 }
 
@@ -273,7 +273,7 @@
    Grotesk Medium is the brand's display weight and 3.75rem is what .ln-h2 tops
    out at. Two surfaces of one site should not be running two type scales. */
 .work-case-title {
-  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-size: var(--type-title);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.14;
@@ -283,7 +283,7 @@
 
 .work-case-summary {
   color: #fff;
-  font-size: 1.05rem;
+  font-size: var(--type-body);
   line-height: 1.6;
   max-width: 40rem;
 }
@@ -293,14 +293,14 @@
    file gives to sub-labels and this is one. */
 .work-case-facts {
   margin-top: 1.25rem;
-  font-size: 0.9375rem;
+  font-size: var(--type-small);
   letter-spacing: -0.02em;
   color: var(--color-dark-silver);
 }
 
 .work-case-fact dd {
   color: #fff;
-  font-size: 0.95rem;
+  font-size: var(--type-small);
 }
 
 .work-case-cover {
@@ -325,7 +325,7 @@
   flex-direction: column;
   gap: 1.5rem;
   color: #fff;
-  font-size: 1.05rem;
+  font-size: var(--type-body);
   line-height: 1.7;
 }
 
@@ -353,7 +353,7 @@
 
 .work-case-quote blockquote {
   margin: 0;
-  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+  font-size: var(--type-heading);
   font-weight: 500;
   line-height: 1.35;
   letter-spacing: -0.02em;
@@ -365,14 +365,14 @@
    Silver is the palette's one secondary text value. */
 .work-case-quote figcaption {
   margin-top: 0.85rem;
-  font-size: 0.9375rem;
+  font-size: var(--type-small);
   letter-spacing: -0.02em;
   color: var(--color-dark-silver);
 }
 
 .work-case-body h2 {
   color: #fff;
-  font-size: 1.4rem;
+  font-size: var(--type-heading);
   font-weight: 600;
   margin-top: 1rem;
 }
@@ -455,7 +455,7 @@
   border: 1px solid #333;
   background: #111;
   color: #fff;
-  font-size: 1.5rem;
+  font-size: var(--type-heading);
   line-height: 1;
   cursor: pointer;
 }
@@ -466,7 +466,7 @@
 
 .work-case-body figcaption {
   color: #9a9a9a;
-  font-size: 0.85rem;
+  font-size: var(--type-micro);
   margin-top: 0.6rem;
 }
 
@@ -498,14 +498,14 @@
 }
 
 .work-more-heading {
-  font-size: 1.1rem;
+  font-size: var(--type-body);
   font-weight: 600;
 }
 
 .work-more-view-all {
   color: #b8b8b8;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: var(--type-small);
   flex-shrink: 0;
 }
 
@@ -540,7 +540,7 @@
 
 .work-more-title {
   color: #fff;
-  font-size: 1rem;
+  font-size: var(--type-small);
   font-weight: 600;
   letter-spacing: -0.01em;
   transition: font-weight 0.2s ease;
@@ -573,12 +573,12 @@
 }
 
 .work-login-eyebrow {
-  font-size: 0.8rem;
+  font-size: var(--type-micro);
   letter-spacing: 0.1em;
 }
 
 .work-login-card h1 {
-  font-size: 1.75rem;
+  font-size: var(--type-heading);
   font-weight: 700;
   letter-spacing: -0.02em;
   /* Was inherited from the global h1 rule, which is gone. Stated so the card
@@ -591,7 +591,7 @@
 .work-login-card button {
   border-radius: 0.5rem;
   padding: 0.85rem 1rem;
-  font-size: 1rem;
+  font-size: var(--type-small);
 }
 
 .work-login-card input[type="password"] {
@@ -619,5 +619,5 @@
 
 .work-login-error {
   color: #ff6b6b;
-  font-size: 0.85rem;
+  font-size: var(--type-micro);
 }

@@ -26,9 +26,9 @@ import "./landing.css";
 // of it should come back, `git show 55a0cad:app/\(landing\)/content.js` has the
 // copy and the argument for it.
 
-function Section({ children, rule = true, className = "" }) {
+function Section({ children, className = "" }) {
   return (
-    <section className={`ln-section ${rule ? "ln-rule" : ""} ${className}`}>
+    <section className={`ln-section ${className}`}>
       <div className="ln-shell">{children}</div>
     </section>
   );
@@ -61,7 +61,7 @@ export default function Landing() {
           It carries the page's h1. The hero has no copy in the mock, only the
           lockup, so there is no headline up there to be the document's heading
           any more. */}
-      <Section rule={false}>
+      <Section>
         <Reveal>
           <div className="ln-cols ln-definition-row">
             <div>
@@ -125,7 +125,7 @@ export default function Landing() {
 
       {/* The close. One statement and one action, which is the only button on the
           page now that the hero has no copy. */}
-      <Section rule={false} className="ln-closing text-center">
+      <Section className="ln-closing text-center">
         <Reveal>
           <h2 className="ln-h2 mx-auto max-w-2xl">{finalCta.heading}</h2>
           <CallToAction className="mt-8" />

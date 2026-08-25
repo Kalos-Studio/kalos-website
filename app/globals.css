@@ -87,6 +87,45 @@
   --page-pad: clamp(1.25rem, 5vw, 2.5rem);
 }
 
+/* The type scale, in one place, because it was in three and none of them agreed.
+ *
+ * work.css alone carried twenty ad-hoc sizes — 0.8, 0.85, 0.9, 0.95, 1.05, 1.1,
+ * 1.25, 1.4, 1.5, 1.75rem and more — which is not a scale, it is a list of
+ * numbers that each looked right on the day. Two pages of one site were also
+ * running two different ladders, so a case study title and a section headline
+ * were set differently for no reason anyone could state.
+ *
+ * Seven steps, each with a job. Adjacent steps are roughly a 1.25 ratio apart,
+ * which is the smallest gap two sizes can sit at and still read as deliberately
+ * different rather than as a mistake.
+ *
+ * Deliberately in :root rather than @theme. @theme would generate `text-*`
+ * utilities, and a scale that can be applied ad hoc from markup is a scale that
+ * drifts — which is how the twenty numbers happened.
+ *
+ * The brand file has four sizes (160 / 116 / 26 / 16 on a 1920 frame) and no
+ * intermediates, because a deck has no card titles, no captions and no facts
+ * line. Display and body are its numbers brought onto a 1080 grid. The rest are
+ * derived from what this site actually has to set.
+ */
+:root {
+  /* 40 - 80. The word, and nothing else. */
+  --type-display: clamp(2.5rem, 5.6vw, 5rem);
+  /* 32 - 60. Section headlines and case study titles. */
+  --type-title: clamp(2rem, 5vw, 3.75rem);
+  /* 22 - 28. Sub-headings, pull quotes, anything leading a paragraph. */
+  --type-heading: clamp(1.375rem, 2.2vw, 1.75rem);
+  /* 17 - 22. A first sentence: the definition, a case study summary. */
+  --type-lead: clamp(1.0625rem, 2vw, 1.375rem);
+  /* 16 - 18. Reading size. */
+  --type-body: clamp(1rem, 1.6vw, 1.125rem);
+  /* 15. Secondary text that is still meant to be read. */
+  --type-small: 0.9375rem;
+  /* 13. Captions, facts, credits. Below this the brand face stops working — it
+     is a display grotesk and it gets brittle. */
+  --type-micro: 0.8125rem;
+}
+
 /* Applied wherever the brand face is set. Kept as a custom property rather than
    repeated, because forgetting it renders Space Grotesk's default forms and the
    type quietly stops matching the logo. */
