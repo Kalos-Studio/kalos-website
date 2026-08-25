@@ -106,7 +106,22 @@
   right: 0;
   pointer-events: none;
   z-index: 3;
-  animation: lab-fade-in 1.2s ease 0.25s both;
+  /* Was `animation: lab-fade-in 1.2s ease 0.25s both`. The delay was the
+     problem: it is measured from when the CSS applies, which is when the page
+     shell paints, and the renderer behind it can be seconds away on a phone. The
+     lockup arrived over an empty background and had finished arriving before
+     there was a mark to sit above.
+     It waits for the sunrise now. hero.js adds .is-lit when the stage says the
+     light is up, with the same timeout fallback the stage itself has, so a lost
+     context cannot leave the masthead invisible. */
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 900ms ease, transform 900ms ease;
+}
+
+.lab-header.is-lit {
+  opacity: 1;
+  transform: none;
 }
 
 /* The lockup used to be wrapped in an <h1>, from when the hero was the entire
@@ -126,17 +141,6 @@
   display: block;
   width: clamp(98px, 9vw, 124px);
   height: auto;
-}
-
-@keyframes lab-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 /* ---------- hero copy ---------- */
@@ -341,8 +345,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Same entrance, no travel: the fade is information (the page is arriving),
+     the 6px of movement is decoration. The lockup is still cued by the sunrise
+     rather than a delay, and the sunrise itself is shortened rather than
+     removed — see sunriseSeconds() in device.js for why cutting straight to the
+     lit state reads as broken instead of restrained. */
   .lab-header {
-    animation: lab-opacity-in 1.2s ease 0.25s both;
+    transform: none;
+  }
+
+  .lab-header.is-lit {
+    transform: none;
   }
 
   .lab-tilt-hint {
@@ -366,16 +379,5 @@
       opacity: 1;
       transform: translateY(var(--lab-copy-shift));
     }
-  }
-}
-
-/* Same entrance, no travel — the fade is information (the page is arriving), the
-   6px of movement is decoration. */
-@keyframes lab-opacity-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }

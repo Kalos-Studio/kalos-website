@@ -40,6 +40,29 @@ export const GOLD_FACE = "#ac9267";
 export const GOLD_BEVEL = "#d9b782";
 export const BACKDROP = "#060505";
 
+// There is no envMapIntensity on either material any more, and the reason is
+// worth keeping, because both of them carried a tuned number that has never once
+// reached the shader.
+//
+// WebGLRenderer.js, every frame and gated on nothing:
+//
+//   if ( ( material.isMeshStandardMaterial || … ) &&
+//        material.envMap === null && scene.environment !== null )
+//     m_uniforms.envMapIntensity.value = scene.environmentIntensity;
+//
+// These materials have no envMap of their own — the light comes from
+// scene.environment, which drei's <Environment> sets — so they were taking that
+// branch on every draw and rendering at the scene's flat 1.0. The face was
+// declared at 1.45 and the bevel at 1.35, and the comment explaining that the
+// bevel came down from 1.9 to stop it hazing the bloom pass was describing a
+// change that could not have done anything.
+//
+// Nothing is being restored here. Handing the materials their own envMap would
+// make those numbers real for the first time, and measured, it lifts the whole
+// mark about 45% above the state that has actually been looked at and approved.
+// The difference between the two surfaces is carried by roughness and colour,
+// which do work. The sunrise scales scene.environmentIntensity instead.
+
 // How long after the last pointer event the mark goes back to drifting on its
 // own. This is what makes touch work: a finger produces pointer events only while
 // it's down, and `pointerleave` never fires, so without a timeout the mark would
@@ -327,7 +350,6 @@ export function GoldFaceMaterial(props) {
       bumpScale={4.5}
       anisotropyMap={anisotropy}
       anisotropy={0.85}
-      envMapIntensity={1.45}
       // The mark is mirrored on Y to convert SVG's y-down space to three's y-up.
       // A mirror inverts winding, so backface culling would eat the front faces;
       // DoubleSide keeps them and lets the shader flip normals per-face instead.
@@ -384,10 +406,11 @@ export function GoldBevelMaterial(props) {
       // built out of world position and pointed at nothing in particular.
       anisotropy={0.45}
       anisotropyRotation={0}
-      // Was 1.9. The bevel also feeds the bloom pass, so a long strip of it far
-      // past the luminance threshold turned a rim light into a haze that washed
-      // across the faces and hid the matte finish that was the point.
-      envMapIntensity={1.35}
+      // An envMapIntensity used to sit here, and a note explaining it had come
+      // down from 1.9 because the bevel feeds the bloom pass and a long strip of
+      // it past the luminance threshold hazed the faces. That observation was
+      // probably real; the attribution was not. See the block at the top of this
+      // file: neither material's envMapIntensity has ever reached the shader.
       side={THREE.DoubleSide}
       {...props}
     />

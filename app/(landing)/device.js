@@ -141,3 +141,35 @@ export async function requestDeviceTilt() {
 export function getTilt() {
   return tilt;
 }
+
+// How long the opening sunrise should run, in seconds, and whether it has
+// already been seen.
+//
+// The designer's note asks for light rising over the mark as the page opens. The
+// constraint that goes with it is that a three second overture is a delight the
+// first time and a toll every time after, so this is once a session. A return
+// visit inside the same tab still gets a short version rather than nothing:
+// cutting straight to the lit state makes the mark look like it failed to
+// animate, which reads as broken rather than as restraint.
+//
+// sessionStorage rather than localStorage on purpose. A week later it should
+// play again; ten minutes later, when someone has come back for the pricing, it
+// should not.
+const SUNRISE_SEEN_KEY = "kalos:sunrise";
+export const SUNRISE_FULL_SECONDS = 3.4;
+export const SUNRISE_SHORT_SECONDS = 0.9;
+
+export function sunriseSeconds() {
+  if (prefersReducedMotion()) return SUNRISE_SHORT_SECONDS;
+  try {
+    if (window.sessionStorage.getItem(SUNRISE_SEEN_KEY)) {
+      return SUNRISE_SHORT_SECONDS;
+    }
+    window.sessionStorage.setItem(SUNRISE_SEEN_KEY, "1");
+  } catch {
+    // Safari in private mode throws on setItem. A visitor who cannot be
+    // remembered gets the full sunrise every time, which is the failure worth
+    // having of the two.
+  }
+  return SUNRISE_FULL_SECONDS;
+}

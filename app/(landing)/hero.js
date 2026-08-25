@@ -57,6 +57,26 @@ export default function Hero() {
   const [stageReady, setStageReady] = useState(false);
   const onStageReady = useCallback(() => setStageReady(true), []);
 
+  // The masthead waits for the sunrise to finish rather than for a delay.
+  //
+  // It used to animate in on a fixed 0.25s CSS delay, which is the pattern this
+  // codebase keeps relearning: on a phone the renderer lands seconds later, so
+  // the lockup had long since faded in over an empty background by the time
+  // there was anything for it to sit above. The annotation on the mock asks for
+  // it to arrive "after starting animation", and now it does.
+  //
+  // Same timeout as the stage: a lost context or a failed chunk must not leave
+  // the masthead invisible forever, so `lit` falls back on the same guarantee
+  // stageReady has.
+  const [lit, setLit] = useState(false);
+  const onLit = useCallback(() => setLit(true), []);
+
+  useEffect(() => {
+    if (!stageReady || lit) return;
+    const id = setTimeout(() => setLit(true), STAGE_READY_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [stageReady, lit]);
+
   useEffect(() => {
     if (stageReady) return;
     const id = setTimeout(() => setStageReady(true), STAGE_READY_TIMEOUT_MS);
@@ -67,7 +87,10 @@ export default function Hero() {
     const supported = hasWebGL();
     setWebgl(supported);
     // Nothing to wait for when there's no stage to render.
-    if (!supported) setStageReady(true);
+    if (!supported) {
+      setStageReady(true);
+      setLit(true);
+    }
 
     // ?hint=1 forces the motion prompt on any browser. It only ever mounts on
     // iOS otherwise, which makes it impossible to art-direct from a desktop —
@@ -152,7 +175,7 @@ export default function Hero() {
     <section className="lab">
       {webgl && (
         <div className="lab-stage">
-          <Solid onReady={onStageReady} />
+          <Solid onReady={onStageReady} onLit={onLit} />
         </div>
       )}
 
@@ -160,7 +183,7 @@ export default function Hero() {
           way. The 3D mark is the only thing in the middle of the page now, which
           is the point: the composition is the object, and this is the masthead
           around it. */}
-      <header className="lab-header">
+      <header className={`lab-header${lit ? " is-lit" : ""}`}>
         <div className="lab-shell">
           <Lockup className="lab-lockup" />
         </div>

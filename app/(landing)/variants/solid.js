@@ -16,17 +16,94 @@ import {
   getTilt,
   isCoarsePointer,
   prefersReducedMotion,
+  sunriseSeconds,
   usePageVisible,
 } from "../device";
 
 // Dynamic so phones never download the postprocessing chunk — see post.js.
 const Post = dynamic(() => import("../post"), { ssr: false });
 
-function Lockup({ still, started }) {
+/**
+ * The opening sunrise, as light rather than as a fade.
+ *
+ * The annotation on the mock asks for "light glistening on the logo in like a
+ * top to bottom, sunrise type way", and the temptation is to fade the canvas up.
+ * That is not what a sunrise looks like. What makes dawn read as dawn is that
+ * the source moves: the highlight travels across a surface rather than the whole
+ * surface getting brighter at once.
+ *
+ * So two things move together. The environment's contribution ramps from almost
+ * nothing to the lit values, which is the sky filling in. And a single
+ * directional light climbs past the mark from below, which is the sun itself and
+ * the reason a bright edge sweeps down the bevel on the way. At metalness 1
+ * there is no diffuse term, so a direct light shows up purely as that moving
+ * specular, which is exactly the "glisten" being asked for.
+ *
+ * Deliberately not done by animating the Environment. Its cubemap is baked once
+ * at frames={1}, and animating a lightformer means re-baking six faces every
+ * frame for the whole intro, on the frames where a phone is already busiest.
+ * Moving one light costs nothing and looks like more.
+ */
+const SUNRISE_START = 0.06;
+
+function applySunrise(scene, sun, t) {
+  // Smoothstep, slow at both ends.
+  //
+  // This was an ease-out, on the theory that light should arrive fast and settle
+  // slowly, and it measured badly: 1-(1-t)^3 is already at 0.58 a quarter of the
+  // way through, so the mark was fully lit within the first half second of a
+  // three and a half second animation and the rest was a very slow nothing.
+  // Pinned at ?dawn=0.25 it measured mean luminance 143 against a finished 148.
+  // Dawn does not work like that. The sky spends most of its time getting
+  // slightly less dark.
+  const eased = t * t * (3 - 2 * t);
+  const lift = SUNRISE_START + (1 - SUNRISE_START) * eased;
+
+  // The sky filling in, as one number on the scene rather than a value per
+  // material. That is not a shortcut, it is the only lever that works here:
+  // WebGLRenderer.js does this every frame, gated on nothing —
+  //
+  //   if ( ( material.isMeshStandardMaterial || … ) &&
+  //        material.envMap === null && scene.environment !== null )
+  //     m_uniforms.envMapIntensity.value = scene.environmentIntensity;
+  //
+  // so while these materials have no envMap of their own, any envMapIntensity
+  // they declare is overwritten before it reaches the shader. See stage.js,
+  // where two carefully tuned values were being discarded exactly this way.
+  scene.environmentIntensity = lift;
+
+  if (!sun) return;
+  // The sun itself. Climbs from below the mark to above it, brightest halfway up
+  // where it rakes hardest across the faces, and gone by the end, leaving the
+  // environment doing all the work — which is the state the material was tuned
+  // in. At metalness 1 there is no diffuse term, so a direct light shows up
+  // purely as a moving specular, which is the "glisten" the annotation asks for.
+  sun.position.set(-2.2, -3.4 + eased * 8, 3.6);
+  sun.intensity = Math.sin(Math.PI * eased) * 2.6;
+}
+
+function Lockup({ still, started, onLit }) {
   const geometries = useMarkGeometries();
   const { scale, lift, offsetX } = useMarkFit();
   const group = useRef();
+  const sun = useRef();
   const pointer = usePointer();
+
+  // Read once, at mount: how long the sunrise runs is a per-session decision and
+  // must not change under the animation. Held in a ref rather than state because
+  // the frame loop is the only reader and re-rendering the tree to carry a
+  // number the GPU already has would be waste.
+  const sunrise = useRef({ elapsed: 0, seconds: 0, done: false, pinned: null });
+  if (sunrise.current.seconds === 0) {
+    sunrise.current.seconds = sunriseSeconds();
+    // ?dawn=0.4 pins the sunrise at a point instead of playing it, the same
+    // affordance ?hint=1 gives the gyroscope prompt. Judging a three second
+    // entrance from screenshots is otherwise a fight with shutter latency: the
+    // frame you get back is a couple of hundred milliseconds after the one you
+    // asked for, which on a ramp is a different picture.
+    const pinned = new URLSearchParams(window.location.search).get("dawn");
+    if (pinned !== null) sunrise.current.pinned = Math.min(1, Math.max(0, Number(pinned)));
+  }
 
   useFrame((state, delta) => {
     const g = group.current;
@@ -41,7 +118,31 @@ function Lockup({ still, started }) {
     // nothing composited — long enough for the swing to be most of the way over
     // before anything appeared. Gating on the reveal makes it play in view on
     // any device, however slow that first frame turns out to be.
-    if (!started) return;
+    // Held dark from the very first frame, not from the reveal. The canvas fades
+    // up over 260ms and the materials are declared at their lit values, so
+    // without this the first frames composite a fully lit mark and the sunrise
+    // starts by getting darker.
+    if (!started) {
+      if (!sunrise.current.done) applySunrise(state.scene, sun.current, 0);
+      return;
+    }
+
+    // The sunrise runs off the reveal, never off a timer. The renderer lands
+    // seconds after the page shell on a phone, and an entrance on a fixed delay
+    // plays to an empty background.
+    const dawn = sunrise.current;
+    if (dawn.pinned !== null) {
+      applySunrise(state.scene, sun.current, dawn.pinned);
+    } else if (!dawn.done) {
+      dawn.elapsed += delta;
+      const t = Math.min(1, dawn.elapsed / dawn.seconds);
+      applySunrise(state.scene, sun.current, t);
+      if (t === 1) {
+        dawn.done = true;
+        if (sun.current) sun.current.visible = false;
+        onLit?.();
+      }
+    }
 
     const t = state.clock.elapsedTime;
     const p = pointer.current;
@@ -99,6 +200,10 @@ function Lockup({ still, started }) {
 
   return (
     <group ref={group} position={[offsetX, lift, 0]} rotation={[0.3, -0.8, 0]}>
+      {/* The sun. Starts under the mark and dark, and is switched off entirely
+          once it has passed over: leaving it in the scene at zero intensity
+          still costs a light slot in every shader compile. */}
+      <directionalLight ref={sun} intensity={0} color="#ffdca8" position={[-2.2, -3.4, 3.6]} />
       <group scale={[scale, -scale, scale]}>
         {/* Two materials, in the order ExtrudeGeometry declares its groups:
             0 is the flat caps, 1 is the side walls and the bevel. */}
@@ -141,7 +246,7 @@ function RevealOnFirstFrame({ onReveal }) {
   return null;
 }
 
-export default function Solid({ onReady }) {
+export default function Solid({ onReady, onLit }) {
   // Read once at mount rather than per frame: neither answer changes while the
   // hero is on screen, and both feed props that shouldn't thrash.
   const [coarse] = useState(isCoarsePointer);
@@ -170,7 +275,7 @@ export default function Solid({ onReady }) {
       }}
     >
       <GoldEnvironment />
-      <Lockup still={still} started={revealed} />
+      <Lockup still={still} started={revealed} onLit={onLit} />
       <RevealOnFirstFrame onReveal={reveal} />
       {!coarse && <Post />}
     </Canvas>
