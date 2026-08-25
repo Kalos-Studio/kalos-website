@@ -64,6 +64,13 @@ They differ in duration, starting floor, sky tilt, easing, light type and shape,
 sand floor, face bump and anisotropy, and ring pitch. Having all three makes the
 pitch fix's contribution visible on its own.
 
+**No variant has been chosen, and `drastic` is the default** — so that is what a
+visitor gets today, by inheritance rather than by decision. `DEFAULT_VARIANT` in
+`sunrise-variants.js` is the one line to change. Picking one is the last open item
+on the hero, and `soft` is worth a hard look: it is the finish that was originally
+approved, without the moiré that turned out to be a sampling bug rather than a
+property of it.
+
 Hover the top-left corner of the hero and click the tab, or use `?v=original`,
 `?v=soft`, `?v=drastic` — remembered, and shareable as a link. Switching reloads, because the two
 differ in which light element exists in the scene and in material values built
