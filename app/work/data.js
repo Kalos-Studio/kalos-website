@@ -2,6 +2,23 @@
 // `caseStudies` array below — that's the only file you need to touch to add,
 // reorder, or remove a project from /work.
 //
+// WRITE THESE AS STORIES. The default is a run of paragraphs that carries the
+// reader from the client's situation through to what shipped, showing the value
+// in the telling rather than asserting it under a label. The earlier entries
+// here were built the other way, as Client Need / The Work / The Result with
+// each beat pinned to a heading, and that structure is what a reader skims past
+// rather than reads. `shell-tapup` below is the reference for the new voice.
+//
+// Consequences for the fields under it: leave `bodyLayout` off, so the body
+// renders as a single reading column capped at a 40rem measure. Use `heading`
+// and `section` blocks sparingly if at all — every one of them is a place the
+// story stops. Drop images in where the narrative reaches something worth
+// seeing, not at fixed intervals.
+//
+// No em dashes in any string here. `bun run lint:copy` only walks
+// app/(landing)/content.js, so nothing enforces it on this file, but it is a
+// brand preference that applies to every line that ships.
+//
 // {
 //   slug: "kebab-case-id",     // required, unique — becomes the URL /work/<slug>
 //   title: "Project Title",    // required
@@ -68,52 +85,36 @@ export const caseStudies = [
     summary: "Native iOS and Android app design for Shell's global refueling service.",
     client: "Shell",
     role: "Mobile App Design & Development",
-    bodyLayout: "columns",
     cover: {
       src: "/work/shell-tapup/cover.jpg",
       alt: "A Shell TapUp driver app screenshot, showing tank levels and fueling controls, composited over a photo of the Shell pecten logo at a refueling station",
     },
     body: [
       {
-        type: "heading",
-        text: "Client Need",
+        type: "paragraph",
+        text: "Shell was looking for a partner to help digitize its mobile fueling programme. TapUp brings the fuel to the vehicle rather than the vehicle to the station, and for business customers running fleets that is the difference between a driver losing an hour and never leaving the yard. The service worked. What it ran on was people, paper, and a set of tools that had never been designed to work together.",
       },
       {
         type: "paragraph",
-        text: "Shell was seeing inconsistencies across its business customer refueling service leading to significant human errors, data issues, and inefficient fueling time per vehicle. The Shell team wanted to see if they could design a better tool and experience.",
-      },
-      {
-        type: "heading",
-        text: "Driven by Understanding",
+        text: "Every job passed through several of them. A driver took an order in one place, operated the pump in another, and closed out the invoice somewhere else again, and each handoff between those steps was somewhere a mistake could enter. Shell was seeing the results across the operation: inconsistent records, data that did not reconcile, and more time spent at each vehicle than the work actually needed. The question they brought us was whether a better tool was possible at all.",
       },
       {
         type: "paragraph",
-        text: "Through driver interviews, working sessions, and on-site visits, we developed a deep understanding of Shell's fuel delivery ecosystem.",
-      },
-      {
-        type: "heading",
-        text: "Innovation in Motion",
+        text: "We started with the drivers, because they were the ones absorbing the problem. Through interviews, working sessions and on-site visits we built up a picture of how fuel actually moves through Shell's delivery ecosystem, which turned out to be a good deal messier than any process document described. The errors were not carelessness. They were what happens when a job has more steps than a person can hold while standing next to a running pump.",
       },
       {
         type: "paragraph",
-        text: "Our design work translated those insights into an iOS and Android app experience built around how drivers actually work: fewer steps, clearer status at a glance, and less room for the kind of manual error Shell was trying to eliminate.",
-      },
-      {
-        type: "heading",
-        text: "The Result",
-      },
-      {
-        type: "paragraph",
-        text: "We designed native, global iOS and Android apps that bring clarity and consistency to the refueling process for Shell TapUp drivers and their customers, replacing error-prone manual steps with a guided, purpose-built experience.",
-      },
-      {
-        type: "paragraph",
-        text: "Drivers now manage orders, operate pumps remotely, and submit invoices from a single app, instead of juggling separate tools and paperwork for each step.",
+        text: "So the app was built around that, rather than around the org chart. Fewer steps to complete a job. Status legible at a glance instead of recalled from memory. And the places where a manual entry could go wrong either removed or guarded, so that getting it right was the path of least resistance instead of an act of concentration.",
       },
       {
         type: "image",
         src: "/work/shell-tapup/streamlined-fuel-management.jpg",
         alt: "Streamlined Fuel Management: Shell TapUp login, fueling, wetstock history, and fuel truck screens",
+        caption: "One app for the whole job, from login through to wetstock history.",
+      },
+      {
+        type: "paragraph",
+        text: "What shipped is a pair of native iOS and Android apps, running globally, where a driver manages orders, operates the pump remotely and submits the invoice without leaving the screen. The separate tools and the paperwork between them are gone. For Shell's customers, the visible change is smaller and more useful: the fuel arrives, the numbers are right, and nobody has to sort it out afterwards.",
       },
     ],
   },
