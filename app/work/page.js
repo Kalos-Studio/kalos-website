@@ -1,19 +1,19 @@
 import Link from "next/link";
+import Lockup from "../(landing)/lockup";
 import CoverImage from "./CoverImage";
 import { caseStudies } from "./data";
 
 export default function WorkIndexPage() {
   return (
     <div className="work-shell work-shell--wide">
-      <p className="work-construction-note">
-        This is a temporary repository as we build out our website. More
-        case studies are coming soon.
-      </p>
-
+      {/* The "temporary repository, more coming soon" note is gone with the
+          password gate. It was true while this was an unlisted holding page and
+          it is an apology now: the homepage sends people here on purpose. */}
       <header className="work-header">
-        <Link href="/work" className="work-wordmark">
-          kalos <span>/ work</span>
+        <Link href="/" className="work-wordmark" aria-label="Kalos, home">
+          <Lockup className="work-lockup" />
         </Link>
+        <h1 className="work-title">Work</h1>
       </header>
 
       {caseStudies.length === 0 ? (
@@ -31,7 +31,6 @@ export default function WorkIndexPage() {
                 />
                 <h2 className="work-card-title">{cs.title}</h2>
                 <p className="work-card-summary">{cs.summary}</p>
-                <span className="work-card-link">View case study →</span>
               </Link>
             </li>
           ))}

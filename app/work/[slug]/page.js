@@ -31,9 +31,12 @@ export default async function CaseStudyPage({ params }) {
 
   if (!cs) notFound();
 
+  // The client is dropped when it is the title again, which it is on more than
+  // half of these. "Vital Energy / Vital Energy / Head of Design" is not a fact
+  // list, it is a stutter.
   const facts = [
-    cs.client && { label: "Client", value: cs.client },
-    cs.role && { label: "Role", value: cs.role },
+    cs.client !== cs.title && cs.client,
+    cs.role,
   ].filter(Boolean);
 
   const otherCaseStudies = caseStudies.filter((c) => c.slug !== cs.slug);
@@ -44,21 +47,20 @@ export default async function CaseStudyPage({ params }) {
         ← Work
       </Link>
 
+      {/* No "Case study" eyebrow above the title any more. It was a label
+          announcing what the reader can already see, and the brand file has no
+          eyebrow-above-heading pattern anywhere in it — the same invention that
+          landing.css records as the thing that made the homepage read as a
+          template.
+
+          The facts are one line rather than a labelled definition list. CLIENT
+          set in small caps over a client name is two pieces of furniture around
+          one fact, and on half these pages the client name and the title were
+          the same word, so the label was introducing a repeat. */}
       <div className="work-case-header">
-        <p className="work-case-eyebrow">Case study</p>
         <h1 className="work-case-title">{cs.title}</h1>
         <p className="work-case-summary">{cs.summary}</p>
-
-        {facts.length > 0 && (
-          <dl className="work-case-facts">
-            {facts.map((fact) => (
-              <div className="work-case-fact" key={fact.label}>
-                <dt>{fact.label}</dt>
-                <dd>{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
+        {facts.length > 0 && <p className="work-case-facts">{facts.join(" / ")}</p>}
       </div>
 
       <CoverImage

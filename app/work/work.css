@@ -91,56 +91,46 @@
   max-width: 1160px;
 }
 
+/* Masthead above, page title under it, both on the left margin. They were a
+   space-between row, which pinned a 60px headline to the right edge of a 1200px
+   shell with nothing to balance it: every other headline on this site starts at
+   the left margin, and one that does not reads as a different site. */
 .work-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 4rem;
+  display: block;
+  margin-bottom: clamp(2.5rem, 6vw, 4rem);
 }
 
+.work-title {
+  margin-top: clamp(1.75rem, 5vw, 3rem);
+}
+
+/* The masthead is the real lockup now, not "kalos / work" set in bold. The
+   wordmark existed because this section was unlisted and had no relationship to
+   the homepage; it has one now, and the mark is how every other surface says who
+   this is. Sized to match .lab-lockup on the landing hero. */
 .work-wordmark {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  display: block;
   text-decoration: none;
-  color: #fff;
+  color: var(--color-snow-white);
 }
 
-.work-wordmark span {
-  color: #9a9a9a;
-  font-weight: 400;
+.work-lockup {
+  display: block;
+  width: clamp(98px, 9vw, 124px);
+  height: auto;
 }
 
-.work-intro {
-  color: #b8b8b8;
-  font-size: 1rem;
-  line-height: 1.6;
-  max-width: 34rem;
-  margin-bottom: 4rem;
+/* Set at the page's own headline size rather than as a label, because it is the
+   page's headline. */
+.work-title {
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.14;
+  color: var(--color-snow-white);
 }
 
 /* --- Case study list -------------------------------------------------- */
-
-/* The one callout on /work, and the brand file is explicit that callouts are
-   exactly what the accent is for. It was #ffcc66 — a bright amber picked before
-   the palette existed, and far enough from Vulcan Gold (#AE9357) to read as a
-   different brand sitting inside this one.
- *
- * The label goes lighter than the border rather than taking the accent flat:
- * Vulcan Gold is a mid-tone and 0.9rem text set in it on near-black is thin to
- * read. Same move the landing CTA makes with its own label. */
-.work-construction-note {
-  color: color-mix(in srgb, var(--color-vulcan-gold) 55%, var(--color-snow-white));
-  font-size: 0.9rem;
-  font-weight: 500;
-  line-height: 1.5;
-  background: color-mix(in srgb, var(--color-vulcan-gold) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-vulcan-gold) 40%, transparent);
-  border-radius: 0.5rem;
-  padding: 0.85rem 1.1rem;
-  margin-bottom: 2.5rem;
-}
 
 .work-list {
   list-style: none;
@@ -234,19 +224,6 @@
   margin-top: 0.4rem;
 }
 
-.work-card-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
-  color: #ccc;
-}
-
-.work-card:hover .work-card-link {
-  color: #fff;
-}
-
 .work-empty {
   color: #9a9a9a;
   font-size: 0.95rem;
@@ -285,25 +262,23 @@
 
 /* Shared look for small-caps labels — the case study eyebrow, each fact's
    label, and the login eyebrow all use it, differing only in size/spacing. */
-.work-case-eyebrow,
-.work-case-fact dt,
-.work-login-eyebrow {
-  color: #9a9a9a;
-  text-transform: uppercase;
-}
+/* The small-caps eyebrow rules are gone with the elements that used them. Worth
+   knowing they also covered .work-login-eyebrow, which went with the password
+   page. Nothing on this section sets type in uppercase now, which is how the
+   brand file has it: it has one small label, a running head, set in sentence
+   case. */
 
-.work-case-eyebrow {
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.75rem;
-}
-
+/* Weight 500 and the landing page's headline size. It was 700 at a smaller cap,
+   which is heavier and quieter than anything on the rest of the site: Space
+   Grotesk Medium is the brand's display weight and 3.75rem is what .ln-h2 tops
+   out at. Two surfaces of one site should not be running two type scales. */
 .work-case-title {
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 1.1;
+  line-height: 1.14;
   margin-bottom: 1rem;
+  text-wrap: balance;
 }
 
 .work-case-summary {
@@ -313,19 +288,14 @@
   max-width: 40rem;
 }
 
+/* One quiet line under the summary, in the palette's single secondary value,
+   rather than a bordered slab of labelled facts. Dark Silver is what the brand
+   file gives to sub-labels and this is one. */
 .work-case-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #1f1f1f;
-}
-
-.work-case-fact dt {
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.25rem;
+  margin-top: 1.25rem;
+  font-size: 0.9375rem;
+  letter-spacing: -0.02em;
+  color: var(--color-dark-silver);
 }
 
 .work-case-fact dd {
