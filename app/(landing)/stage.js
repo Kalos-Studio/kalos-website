@@ -30,6 +30,11 @@ const MARK_UV_CENTRE = [75, 70];
 // contourUVGenerator in kalos-mark.js and take a map of their own.
 const MARK_UV_SPAN = 200;
 
+// Texels between one groove and the next on the faces. See the note where it is
+// used: at 1 the finish sat on the pixel grid's own frequency and rendered as a
+// bullseye.
+const RING_PITCH = 4;
+
 export const GOLD_FACE = "#ac9267";
 // Brighter than the face and still unmistakably gold. This was #F4EEDA, which is
 // the brightest *highlight* on the reference render rather than the bevel's own
@@ -171,8 +176,16 @@ function useBrushedGold() {
     // The faces' profile runs along the radius. A spun finish is constant along
     // any circle and varies across radii, so this is sampled by distance from
     // the centre and nothing else.
+    //
+    // RING_PITCH is the fix for the bullseye. This used to index the profile with
+    // Math.round(r), one groove per texel of radius — and the mark renders at
+    // roughly one texel per screen pixel, so the grooves landed a pixel apart.
+    // A pattern at the pixel grid's own frequency cannot be drawn; it beats
+    // against it, and what you see is concentric moiré rather than a finish. Four
+    // texels to a groove puts it back where the screen can resolve it.
     const span = Math.ceil(Math.SQRT2 * half) + 2;
-    const groove = grooveProfile(span);
+    const rings = Math.ceil(span / RING_PITCH) + 2;
+    const groove = grooveProfile(rings);
 
     const bumpCanvas = document.createElement("canvas");
     const anisoCanvas = document.createElement("canvas");
@@ -195,14 +208,19 @@ function useBrushedGold() {
         // *position* by a couple of texels breaks it into something closer to
         // wood grain, which is what made the finish read as abstract rather than
         // machined. Variation belongs in the groove's depth, not its path.
-        const i = Math.min(span - 1, Math.round(r));
+        // Interpolated, not rounded. Math.round is a step function: it draws each
+        // groove as a hard band a texel wide, which is half of why this aliased.
+        const at = Math.min(rings - 2, r / RING_PITCH);
+        const i0 = Math.floor(at);
+        const f = at - i0;
+        const depth = groove[i0] + (groove[i0 + 1] - groove[i0]) * f * f * (3 - 2 * f);
 
         // A slow sweep around the circle, so one side of a ring catches more
         // than the other. Modulates depth only, so the ring stays circular.
         const sweep = 0.76 + 0.24 * (0.5 + 0.5 * Math.sin(angle * 2 + r * 0.01));
 
         const o = (y * size + x) * 4;
-        const v = 150 + groove[i] * 105 * sweep;
+        const v = 150 + depth * 105 * sweep;
         bumpData.data[o] = bumpData.data[o + 1] = bumpData.data[o + 2] = v;
         bumpData.data[o + 3] = 255;
 
@@ -347,9 +365,9 @@ export function GoldFaceMaterial(props) {
       // is this wide: bumpScale is a derivative multiplier, so a groove one
       // texel across needs a far larger number than a broad dent would.
       bumpMap={bump}
-      bumpScale={4.5}
+      bumpScale={2.4}
       anisotropyMap={anisotropy}
-      anisotropy={0.85}
+      anisotropy={0.55}
       // The mark is mirrored on Y to convert SVG's y-down space to three's y-up.
       // A mirror inverts winding, so backface culling would eat the front faces;
       // DoubleSide keeps them and lets the shader flip normals per-face instead.

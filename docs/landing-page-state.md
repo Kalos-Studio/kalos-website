@@ -62,6 +62,22 @@ asking.**
 It runs 4.6s. Reduced motion gets a shortened 2s rather than none, because
 cutting straight to the lit state reads as an animation that failed.
 
+**The ringing was a sampling bug in the material, not a lighting problem.** The
+faces' groove profile was indexed with `Math.round(r)` — one groove per texel of
+radius — and the mark renders at roughly one texel per screen pixel. A pattern at
+the pixel grid's own frequency cannot be drawn; it beats against it, and what you
+see is concentric moiré. `RING_PITCH` in `stage.js` puts four texels to a groove
+and interpolates between profile samples instead of stepping. `bumpScale` came
+down 4.5 to 2.4 and `anisotropy` 0.85 to 0.55 to suit the wider grooves.
+
+Two dead ends worth not repeating, both of which treated the symptom. Ramping
+`bumpScale` down during the reveal did not fix it, because the anisotropy map is
+an independent second source of the same artefact — it stores a tangent direction
+that rotates concentrically and the specular stretch draws the rings on its own.
+Ramping both down did suppress it during the reveal and made the opening look
+like plastic, while leaving the settled state ringing at any angle that lit it
+that way. The finish is no longer touched by the sunrise at all.
+
 **Two independent sources of the ringing, and the second is the one that
 mattered.** The anisotropy map stores a per-texel tangent direction that rotates
 around the mark's centre, and anisotropy stretches the specular lobe along it, so

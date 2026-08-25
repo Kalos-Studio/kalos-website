@@ -72,160 +72,64 @@ const SUN_OVER = 0.62;
 const SKY_TILT = 1.0;
 
 // What stage.js sets on the faces, and what the sunrise ramps back up to.
-const FACE_BUMP = 4.5;
-const FACE_ANISOTROPY = 0.85;
 
-function applySunrise(group, scene, sun, t) {
-  // Smoothstep, slow at both ends.
-  //
-  // This was an ease-out, on the theory that light should arrive fast and settle
-  // slowly, and it measured badly: 1-(1-t)^3 is already at 0.58 a quarter of the
-  // way through, so the mark was fully lit within the first half second of a
-  // three and a half second animation and the rest was a very slow nothing.
-  // Pinned at ?dawn=0.25 it measured mean luminance 143 against a finished 148.
-  // Dawn does not work like that. The sky spends most of its time getting
-  // slightly less dark.
+function applySunrise(scene, sun, t) {
   // Ease-in-out cubic rather than smoothstep. Sharper through the middle, which
   // is what makes this read as a sweep rather than a fade: the sky is nearly
   // still for the first third, crosses fast, then settles.
   const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const lift = SUNRISE_START + (1 - SUNRISE_START) * eased;
 
-  // The sun finishes before the sky does. Its own progress is the same curve run
-  // over the first SUN_OVER of the time, so it has cleared the top of the mark
-  // and gone out while the environment is still filling in.
-  //
-  // This is the fix for the animation appearing to stall near the end. Both
-  // curves used to run over the full duration, and the sun's intensity follows a
-  // sine that is falling through exactly the window where the environment is
-  // still rising: the two cancelled, and measured, the mark's mean luminance sat
-  // at 129, 129, 127 across the last half of the animation. Half the runtime with
-  // nothing visibly changing, which is what "stuck at the top" was.
+  // The sun finishes before the sky does, on its own copy of the same curve, so
+  // it clears the mark and goes out while the environment is still filling in.
+  // Both used to run over the full duration and the sun's fall cancelled the
+  // sky's rise: the mark measured 129, 129, 127 across the last half, which is
+  // what "stuck at the top" was.
   const sunT = Math.min(1, t / SUN_OVER);
   const sunEased = sunT * sunT * (3 - 2 * sunT);
 
-  // The sky itself tips up, and this is the part that actually reads as light
-  // arriving on the object.
+  // The sky itself tips up, and this is the part that reads as light arriving.
   //
   // At metalness 1 the mark is a mirror: what you see on it is the environment,
-  // not a shading model. Brightening the environment uniformly makes the whole
-  // surface get lighter at once, which is a dimmer switch. Rotating it drags the
-  // reflection of the key light and the hot rim strip up across the faces, so
-  // the light travels bottom to top the way it does on real metal at dawn.
+  // not a shading model. Brightening the environment uniformly is a dimmer
+  // switch. Rotating it drags the reflection of the key light and the hot rim up
+  // across the faces, so the light travels bottom to top.
   //
-  // Cheap, and the reason this is possible at all: scene.environmentRotation is
-  // applied at draw time to materials that have no envMap of their own, which is
-  // exactly these two. Nothing is re-baked — the cubemap is still the single
-  // frames={1} bake it always was.
+  // Cheap, and the reason this is possible: scene.environmentRotation is applied
+  // at draw time to materials with no envMap of their own, which is exactly these
+  // two. Nothing is re-baked.
   scene.environmentRotation.x = -SKY_TILT * (1 - eased);
-
-  // The sky filling in, as one number on the scene rather than a value per
-  // material. That is not a shortcut, it is the only lever that works here:
-  // WebGLRenderer.js does this every frame, gated on nothing —
-  //
-  //   if ( ( material.isMeshStandardMaterial || … ) &&
-  //        material.envMap === null && scene.environment !== null )
-  //     m_uniforms.envMapIntensity.value = scene.environmentIntensity;
-  //
-  // so while these materials have no envMap of their own, any envMapIntensity
-  // they declare is overwritten before it reaches the shader. See stage.js,
-  // where two carefully tuned values were being discarded exactly this way.
   scene.environmentIntensity = lift;
 
   // And the world the object is standing in. The sand is a 2D canvas outside the
-  // scene graph, so it cannot be lit; it is faded toward the page ground instead,
-  // which at #040406 is near enough to black that the effect is the same.
-  //
-  // This was missed the first time and the result was incoherent: the mark rose
-  // out of darkness while the dunes behind it sat at full brightness from the
-  // first frame. A sunrise that lights the object and not the landscape is not a
-  // sunrise, it is a spotlight.
-  //
-  // A custom property rather than React state. This runs every frame, and setting
-  // one string on the root element is what CSS is for; re-rendering the tree
-  // sixty times a second to carry a number would not be.
+  // scene graph, so it cannot be lit; its opacity reads this instead. Without it
+  // the mark rose out of darkness while the dunes behind it sat at full
+  // brightness, which is a spotlight rather than a sunrise.
   if (typeof document !== "undefined") {
     document.documentElement.style.setProperty("--dawn", lift.toFixed(3));
   }
 
   if (!sun) return;
-  // The blade. A tall, narrow area light climbing past the mark, which on a
-  // brushed metal face reflects as a long streak travelling up it rather than as
-  // a hot spot. It is far brighter than the environment ever gets, so for the
-  // couple of seconds it is crossing, the object is lit by one source in a dark
-  // room and nothing else.
-  sun.position.set(-1.8, -4.2 + sunEased * 9, 5.4);
-  sun.lookAt(0, 0, 0);
-  // 4.2, down from 26 and then 13, and the reason is worth keeping because it is
-  // a property of this material rather than a preference.
+  // The blade: a tall narrow area light climbing past the mark, which on metal
+  // reflects as a streak travelling up it rather than as a hot spot.
   //
-  // The faces carry a bump map at bumpScale 4.5, tuned so the turned grooves read
-  // under the environment. A bump map perturbs normals, and under a bright light
-  // at a grazing angle each groove's normal swings in and out of the reflection
-  // direction, so neighbouring texels flip between fully lit and fully dark. The
-  // grooves are about a texel across, so at screen resolution that aliases into
-  // concentric moiré and the mark renders as a vinyl record.
-  //
-  // A hard raking light and this finish are not compatible at any intensity that
-  // reads as hard. The drama has to come from the sky sweeping, which is a mirror
-  // effect and does not touch the normals; the blade is here to give that sweep a
-  // leading edge, not to light the object.
-// Rises and holds, rather than pulsing. A sine peaks in the middle of the sun's
-  // window and is falling through exactly the stretch where the environment is
-  // still climbing, so the two cancelled and the mark measured 110, 95, 92 across
-  // the middle: bright, dim, bright, which is not a sunrise. Holding it means the
-  // blade is still there while the sky arrives, and it goes out at the end when
-  // there is something to hand over to.
+  // It rises and holds rather than pulsing. A sine peaks in the middle of its
+  // window and falls through exactly the stretch where the sky is still climbing,
+  // so the two cancelled and the mark measured 110, 95, 92 across the middle.
   const bladeRise = Math.min(1, sunEased * 2.2);
   const bladeFade = t > 0.82 ? Math.max(0, 1 - (t - 0.82) / 0.18) : 1;
-  const blade = bladeRise * bladeFade;
-  sun.intensity = blade * 4.2;
+  sun.position.set(-1.8, -4.2 + sunEased * 9, 5.4);
+  sun.lookAt(0, 0, 0);
+  sun.intensity = bladeRise * bladeFade * 4.2;
 
-  // The finish stands down while the blade is crossing, and comes back as it
-  // leaves. This is the fix for the mark rendering as a vinyl record during the
-  // reveal, and it is the same reasoning as mipmapping rather than a cheat.
+  // The finish is deliberately not ramped here any more.
   //
-  // The faces carry a bump map at 4.5, which is a derivative multiplier tuned so
-  // grooves about a texel wide read under the environment. Under a bright direct
-  // light at a grazing angle each groove's normal swings in and out of the
-  // reflection direction, so neighbouring texels flip fully lit to fully dark and
-  // alias into concentric moiré. There is no intensity at which a hard raking
-  // light and this finish coexist: measured, it was still ringing at 4.2 after
-  // starting at 26. Detail the lighting cannot represent should not be asked for.
-  // Squared against the blade rather than scaled linearly by it. Linearly, the
-  // finish was already half back while the blade was still at half strength, and
-  // the handover window became the worst ringing on the whole animation — a
-  // texture visibly snapping on under a light still hard enough to alias it.
-  // Squaring holds the grooves down until the blade has actually left.
-  const away = 1 - blade;
-  const finish = away * away * (0.16 + 0.84 * eased);
-  group.traverse((child) => {
-    if (!child.isMesh) return;
-    const materials = Array.isArray(child.material) ? child.material : [child.material];
-    // Group 0 only. The walls' map is a straight run of grooves along the
-    // outline, which does not ring.
-    // Anisotropy as well as bump, and the anisotropy is the one that mattered.
-    //
-    // Ramping bumpScale alone did not fix the ringing: measured at a close crop,
-    // the faces were still drawing concentric streaks at 0.15, 0.3 and 0.5 with
-    // the bump at effectively zero. The anisotropy map is a second, independent
-    // source of the same artefact — it stores a per-texel tangent direction that
-    // rotates around the mark's centre, and anisotropy stretches the specular
-    // lobe along it, so under a hard light the stretch itself draws the rings.
-    // bumpScale has no influence over that at all.
-    //
-    // Both now ride the same factor: how harsh the light is, and how far into the
-    // sunrise we are.
-    if (materials[0]) {
-      materials[0].bumpScale = FACE_BUMP * finish;
-      materials[0].anisotropy = FACE_ANISOTROPY * finish;
-    }
-  });
-  // The sun itself. Climbs from below the mark to above it, brightest halfway up
-  // where it rakes hardest across the faces, and gone by the end, leaving the
-  // environment doing all the work — which is the state the material was tuned
-  // in. At metalness 1 there is no diffuse term, so a direct light shows up
-  // purely as a moving specular, which is the "glisten" the annotation asks for.
+  // It was, to stop the faces ringing under the blade, and that was treating a
+  // symptom. The ringing is the material's own at any angle that lights it that
+  // way — it shows in the settled state too — and suppressing it during the
+  // reveal made the opening look like plastic without fixing anything. The cause
+  // is fixed in stage.js: the grooves were one texel apart, which is the pixel
+  // grid's own frequency, so they beat against it into a bullseye.
 }
 
 /**
@@ -233,8 +137,7 @@ function applySunrise(group, scene, sun, t) {
  *
  * Not the whole hero. The flight has to be over well before the hero leaves the
  * screen, or the reader watches the last of it disappearing off the top edge and
- * the arrival — which is the whole point, the lockup turning gold — happens
- * where nobody is looking.
+ * the arrival — the lockup turning gold — happens where nobody is looking.
  */
 const DOCK_OVER = 0.55;
 
@@ -242,14 +145,14 @@ const DOCK_OVER = 0.55;
  * Where the masthead's mark sits, in the canvas' own world units.
  *
  * Measured from the DOM rather than guessed, because the lockup is sized with a
- * clamp() and its position uses env(safe-area-inset-top): there is no arithmetic
+ * clamp() and positioned with env(safe-area-inset-top): there is no arithmetic
  * that gets this right on every device, and being a few pixels out is visible
  * when the thing being aligned is a logo landing on itself.
  *
  * Measured against .lab every frame rather than cached, because the lockup is
  * fixed to the viewport and the canvas inside .lab is not: the gap between them
  * is exactly the scroll distance, so the target moves the whole way through the
- * flight. Two getBoundingClientRect calls a frame is nothing next to the draw.
+ * flight.
  */
 function dockTarget(viewport) {
   if (typeof document === "undefined") return null;
@@ -262,16 +165,14 @@ function dockTarget(viewport) {
   if (!labRect.width || !labRect.height) return null;
 
   // The lockup is the full wordmark, 568x139, and only its first 150 units are
-  // the mark. So the mark's own centre is a fraction of the way across the SVG,
-  // not the middle of it.
+  // the mark, so the mark's own centre is a fraction across the SVG rather than
+  // the middle of it.
   const markCentreX = rect.left - labRect.left + (rect.width * 75) / 568;
   const markCentreY = rect.top - labRect.top + rect.height / 2;
 
   return {
     x: (markCentreX / labRect.width - 0.5) * viewport.width,
     y: (0.5 - markCentreY / labRect.height) * viewport.height,
-    // 150 of 568 units wide on screen, converted into the world units the mark
-    // is scaled in.
     scale:
       (((rect.width * 150) / 568 / labRect.width) * viewport.width) / MARK_WIDTH,
   };
@@ -371,7 +272,7 @@ function Lockup({ still, started, onLit, onDocked }) {
     // without this the first frames composite a fully lit mark and the sunrise
     // starts by getting darker.
     if (!started) {
-      if (!sunrise.current.done) applySunrise(g, state.scene, sun.current, 0);
+      if (!sunrise.current.done) applySunrise(state.scene, sun.current, 0);
       return;
     }
 
@@ -380,11 +281,11 @@ function Lockup({ still, started, onLit, onDocked }) {
     // plays to an empty background.
     const dawn = sunrise.current;
     if (dawn.pinned !== null) {
-      applySunrise(g, state.scene, sun.current, dawn.pinned);
+      applySunrise(state.scene, sun.current, dawn.pinned);
     } else if (!dawn.done) {
       dawn.elapsed += delta;
       const t = Math.min(1, dawn.elapsed / dawn.seconds);
-      applySunrise(g, state.scene, sun.current, t);
+      applySunrise(state.scene, sun.current, t);
       if (t === 1) {
         dawn.done = true;
         if (sun.current) sun.current.visible = false;
