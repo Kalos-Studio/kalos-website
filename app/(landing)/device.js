@@ -162,7 +162,7 @@ export function getTilt() {
 // to defeat it and went with it; `?dawn=` still pins the animation at a point.
 // 4.6, up from 3.4. Slower on the owner's ear: at 3.4 the whole thing is over
 // before it has read as a sunrise rather than as a fade.
-export const SUNRISE_FULL_SECONDS = 4.6;
+export const SUNRISE_FULL_SECONDS = 5.6;
 
 // Reduced motion still gets a short one rather than none. Cutting straight to
 // the lit state reads as an animation that failed rather than as restraint, and

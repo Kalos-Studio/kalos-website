@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Canvas, useFrame } from "@react-three/fiber";
+import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js";
+
+// RectAreaLight is the only light in three that reads as a *bar* on metal rather
+// than a dot, which is the whole reason the reveal below works. It needs its BRDF
+// lookup tables built before it lights anything, once per page.
+RectAreaLightUniformsLib.init();
 import { MARK_WIDTH, useMarkFit, useMarkGeometries } from "../kalos-mark";
 import {
   GoldBevelMaterial,
@@ -44,7 +50,10 @@ const Post = dynamic(() => import("../post"), { ssr: false });
  * frame for the whole intro, on the frames where a phone is already busiest.
  * Moving one light costs nothing and looks like more.
  */
-const SUNRISE_START = 0.06;
+// Pure black. The soft version held a floor at 0.06 so the mark was always a
+// faint object in the room; this one starts with nothing there at all, and the
+// first thing that exists is the light hitting it.
+const SUNRISE_START = 0;
 
 // How much of the sunrise the sun itself occupies. The rest is the sky alone,
 // which is what keeps something changing all the way to the end.
@@ -53,9 +62,18 @@ const SUN_OVER = 0.62;
 // How far the sky is tipped over at the start, in radians. Large on purpose: the
 // environment's bright sources sit high and in front, so this has to swing them
 // well below the mark for there to be anywhere for the light to rise from.
-const SKY_TILT = 1.15;
+// 1.0, arrived at by measuring rather than by taste. 2.4 was tried first and the
+// mark came out brighter a third of the way through than at half: the environment
+// is hand-built from a handful of lightformers with dark gaps between them, and a
+// long swing drags the reflection straight through a gap. Measured mean luminance
+// at 1.7 still dipped 107, 50, 104 across the middle. At 1.0 the sweep stays
+// inside the lit part of the sky and the ramp climbs the whole way.
+const SKY_TILT = 1.0;
 
-function applySunrise(scene, sun, t) {
+// What stage.js sets on the faces, and what the sunrise ramps back up to.
+const FACE_BUMP = 4.5;
+
+function applySunrise(group, scene, sun, t) {
   // Smoothstep, slow at both ends.
   //
   // This was an ease-out, on the theory that light should arrive fast and settle
@@ -65,7 +83,10 @@ function applySunrise(scene, sun, t) {
   // Pinned at ?dawn=0.25 it measured mean luminance 143 against a finished 148.
   // Dawn does not work like that. The sky spends most of its time getting
   // slightly less dark.
-  const eased = t * t * (3 - 2 * t);
+  // Ease-in-out cubic rather than smoothstep. Sharper through the middle, which
+  // is what makes this read as a sweep rather than a fade: the sky is nearly
+  // still for the first third, crosses fast, then settles.
+  const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const lift = SUNRISE_START + (1 - SUNRISE_START) * eased;
 
   // The sun finishes before the sky does. Its own progress is the same curve run
@@ -126,13 +147,68 @@ function applySunrise(scene, sun, t) {
   }
 
   if (!sun) return;
+  // The blade. A tall, narrow area light climbing past the mark, which on a
+  // brushed metal face reflects as a long streak travelling up it rather than as
+  // a hot spot. It is far brighter than the environment ever gets, so for the
+  // couple of seconds it is crossing, the object is lit by one source in a dark
+  // room and nothing else.
+  sun.position.set(-1.8, -4.2 + sunEased * 9, 5.4);
+  sun.lookAt(0, 0, 0);
+  // 4.2, down from 26 and then 13, and the reason is worth keeping because it is
+  // a property of this material rather than a preference.
+  //
+  // The faces carry a bump map at bumpScale 4.5, tuned so the turned grooves read
+  // under the environment. A bump map perturbs normals, and under a bright light
+  // at a grazing angle each groove's normal swings in and out of the reflection
+  // direction, so neighbouring texels flip between fully lit and fully dark. The
+  // grooves are about a texel across, so at screen resolution that aliases into
+  // concentric moiré and the mark renders as a vinyl record.
+  //
+  // A hard raking light and this finish are not compatible at any intensity that
+  // reads as hard. The drama has to come from the sky sweeping, which is a mirror
+  // effect and does not touch the normals; the blade is here to give that sweep a
+  // leading edge, not to light the object.
+// Rises and holds, rather than pulsing. A sine peaks in the middle of the sun's
+  // window and is falling through exactly the stretch where the environment is
+  // still climbing, so the two cancelled and the mark measured 110, 95, 92 across
+  // the middle: bright, dim, bright, which is not a sunrise. Holding it means the
+  // blade is still there while the sky arrives, and it goes out at the end when
+  // there is something to hand over to.
+  const bladeRise = Math.min(1, sunEased * 2.2);
+  const bladeFade = t > 0.82 ? Math.max(0, 1 - (t - 0.82) / 0.18) : 1;
+  const blade = bladeRise * bladeFade;
+  sun.intensity = blade * 4.2;
+
+  // The finish stands down while the blade is crossing, and comes back as it
+  // leaves. This is the fix for the mark rendering as a vinyl record during the
+  // reveal, and it is the same reasoning as mipmapping rather than a cheat.
+  //
+  // The faces carry a bump map at 4.5, which is a derivative multiplier tuned so
+  // grooves about a texel wide read under the environment. Under a bright direct
+  // light at a grazing angle each groove's normal swings in and out of the
+  // reflection direction, so neighbouring texels flip fully lit to fully dark and
+  // alias into concentric moiré. There is no intensity at which a hard raking
+  // light and this finish coexist: measured, it was still ringing at 4.2 after
+  // starting at 26. Detail the lighting cannot represent should not be asked for.
+  group.traverse((child) => {
+    if (!child.isMesh) return;
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    // Group 0 only. The walls' map is a straight run of grooves along the
+    // outline, which does not ring.
+    // Two terms. The blade one is above. The second is the sunrise generally:
+    // early on the sky is tipped hard over and dim, which grazes the faces just
+    // as badly as the blade does, so at 0.1 the mark was still ringing with the
+    // blade at only 15%. The finish resolving as the light arrives is also
+    // simply true — you cannot see machining in the dark.
+    if (materials[0]) {
+      materials[0].bumpScale = FACE_BUMP * (1 - 0.82 * blade) * (0.16 + 0.84 * eased);
+    }
+  });
   // The sun itself. Climbs from below the mark to above it, brightest halfway up
   // where it rakes hardest across the faces, and gone by the end, leaving the
   // environment doing all the work — which is the state the material was tuned
   // in. At metalness 1 there is no diffuse term, so a direct light shows up
   // purely as a moving specular, which is the "glisten" the annotation asks for.
-  sun.position.set(-2.2, -3.4 + sunEased * 8, 3.6);
-  sun.intensity = Math.sin(Math.PI * sunEased) * 2.6;
 }
 
 /**
@@ -278,7 +354,7 @@ function Lockup({ still, started, onLit, onDocked }) {
     // without this the first frames composite a fully lit mark and the sunrise
     // starts by getting darker.
     if (!started) {
-      if (!sunrise.current.done) applySunrise(state.scene, sun.current, 0);
+      if (!sunrise.current.done) applySunrise(g, state.scene, sun.current, 0);
       return;
     }
 
@@ -287,11 +363,11 @@ function Lockup({ still, started, onLit, onDocked }) {
     // plays to an empty background.
     const dawn = sunrise.current;
     if (dawn.pinned !== null) {
-      applySunrise(state.scene, sun.current, dawn.pinned);
+      applySunrise(g, state.scene, sun.current, dawn.pinned);
     } else if (!dawn.done) {
       dawn.elapsed += delta;
       const t = Math.min(1, dawn.elapsed / dawn.seconds);
-      applySunrise(state.scene, sun.current, t);
+      applySunrise(g, state.scene, sun.current, t);
       if (t === 1) {
         dawn.done = true;
         if (sun.current) sun.current.visible = false;
@@ -390,10 +466,17 @@ function Lockup({ still, started, onLit, onDocked }) {
 
   return (
     <group ref={group} position={[offsetX, lift, 0]} rotation={[0.3, -0.8, 0]}>
-      {/* The sun. Starts under the mark and dark, and is switched off entirely
-          once it has passed over: leaving it in the scene at zero intensity
-          still costs a light slot in every shader compile. */}
-      <directionalLight ref={sun} intensity={0} color="#ffdca8" position={[-2.2, -3.4, 3.6]} />
+      {/* The sun, as a blade rather than a point. Starts under the mark and dark,
+          and is switched off entirely once it has passed over: leaving it in the
+          scene at zero intensity still costs a light slot in every compile. */}
+      <rectAreaLight
+        ref={sun}
+        intensity={0}
+        color="#ffe6bd"
+        width={1.6}
+        height={8}
+        position={[-1.8, -4.2, 5.4]}
+      />
       <group ref={inner} scale={[scale, -scale, scale]}>
         {/* Two materials, in the order ExtrudeGeometry declares its groups:
             0 is the flat caps, 1 is the side walls and the bevel. */}

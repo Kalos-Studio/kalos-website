@@ -62,6 +62,16 @@ asking.**
 It runs 4.6s. Reduced motion gets a shortened 2s rather than none, because
 cutting straight to the lit state reads as an animation that failed.
 
+**A hard raking light and this finish do not coexist.** The faces carry a bump map
+at `bumpScale: 4.5`, tuned so grooves about a texel wide read under the
+environment. Under a bright direct light at a grazing angle each groove's normal
+swings in and out of the reflection direction, neighbouring texels flip fully lit
+to fully dark, and the mark renders as a vinyl record. Measured, it was still
+ringing after the light came down from 26 to 4.2. The sunrise therefore ramps
+`bumpScale` as the light arrives and drops it while the blade crosses: detail the
+lighting cannot represent should not be asked for, which is mipmapping's argument
+rather than a cheat.
+
 The effect that actually reads is `scene.environmentRotation`, not the intensity
 ramp. At metalness 1 the mark is a mirror: what you see on it is the environment,
 so brightening the environment uniformly is a dimmer switch, while rotating it
