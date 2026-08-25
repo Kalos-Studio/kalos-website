@@ -173,7 +173,6 @@ function Lockup({ still, started, onLit, onDocked }) {
     let frame = 0;
     let docked = false;
     let wasPast = false;
-    let wasLeaving = false;
     const read = () => {
       frame = 0;
       const range = lab.offsetHeight * DOCK_OVER;
@@ -182,21 +181,14 @@ function Lockup({ still, started, onLit, onDocked }) {
       // Only tells React when it crosses, not on every frame: the lockup turning
       // gold is one class change, not an animation.
       const now = p > 0.82;
-      // The hero copy starts leaving as soon as the mark commits. Measured, the
-      // headline reaches the masthead's line at about a quarter of the dock, so
-      // without this the fixed lockup ends up sitting on top of 60px type for
-      // the rest of the flight. It is also simply what should happen: the copy
-      // belongs to the hero and the hero is going.
-      const leaving = p > 0.22;
       // And the masthead follows it out, per the annotation. Not at the very end
       // of the hero: by then the gold lockup has been hanging over the section
       // below for half a screen.
       const past = p >= 1;
-      if (now !== docked || past !== wasPast || leaving !== wasLeaving) {
+      if (now !== docked || past !== wasPast) {
         docked = now;
         wasPast = past;
-        wasLeaving = leaving;
-        onDocked?.({ docked: now, past, leaving });
+        onDocked?.({ docked: now, past });
       }
     };
     const onScroll = () => {

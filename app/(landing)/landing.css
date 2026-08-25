@@ -115,24 +115,6 @@
   }
 }
 
-/* The principles, as a row under the offer rather than a screen of their own. */
-.ln-values {
-  display: grid;
-  gap: 1.75rem 2.5rem;
-}
-
-@media (min-width: 640px) {
-  .ln-values {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .ln-values {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
 /* ---------- type ----------
  *
  * Tracking is -0.02em everywhere, because that is what the brand file does at
@@ -161,23 +143,6 @@
  * the page read as a template. Headings carry their own sections now, which also
  * removed a redundancy: "Process" sat above "How it works". */
 
-/* The running head. The one small label the brand actually has, used here for
-   the single line that is genuinely a label rather than a section tag. */
-.ln-runninghead {
-  display: block;
-  font-size: 1rem;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  text-transform: none;
-  /* Dark Silver, which the palette defines as "secondary text and sub-labels",
-     and a running head is a sub-label. It was Snow White at 32% instead, copied
-     off the brand deck's slide header, and that measured 2.68:1 against the
-     ground where WCAG AA wants 4.5:1 for text this size. A number that works on
-     a slide read from across a room is not the same number that works as body
-     text on a website. Quiet comes from the size here, not from the value. */
-  color: var(--color-dark-silver);
-}
-
 /* Section headline. Sized up from a 3rem cap: the file sets its statements at
    116px on a 1920 frame, roughly 6vw, and this was sitting at under 4vw, which
    is quieter than the brand is anywhere. Leading loosens toward the `normal`
@@ -190,61 +155,12 @@
   text-wrap: balance;
 }
 
-/* The step between a section headline and its body, and the one level on this
-   page that is not lifted from the brand file.
- *
- * It was a flat 1.125rem, which is exactly .ln-body's maximum: a value title and
- * the sentence under it were the same size, so every section with sub-parts
- * flattened into an undifferentiated block. The gap it left was the whole
- * hierarchy, 60px down to 18px with nothing in between.
- *
- * Worth being straight about where this number is from, because the rest of the
- * scale is sourced and this is not. The file has four sizes (160 / 116 / 26 /
- * 16) and no intermediate, for the good reason that a deck has no card titles in
- * it. Neither does the web mock: what sits where a card title would go there is
- * a client logo, not text. So there was nothing to copy, and 22 to 28px is
- * derived from the job instead: far enough above .ln-body--tight at 15px to
- * lead it, far enough under .ln-h2 to stay subordinate to the section it is in.
- *
- * Ends at 28px rather than going further because these sit four-up on a wide
- * screen, in columns around 230px, and a title that wraps to three lines in a
- * four-column grid costs more than the extra emphasis buys. */
-.ln-h3 {
-  font-size: clamp(1.375rem, 2.2vw, 1.75rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-}
-
 .ln-body {
   font-size: clamp(1rem, 1.6vw, 1.125rem);
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.6;
   color: var(--color-dark-silver);
-}
-
-/* Same colour as .ln-body on purpose. The palette carries exactly one secondary
-   text value, so hierarchy under a headline comes from size and measure rather
-   than from inventing intermediate greys it does not have. */
-.ln-body--tight {
-  font-size: 0.9375rem;
-  letter-spacing: -0.02em;
-  line-height: 1.6;
-  color: var(--color-dark-silver);
-}
-
-/* The secondary product track. Deliberately quieter than everything around it:
-   the brief allows it one line and forbids it from ever reading as a co-equal
-   offer, because most of the pipeline is buying the primary one. */
-.ln-aside {
-  font-size: 0.9375rem;
-  letter-spacing: -0.02em;
-  line-height: 1.6;
-  /* Was 68% of Dark Silver, which measured 4.32:1 and missed AA by a hair.
-     Mixed toward the ground rather than to transparent so the value is stable
-     whatever ends up behind it. */
-  color: color-mix(in srgb, var(--color-dark-silver) 84%, var(--color-obsidian-black));
 }
 
 /* ---------- call to action ----------
@@ -305,24 +221,6 @@
 
 /* ---------- proof strip ---------- */
 
-.ln-proof {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: clamp(1.75rem, 6vw, 4rem);
-}
-
-/* Client names set in the brand face, standing in for logo artwork we do not
-   have files for yet. Sized and spaced like a logo row rather than like text,
-   so swapping real marks in later does not move the layout. */
-.ln-client {
-  /* Trimmed to sit with the logos rather than shout over them. See .ln-logo. */
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--color-dark-silver);
-}
-
 /* ---------- work cards ---------- */
 
 .ln-card-media {
@@ -338,6 +236,52 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* A project as a full-width row: copy left, screenshot right, three of them at
+   the same weight. It replaced a lead card over a grid of two, which ranked the
+   projects — the mock does not, and with six case studies on /work the homepage's
+   three are a sample rather than a podium. */
+.ln-work-row {
+  display: grid;
+  gap: 1.75rem;
+  margin-top: clamp(3rem, 7vw, 5rem);
+  align-items: center;
+}
+
+@media (min-width: 860px) {
+  .ln-work-row {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+}
+
+.ln-work-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+/* Sized off height, because these are five different lockups with five different
+   aspect ratios and a shared width would set them at five different weights.
+   Capped narrow as well, for the wide ones. */
+.ln-work-logo {
+  height: clamp(2rem, 3.4vw, 2.75rem);
+  width: auto;
+  max-width: 60%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+/* The media is a link, so it needs to say so on hover without moving: a
+   screenshot that jumps under the cursor reads as a glitch at this size. */
+.ln-card-media {
+  transition: box-shadow 240ms ease;
+}
+
+a.ln-card-media:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-vulcan-gold) 55%, transparent);
 }
 
 /* The one text link on the page. Gold, because the palette gives gold to
@@ -366,6 +310,13 @@
 
 .ln-more:hover::after {
   transform: translateX(3px);
+}
+
+/* Centred under the work, where the mock puts it. */
+.ln-more--centred {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -423,24 +374,6 @@
   }
 }
 
-/* ---------- work, editorial ----------
- *
- * One project at full width above two half-width ones, rather than three equal
- * cards in a row. Three identical thumbnails is the most generic arrangement
- * available and it wastes the flagship: Priority Ambulance Transfer is the whole
- * offering delivered end to end, and it was the same size as everything else. */
-.ln-work-lead .ln-card-media {
-  aspect-ratio: 21 / 9;
-}
-
-@media (min-width: 860px) {
-  .ln-work-rest {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.75rem;
-  }
-}
-
 /* ---------- closing plate ----------
  *
  * The final call to action sits on Gold_Ray from the brand file rather than on
@@ -488,24 +421,44 @@
  * Note the tracking. -0.05em, not the -0.02em the rest of the page uses. The
  * file tightens display type as it grows: -8px at 160px on "Mission", -6px at
  * 120px here, both landing on -0.05em. */
+/* "Kalos / καλός" on one line, which is how the mock sets it: the Latin
+   wordmark, a slash, the Greek in gold. It used to be the Greek alone at display
+   size with [adj] and [Greek] labels under it, a dictionary entry lifted from a
+   superseded node in the brand file. The mock is not making a dictionary entry,
+   it is naming the studio twice.
+
+   Set in Space Grotesk rather than as artwork. The wordmark IS Space Grotesk, so
+   rendering it as type is the same shape with none of the cost of an exported
+   asset, and it wraps and scales on a phone, which a fixed-width SVG does not. */
 .ln-word {
   display: block;
-  font-size: clamp(3.5rem, 11vw, 7.5rem);
+  /* Sized to hold "Kalos / καλός" on one line at the page's own width, which is
+     what the mock does. The mock is 1920 wide with a 667px column; ours is a
+     1080 grid, so its literal 100px does not transfer — at 100px the line
+     measures about 620px against a 600px column and breaks after the slash,
+     which puts the slash at the end of a line where it reads as punctuation
+     rather than as the join between two names for the same thing. */
+  font-size: clamp(2.5rem, 5.6vw, 5rem);
   font-weight: 500;
-  letter-spacing: -0.05em;
-  line-height: 1;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
   color: var(--color-snow-white);
 }
 
-.ln-word-labels {
-  display: flex;
-  gap: clamp(1rem, 3vw, 1.875rem);
-  margin-top: clamp(1.25rem, 3vw, 2.5rem);
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1;
+/* Vulcan Gold, which the palette assigns to accents. The slash goes with the
+   Greek rather than sitting between two colours as its own thing. */
+.ln-word-greek {
   color: var(--color-vulcan-gold);
+}
+
+/* The mark takes a little under half. .ln-cols splits 5fr/6fr, which gives the
+   larger share to the right-hand column: right when that column held prose, and
+   wrong when it holds a square object next to a display headline. */
+@media (min-width: 860px) {
+  .ln-definition-row {
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    align-items: center;
+  }
 }
 
 .ln-definition {
@@ -565,37 +518,4 @@
   .ln-sand {
     aspect-ratio: 16 / 10;
   }
-}
-
-/* Client logos, in one weight so the row reads as evidence rather than as
-   several competing brand palettes on a near-black page.
- *
- * The committed assets are already monochrome, recoloured properly rather than
- * flattened, because flattening destroys some marks: the Shell pecten is a
- * yellow fan with red ribs, and one flat colour turns it into a featureless
- * blob. It is baked the way Shell's own monochrome version works, with the fan
- * as ink and the ribs knocked out as gaps.
- *
- * The filter stays anyway. It is a no-op on artwork that is already white, and
- * it means a future logo dropped in with its brand colours intact still lands
- * in the row rather than glowing. Imperfect for a mark like the pecten, which is
- * why the README asks for monochrome files.
- *
- * 0.66 puts white at roughly #A3A9A8, which is Dark Silver within a couple of
- * points, so a logo and a name that has no logo yet carry the same weight and a
- * half-supplied row still looks deliberate.
- *
- * Sized on height, not width, so a long lockup and a square mark read as equals,
- * and matched to .ln-client so swapping one for the other does not move the
- * layout. */
-.ln-logo {
-  display: block;
-  /* Taller than the type beside it looks wrong on paper and right on screen. A
-     logo's cap height is a fraction of its box (a stacked lockup like Priority
-     is three lines inside the same 28px), where a name is nearly all cap. Sized
-     by eye against MARA until the row reads level. */
-  height: clamp(1.6rem, 3.4vw, 2.35rem);
-  width: auto;
-  filter: brightness(0) invert(1);
-  opacity: 0.66;
 }

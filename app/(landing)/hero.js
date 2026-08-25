@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Lockup from "./lockup";
-import { heroes } from "./content";
 import {
   isCoarsePointer,
   needsMotionPermission,
@@ -47,8 +46,6 @@ const STAGE_READY_TIMEOUT_MS = 4000;
 // each number was tried against — a rename would churn every one of them for
 // nothing.
 export default function Hero() {
-  const hero = heroes[heroes.active];
-
   const [webgl, setWebgl] = useState(true);
   const [hintTilt, setHintTilt] = useState(false);
   // The stage lands seconds after this copy does. The prompt waits for it:
@@ -74,10 +71,10 @@ export default function Hero() {
   // The mark's flight into the masthead ends with the lockup taking its colour.
   // One class, set when the dock crosses, not an animation driven from the frame
   // loop — the gradient and the transition are CSS's job.
-  // The three states of the mark leaving: the copy going, the lockup taking the
-  // mark's colour, and the masthead following it out. One object rather than
-  // three callbacks, and it only changes when a threshold is crossed.
-  const [exit, setExit] = useState({ docked: false, past: false, leaving: false });
+  // Two states of the mark leaving: the lockup taking the mark's colour, and the
+  // masthead following it out. There used to be a third, fading the hero copy
+  // out from under the fixed masthead, and it went with the copy.
+  const [exit, setExit] = useState({ docked: false, past: false });
   const onDocked = useCallback((value) => setExit(value), []);
 
   useEffect(() => {
@@ -198,18 +195,10 @@ export default function Hero() {
         </div>
       </header>
 
-      {/* Copy sits over the mark rather than beside it, the way the brand
-          deck's own title slide does: object filling the frame, words in the
-          lower left. A scrim under the text does the legibility work, since the
-          mark drifts and cannot be relied on to stay out from behind a line. */}
-      <div className={`lab-copy${exit.leaving ? " is-leaving" : ""}`}>
-        <div className="lab-shell">
-          <div className="lab-measure">
-            <h1 className="lab-h1">{hero.h1}</h1>
-            <p className="lab-sub">{hero.sub}</p>
-          </div>
-        </div>
-      </div>
+      {/* There is no copy here any more. The mock's hero is the lockup, the sand
+          and the mark, and nothing else: the headline and subhead that used to
+          sit in the lower left came out with the rest of what the mock does not
+          contain. The page's h1 is the word, one section down. */}
 
       {hintTilt && stageReady && (
         <button type="button" className="lab-tilt-hint" onClick={onEnableTilt}>

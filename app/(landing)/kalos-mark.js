@@ -87,16 +87,17 @@ export function useMarkFit({ baseScale = MARK_SCALE, lift = MARK_LIFT } = {}) {
     // grow into on a big screen.
     const scale = baseScale * Math.min(1, widthFit, heightFit);
 
-    // Push the mark off centre in landscape so the hero copy has a column of
-    // its own. Dead centre was right when the mark was the only thing on the
-    // page; with a headline beside it the two collide, and text sitting across
-    // a lit object reads as a mistake rather than as a composition. The brand
-    // deck's own title slide is laid out exactly this way: words left, object
-    // filling the right.
+    // Centred, at every aspect ratio.
     //
-    // Portrait keeps it centred. There is no room for two columns on a phone,
-    // where the copy sits under the mark instead of beside it.
-    const offsetX = portrait ? 0 : width * 0.19;
+    // This used to push the mark 19% right in landscape so the hero copy had a
+    // column of its own: text sitting across a lit object reads as a mistake
+    // rather than as a composition, and the brand deck's title slide is laid out
+    // exactly that way, words left and object filling the right.
+    //
+    // There is no hero copy any more. The mock's hero is the lockup, the sand
+    // and the mark, and with nothing to make room for, an object held off to one
+    // side of an empty screen is just off centre.
+    const offsetX = 0;
 
     // Portrait lifts the mark. Dead centre of the viewport sounds right and
     // measures wrong once there is copy at the bottom: at 390x844 the masthead
