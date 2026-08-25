@@ -43,8 +43,31 @@ const spaceGrotesk = Space_Grotesk({
 // og:image has to be an absolute URL or iMessage and friends can't resolve it.
 // Netlify exposes the production site URL as URL at build time; NEXT_PUBLIC_SITE_URL
 // overrides it once there's a custom domain.
+//
+// A deploy preview has to advertise its own host, which is why the Netlify
+// context is checked first. Both URL and NEXT_PUBLIC_SITE_URL are the *production*
+// address in every context — Netlify's URL is documented as the main site
+// address, not the current deploy's — so a preview was stamping
+// `https://kalos.so/opengraph-image.png?<hash of the branch's image>` into its
+// own og:image. That URL resolves: production ignores the query string and
+// serves whatever image is on main, HTTP 200. So every preview link pasted into
+// a chat previewed *production's* card, and a new OG image was unreviewable in
+// the one place it is meant to be reviewed. It looked like the image had not
+// updated. The image was fine; the URL pointed somewhere else.
+//
+// DEPLOY_PRIME_URL is the deploy's own primary address (the stable
+// `deploy-preview-4--kalosso` form rather than DEPLOY_URL's per-build hash).
+// CONTEXT is unset outside Netlify, so local dev is untouched.
+const deployPreviewUrl =
+  process.env.CONTEXT && process.env.CONTEXT !== "production"
+    ? process.env.DEPLOY_PRIME_URL
+    : null;
+
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? process.env.URL ?? "http://localhost:3000";
+  deployPreviewUrl ??
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.URL ??
+  "http://localhost:3000";
 
 // Site-wide defaults. Every route that does not set its own falls back to these,
 // which currently means /work and /design-system.
