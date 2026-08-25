@@ -72,6 +72,22 @@ function applySunrise(scene, sun, t) {
   // where two carefully tuned values were being discarded exactly this way.
   scene.environmentIntensity = lift;
 
+  // And the world the object is standing in. The sand is a 2D canvas outside the
+  // scene graph, so it cannot be lit; it is faded toward the page ground instead,
+  // which at #040406 is near enough to black that the effect is the same.
+  //
+  // This was missed the first time and the result was incoherent: the mark rose
+  // out of darkness while the dunes behind it sat at full brightness from the
+  // first frame. A sunrise that lights the object and not the landscape is not a
+  // sunrise, it is a spotlight.
+  //
+  // A custom property rather than React state. This runs every frame, and setting
+  // one string on the root element is what CSS is for; re-rendering the tree
+  // sixty times a second to carry a number would not be.
+  if (typeof document !== "undefined") {
+    document.documentElement.style.setProperty("--dawn", lift.toFixed(3));
+  }
+
   if (!sun) return;
   // The sun itself. Climbs from below the mark to above it, brightest halfway up
   // where it rakes hardest across the faces, and gone by the end, leaving the

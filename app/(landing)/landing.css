@@ -49,6 +49,12 @@
   width: 100%;
   z-index: -1;
   pointer-events: none;
+  /* The sand comes up with the sunrise. --dawn is written every frame by
+     applySunrise in variants/solid.js; the fallback is 1 so that a browser with
+     no WebGL, where the sunrise never runs, gets the lit field rather than a
+     black page. Fading toward the page ground rather than filtering brightness,
+     because opacity stays on the compositor. */
+  opacity: var(--dawn, 1);
   /* Only the transform is animated, and only from a rAF, so this stays on the
      compositor rather than repainting six million pixels per scroll event. */
   will-change: transform;

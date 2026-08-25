@@ -79,7 +79,13 @@ export default function Hero() {
 
   useEffect(() => {
     if (!stageReady || lit) return;
-    const id = setTimeout(() => setLit(true), STAGE_READY_TIMEOUT_MS);
+    const id = setTimeout(() => {
+      setLit(true);
+      // The sunrise drives --dawn, which the sand's opacity reads. If the stage
+      // died partway through, the page would otherwise be left sitting on a
+      // half-lit field forever.
+      document.documentElement.style.setProperty("--dawn", "1");
+    }, STAGE_READY_TIMEOUT_MS);
     return () => clearTimeout(id);
   }, [stageReady, lit]);
 
