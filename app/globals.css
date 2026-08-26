@@ -1,187 +1,178 @@
 @import "tailwindcss";
 
-/* Everything below this line is unlayered, which is what keeps it winning.
+/* Design tokens.
  *
- * Tailwind v4 puts its own reset inside `@layer base`, and unlayered CSS beats
- * any layer regardless of source order — so the element styling here overrides
- * preflight rather than fighting it. That is deliberate: the type scale and the
- * near-black ground are art direction, not defaults to be normalised away.
- *
- * Utilities still work as normal on top, because they sit in `@layer utilities`
- * but are applied via class rather than element selectors. Where a utility and
- * a rule in here target the same property on the same element, the rule here
- * wins — reach for a plain class in that case instead of fighting it with
- * `!important`. */
+ * Tailwind v4 has no tailwind.config.js — configuration is CSS, and `@theme` is
+ * where it goes. Everything declared here becomes a utility: `--color-vulcan-gold`
+ * gives `bg-vulcan-gold` / `text-vulcan-gold` / `border-vulcan-gold`, and
+ * `--text-lead` gives `text-lead`. Put shared values here rather than repeating
+ * hex codes and clamps across files.
+ */
+@theme {
+  /* --- Type ------------------------------------------------------------ */
 
-/* The `* { margin: 0; padding: 0; box-sizing: border-box }` that used to sit
-   here is gone, and deliberately so.
- *
- * Preflight already applies exactly that rule — same three properties, same
- * values — but from inside `@layer base`. Keeping an unlayered copy changed
- * nothing visually and quietly broke every spacing utility in the project: `p-6`
- * and `m-4` live in `@layer utilities`, which an unlayered `*` selector outranks,
- * so they resolved to 0 everywhere with no warning.
- *
- * If Tailwind is ever removed, this reset has to come back. */
+  /* Space Grotesk, injected by next/font in app/layout.js as a CSS variable so
+     it is self-hosted and hashed at build time. Naming it `--font-sans` makes it
+     the project's default family: Tailwind's preflight derives the base font
+     from this token, so every element gets it without a `font-sans` anywhere. */
+  --font-sans:
+    var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
 
-html,
-body {
-  height: 100%;
-  overflow: hidden;
-  background: #000;
-  color: #fff;
-  -webkit-font-smoothing: antialiased;
-  /* Preflight sets the root to line-height 1.5. Every page here was composed
-     against the browser default, and adopting 1.5 silently moved things — the
-     work login card grew 17px, the home hero shifted 3px. Restoring `normal`
-     keeps existing pages pixel-identical; anything new should set its own
-     leading explicitly rather than depending on either default. */
-  line-height: normal;
+  /* Three fluid sizes for the landing page, on top of Tailwind's own scale
+     (text-sm, text-base, text-lg … are all still there and still preferred for
+     ordinary work).
+
+     These exist because the brand wireframe is proportion-driven: it is drawn at
+     1920 wide, where the display type is 50px and the body 32px. Those are not
+     reasonable fixed sizes — 32px body copy on a laptop is enormous — so each
+     one is a clamp that reaches the drawn size only on a very wide screen and
+     floors at something readable on a phone. */
+  --text-display: clamp(2rem, 2.6vw, 3.125rem); /* the term, the closer */
+  --text-lead: clamp(1.125rem, 1.5vw, 1.75rem); /* statement, definition, labels */
+  --text-control: clamp(0.875rem, 1vw, 1.125rem); /* buttons and pills */
+
+  /* --- Brand palette ---------------------------------------------------- */
+
+  /* The five brand colours, with the role each one plays. The page is being
+     built in plain black and white first and moves onto these afterwards, so
+     they are declared and mostly unused for now — that is deliberate, not dead
+     code waiting to be pruned. */
+
+  /* Accent: buttons, callouts, and the active indicator in the work rail. */
+  --color-vulcan-gold: #ae9357;
+
+  /* Borders, grid lines, card backgrounds. */
+  --color-eerie-gray: #212225;
+
+  /* Secondary text and sub-labels. */
+  --color-dark-silver: #a8a8a8;
+
+  /* Primary text and key headlines. */
+  --color-snow-white: #f5fefd;
+
+  /* Primary canvas background. */
+  --color-obsidian-black: #040406;
+
+  /* --- Shape ------------------------------------------------------------ */
+
+  /* One radius for every control, and it is a full round.
+   *
+   * The wireframe draws two — 10px on the calls to action, a full round on the
+   * work pills — but a button and a pill are the same kind of object doing the
+   * same kind of job, and two radii on one screen read as an inconsistency
+   * rather than as a distinction. Everything interactive is a pill.
+   *
+   * Imagery gets no radius at all, anywhere on this site.
+   *
+   * Still named `button` rather than `control` because /work uses it too and
+   * renaming a token in shared use across two people's work in progress buys
+   * nothing. `rounded-button` is the one control radius. */
+  --radius-button: 9999px;
 }
 
-main {
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  position: relative;
-  overflow: hidden;
+/* Nothing else lives in this file, and that is the change worth knowing about.
+ *
+ * It used to carry the spotlight hero's art direction below this point —
+ * `html, body { overflow: hidden }`, a centred `main` at 100dvh, and element
+ * styling on bare `h1` and `p`. All of it was unlayered, which meant it beat
+ * every Tailwind utility touching the same property, on every page, whether that
+ * page wanted it or not: /work carried a `.work-root p` reset purely to undo the
+ * `p` rule. The hero and /lab are gone and those rules went with them.
+ *
+ * The base ground is set with utilities on <body> in app/layout.js instead, and
+ * /work now inherits it rather than painting a dark surface of its own. Keep it
+ * that way — an unlayered element rule here is action at a distance on every
+ * other page.
+ *
+ * One rule that must never come back: `* { margin: 0; padding: 0 }`. Preflight
+ * already does exactly that from inside `@layer base`; an unlayered copy adds
+ * nothing visually and silently resolves every `p-*` and `m-*` in the project
+ * to 0, with no error and no warning. */
+
+/* Scroll snapping and smooth scrolling are declared as utilities on <html> in
+   app/layout.js. This is the one thing that cannot be: a media query turning the
+   smooth behaviour off for anyone who has asked for less motion.
+ *
+ * The snapping itself deliberately stays on. Snap points are positions, not
+ * animation -- honouring the preference means not animating the journey, not
+ * removing the stops. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
-h1 {
-  font-size: clamp(3.5rem, 20vw, 11rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
+/* --- View transitions, PROTOTYPE ----------------------------------------
+ *
+ * The cover morph between a landing panel and its case study hero, on every
+ * study. See app/view-transition-link.js for the navigation side of it.
+ *
+ * The pairing is a `view-transition-name` on each cover box; `data-vt-cover`
+ * below gives all of them a shared `view-transition-class` so one rule can time
+ * the lot. Both ends are set in the page components, which is where the name
+ * has to come from anyway.
+ *
+ * These pseudo-elements are on the document, not on either page, which is why
+ * they live here rather than in work.css: the animation is running while the
+ * old page is leaving and the new one arriving, and only globals.css is loaded
+ * for both ends of that.
+ *
+ * Everything sits inside prefers-reduced-motion: no-preference. The link
+ * component bails out for the same preference, so this is belt and braces --
+ * but it also means a reduced-motion visitor gets the browser's own default
+ * rather than a slow one, in the case where a transition starts some other way.
+ */
+/* Outside the motion query on purpose: this is a grouping hook, not an
+   animation. It has to apply either way or the rules below match nothing. */
+[data-vt-cover] {
+  view-transition-class: cover;
 }
 
-p {
-  font-size: clamp(0.875rem, 2vw, 1.125rem);
-  font-weight: 400;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #888;
-}
+@media (prefers-reduced-motion: no-preference) {
+  /* No page-level cross-fade at all, and this is the fix for a real glitch
+     rather than a preference.
 
-/* Entrances are CSS, not JS: if hydration is slow or an animation fails to
-   start, the page still resolves to a readable state on its own. */
-@keyframes spot-in {
-  from {
+     The default is old and new roots dissolving into each other. The old root
+     is a snapshot of the *whole* page minus the morphing cover -- so leaving the
+     landing page, that snapshot still holds the panels above and below the one
+     that was clicked, and they sat ghosted over the case study for the length of
+     the fade. Shortening it only made the ghost briefer.
+
+     So the old root is dropped on the first frame and the new one is there
+     immediately. Only the cover animates, which is what a shared-element
+     transition is supposed to look like: the page does not fade, one thing
+     moves. The destination's text appearing at once is not a problem, because
+     the eye is following the cover. */
+  ::view-transition-old(root) {
+    animation: none;
     opacity: 0;
   }
-  to {
+
+  ::view-transition-new(root) {
+    animation: none;
     opacity: 1;
   }
-}
 
-.spot-layer {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
+  /* The cover itself. The same curve the site uses elsewhere for movement
+     (cubic-bezier(0.22, 1, 0.36, 1) -- fast out, long settle), and slower than
+     the cross-fade so the morph is what the eye follows.
 
-.spot-layer.base {
-  animation: spot-in 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.spot-lens,
-.spot-glow {
-  animation: spot-in 2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
-}
-
-/* Dim, but never invisible — the wordmark should read as "there but unlit"
-   rather than as an empty page. */
-.spot-layer.base h1 {
-  color: #3a3a3a;
-}
-
-/* The subtitle stays legible without the light — the page should still say what
-   it is for someone who never moves their cursor. */
-.spot-layer.base p {
-  color: #6f6f6f;
-}
-
-.spot-layer.lit h1 {
-  color: #fff;
-}
-
-.spot-layer.lit p {
-  opacity: 0;
-}
-
-.spot-lens {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  will-change: transform;
-  -webkit-mask-image: radial-gradient(
-    circle at 50% 50%,
-    #000 0%,
-    rgba(0, 0, 0, 0.72) 42%,
-    transparent 70%
-  );
-  mask-image: radial-gradient(
-    circle at 50% 50%,
-    #000 0%,
-    rgba(0, 0, 0, 0.72) 42%,
-    transparent 70%
-  );
-}
-
-.spot-lens-inner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100dvh;
-  will-change: transform;
-}
-
-.spot-glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 255, 255, 0.06) 0%,
-    transparent 70%
-  );
-}
-
-/* A whisper of film grain — kills the flatness of pure #000 and hides the
-   banding in the glow's falloff. */
-.spot-grain {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* The static fallback lives here rather than in a JS branch, so the server and
-   client always render the same tree. */
-@media (prefers-reduced-motion: reduce) {
-  .spot-grain,
-  .spot-glow,
-  .spot-lens {
-    display: none;
+     Selected by view-transition-class rather than by name: every panel has its
+     own name (`cover-<slug>`, which has to be unique) but they all want the same
+     timing, and listing seven of them would mean an eighth case study silently
+     animating at the browser default. */
+  ::view-transition-group(.cover) {
+    animation-duration: 520ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .spot-layer.base {
+  /* Both ends are the same file at the same crop, so there is nothing to
+     cross-fade between -- holding both at full opacity keeps the image solid
+     for the whole flight instead of dipping through a double exposure. */
+  ::view-transition-old(.cover),
+  ::view-transition-new(.cover) {
     animation: none;
-  }
-
-  .spot-layer.base h1 {
-    color: #fff;
+    mix-blend-mode: normal;
   }
 }

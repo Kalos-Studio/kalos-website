@@ -9,7 +9,7 @@ import { createPortal } from "react-dom";
 //
 // The overlay is portaled to document.body rather than rendered inline:
 // this component sits inside a <figure>, and app/work/work.css scopes
-// image sizing with a `.work-case-body figure img` selector — if the
+// image sizing with a `.work-prose figure img` selector — if the
 // overlay's <img> stayed nested in that same <figure>, that selector's
 // higher specificity would win over the overlay's own sizing and the
 // "expanded" image would render at the same width as the thumbnail.

@@ -1,0 +1,11 @@
+<!-- Favicon for dark UI: the Kalos mark in Snow White, on transparency.
+     Same artwork as icon-light.svg but exported at a slightly different scale
+     (71x63), so the square canvas is 78 rather than 76. Both put the glyph at
+     roughly 91% of the canvas, which is what makes them look the same size
+     when the browser swaps between them. -->
+<svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(3.5 7.5)">
+<path d="M29.6407 0.773245L0.767988 29.6459C-0.255995 30.6699 -0.255996 32.3301 0.767987 33.3541L29.6407 62.2268C31.2925 63.8786 34.1168 62.7087 34.1168 60.3727L34.1168 2.62733C34.1168 0.291312 31.2925 -0.87857 29.6407 0.773245Z" fill="#F5FEFD"/>
+<path d="M53.5275 16.8552C54.5515 15.8313 56.2117 15.8312 57.2357 16.8552L70.0349 29.6544C71.0588 30.6784 71.0588 32.3386 70.0349 33.3626L57.2357 46.1617C56.2117 47.1857 54.5515 47.1857 53.5275 46.1617L40.7284 33.3626C39.7044 32.3386 39.7044 30.6784 40.7284 29.6544L53.5275 16.8552Z" fill="#F5FEFD"/>
+</g>
+</svg>
