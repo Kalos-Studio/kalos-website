@@ -9,12 +9,18 @@ this reproduces the shipped images offline. See the README beside the sources
 for where each one came from and how to re-export it.
 
 WHY THIS EXISTS AT ALL. Every frame in that Figma is a 390x844 portrait phone
-screen, and body images render at `width: 100%` of the ~860px case study column
-(`.work-case-body figure img` in app/work/work.css). Dropped in raw, each screen
-would render about 1,860px tall and the page would come to roughly 13,000px of
-giant phones. Compositing each screen onto a landscape ground brings that to
-~6,200px and lets two screens share one beat where the story wants them side by
-side.
+screen, and the case study column is around 1,030px wide.
+
+The original reason was that body images were `width: 100%` of that column, so a
+raw frame drew about 1,860px tall and seven of them made a 13,000px page of giant
+phones. That rule is gone: `.work-case-body figure img` in app/work/work.css is
+`width: auto; max-width: 100%; max-height: 78vh` now, so a raw 390px frame would
+render at 390px and be a third of the measure instead of three times it.
+
+Compositing is still the answer, for the reason that did not change. A beat gets
+one landscape frame that fills the column at a readable size, and two screens can
+share a frame where the story wants them side by side, which no amount of img
+sizing will do. Do not re-derive the old justification from this file's history.
 
 The ground is obsidian black rather than H-E-B red on purpose. /work is a near
 black page, and five full-bleed red panels down it would read as the brand of

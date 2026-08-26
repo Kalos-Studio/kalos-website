@@ -23,12 +23,40 @@ What that means mechanically:
   a 40rem measure (about 67 characters a line), and images run wider than the
   text.
 - **Use `heading` and `section` blocks sparingly, if at all.** Every one is a
-  place the story stops. None of the six use them now.
+  place the story stops. None of the seven use them now.
 - **Drop images where the narrative reaches something worth seeing**, not at
   fixed intervals.
 - **`quote` blocks are for real client testimonials only**, always attributed to
   a named person with their title. An unattributed pull quote is our own copy set
   in bigger type.
+- **`role` is the facts line, and it comes from one vocabulary.** Disciplines,
+  not a job title, three to five of them, and the same words for the same work
+  across every entry rather than a fresh phrasing each time:
+
+  | | |
+  |---|---|
+  | research | `User Research` |
+  | strategy | `Product Strategy`, `Brand Strategy` |
+  | design | `Product Design`, `Web Design`, `Mobile App Design`, `Brand Identity` |
+  | systems | `Design Systems`, `Brand Guidelines` |
+  | build | `Development` |
+
+  `Development` is the only build term. It was "Web Design & Development" on one
+  entry, "Mobile App Design & Development" on another and "Development" on a
+  third, which is three names for the same thing plus a compound that hides the
+  design work inside the build. Split them.
+
+  One-offs are fine where the work genuinely is one: `Fleet Livery`,
+  `Art Direction`, `Design Exploration`. What is not fine is a synonym for a
+  word already in the table.
+
+  EchoCare and Priority both read "Head of Design" until the owner had them
+  rewritten, so a job title is the thing to avoid here rather than a precedent.
+
+- **There is no `client` field.** It rendered beside the role as "Shell / ..."
+  and was dropped whenever it repeated the title, which was four of six entries,
+  so the line had two shapes and no rule a reader could infer. It went the way
+  `year` did. Every study names its client in the title and the first paragraph.
 - **No em dashes.** `bun run lint:copy` only walks `app/(landing)/content.js`, so
   nothing enforces it here, but it applies to every line that ships.
 
@@ -51,14 +79,16 @@ another beat.
 
 ### Vital Energy — `vital-energy`
 
-New, and the strongest of the six. Ten weeks to define an ESP application and a
+New, and the strongest of the seven. Ten weeks to define an ESP application and a
 field data capture tool, then twenty-two months building Dynamic Routing. Carries
 the Brandon Brown quote.
 
-**Needs: `role`.** Every other entry has one and it was left blank rather than
-guessed. The others read like "Head of Design" or "Mobile App Design &
-Development". Until it is set, this page shows no facts line at all, because
-`client` is dropped when it repeats the title and Vital's does.
+`role` is set now: "User Research, Product Strategy, Product Design,
+Development". It was blank for a long time because it was left rather than
+guessed, and with `client` dropped when it repeats the title, this page showed
+no facts line at all. Written off the story: the site visits and working
+sessions the copy leads on, the ten week definition sprint, the two products
+designed inside it, and the twenty-two months of build after.
 
 Images: four placed. `vital3` (an oil derrick at sunset, stock or generated) was
 deliberately not used — it is decoration, and every other image on the page is
@@ -116,11 +146,49 @@ is the website.
 - **The logo and wordmark**, and a collateral shot (credentialing, facility sales
   materials) would each earn a place.
 
+### My H-E-B App — `my-heb-app`
+
+New, and the only entry that is not a client engagement: a design exploration
+for H-E-B, written up as one. Last in the array deliberately, since the order
+note in `app/work/data.js` ranks by depth of the work.
+
+**Read the framing before editing the copy.** It never says H-E-B commissioned
+it and never narrates a pitch. `role` leads on "Design Exploration", which is
+what keeps a page formatted like six client engagements from reading as a
+seventh. It said "Design exploration for H-E-B" until the vocabulary pass, and
+the "for H-E-B" half is now carried by the summary and the copy instead. The closing
+paragraph observes that the shape of the proposal is close to the shape of the
+app today and stops there, which is a checkable statement rather than a claim
+about another company's roadmap. That restraint is the point, not an oversight.
+
+Other decisions that will look arbitrary later:
+
+- **No `client` field.** It was a pitch, not an engagement, so the facts line is
+  the role alone.
+- **No `quote` block**, though the deck has four good interview quotes. Every one
+  is an anonymous shopper, and the schema wants a named person. The strongest of
+  them runs inside a paragraph instead, where it is the pivot of the story.
+- **"the largest grocery chain in Texas" appears twice**, in the summary and in
+  the first paragraph. The card on `/work` shows only the summary, so a reader
+  who never opens the page still gets the context.
+- **The feature is called a Spree in the designs** and the screenshots say so all
+  over. One sentence names it for that reason. The case study is called after the
+  app, not the feature.
+- **The personas and the "Impact" slide were left out.** The personas are stock
+  photographs captioned as fictional shoppers; the impact slide asserts business
+  impact with nothing behind it.
+
+Images: eight, all generated by `scripts/compose-case-images.py` rather than
+exported. Every frame in the Figma is a 390x844 portrait phone screen, which at
+full column width would render about 1,860px tall each and make a 13,000px page.
+See `docs/assets/my-heb-app/README.md` for the sources, the node IDs and how to
+regenerate.
+
 ## Open across the section
 
 - **Featured three on the homepage: settled, and worth arguing with.** It is the
   mock's set now, Shell / EchoCare / MARA, replacing Priority / Allganize / Shell.
-  Vital Energy is arguably the strongest of the six and is not among them. That is
+  Vital Energy is arguably the strongest of the seven and is not among them. That is
   a positioning call, and the mock made it rather than anyone here.
 - **`heroPosition`** is wired end to end and set on no entry. It only matters if a
   cover crops badly in the 16:9 hero, which none currently do.

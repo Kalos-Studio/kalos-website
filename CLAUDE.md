@@ -347,6 +347,13 @@ Infrastructure facts that are invisible until they cost an hour.
 - **Two files claiming the same icon route means one is ignored.** `app/icon.png`
   and `app/icon.svg` both existing emits a single link tag, and the PNG wins, so
   the SVG is built and never served.
+- **The `/work/my-heb-app` case study images are generated too.** Every frame in
+  that project's Figma is a 390px-wide portrait phone screen, a third of the
+  case study measure, and two of the beats want a pair of screens in one frame.
+  `scripts/compose-case-images.py` composes them onto landscape grounds from the
+  sources in `docs/assets/my-heb-app/`. Editing the `.webp` files by hand is the
+  thing not to do. The README beside the sources carries the Figma node IDs and
+  the two crops.
 - **`app/opengraph-image.png` is a generated file.** Its vector source is
   `docs/assets/og-image.svg`, kept out of `app/` deliberately — see the README
   beside it for the export size and what else moves with the artwork.
