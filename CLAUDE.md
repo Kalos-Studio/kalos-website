@@ -48,8 +48,18 @@ shared is declared in `@theme` in `app/globals.css` and becomes a utility:
   `eerie-gray`, `dark-silver`, `snow-white`, `obsidian-black`. Most are declared
   and unused — the site is being built in black and white first and moves onto
   the palette in one pass. That is deliberate, not dead code to prune.
-- `--radius-button` is a full round. Buttons and pills are the same kind of
-  object, so they share one radius. **Imagery gets no radius anywhere.**
+- `--color-muted` is the one secondary text colour and `--color-surface` the one
+  grey plate. They do not resolve against `dark-silver`, and that is measured:
+  it is 2.38:1 on white, below what even large text needs, against 8.61:1 on
+  obsidian. It is a dark-ground colour and this site is light.
+- `--ease-brand` is the one easing curve, with `--duration-quick`, `-settle` and
+  `-morph` beside it. Each duration is a kind of event, not a point on a scale.
+- `--radius-control` is a full round, shared by buttons and pills because they
+  are the same kind of object. It was `--radius-button`; a token that sounds like
+  it covers one thing is how a third radius gets invented.
+- `--radius-screen` and `--shadow-screen` are for device screens only, and they
+  are the **one exception** to the rule that imagery has no radius and no shadow.
+  See *Case study imagery* for which images qualify — guessing gets it wrong.
 
 ### The trap this file used to document
 
@@ -96,6 +106,15 @@ clearance mid-scroll — fine until the definition wrapped to another line. If y
 change the hero's height or the panel offset, run `bun run check:landing` rather
 than trusting your eye.
 
+The wheel **and the unmodified arrow and page keys** are paged by
+`app/(landing)/paged-scroll.js`; `Home`, `End`, space, every modified key,
+typing and touch are handed straight back to the browser. The keyboard was left
+out at first and that was the bug: an arrow key scrolls about 40px, proximity
+snapping decides the page is still nearest the stop it just left and drags it
+back, so the press does nothing. Keys and wheel share one lock so neither can
+compute a target from a position the other is animating away from — but only the
+wheel holds it through a momentum tail, because a keystroke does not have one.
+
 `app/lockup.js` holds the Kalos mark and wordmark as vector paths, in three
 exports: the full `Lockup`, and `Mark` / `Wordmark` separately so the hero can
 fly one and fade the other. **Never re-export the logo from Figma** — these paths
@@ -113,7 +132,11 @@ two in step or that comes back.
 That file also records **four attempts at putting navigation on a case study
 that were built and cut** — an eyebrow, a masthead call to action, a pill rail,
 and previous/next. Read the list before adding a fifth. What survived is one
-"Back to Work" and the hero, which flies back into its own panel.
+"Back to Work" and the hero. Both return to *this* study's panel on the landing
+page rather than to the top of the work section: the hero flies its cover back
+there, and the link is a `#case-<slug>` anchor that `HashTarget` centres, since
+an anchor on its own top-aligns. They used to disagree, and the text link was
+the one that was wrong.
 
 **One image per case study.** `landingCover` is spread over `cover` and the hero
 renders the result, so the panel and the hero are always the same picture at the
@@ -142,6 +165,75 @@ first:
   the landing it still held the panels above and below the clicked one and
   ghosted them over the case study. Shortening the fade only makes the ghost
   briefer; it has to be zero.
+
+### Case study imagery
+
+**Two kinds of image, and the difference decides the treatment.** Test it, do not
+eyeball it — open the file and look at the corner pixels:
+
+- **Product screenshots** are opaque rectangles with a hard edge. They get
+  `screenshot: true` in `data.js`, which gives them `--radius-screen`,
+  `--shadow-screen` and no border. A screen with square corners sitting flat on
+  white reads as a crop of a screen rather than a screen.
+- **Floating artwork** — marketing renders with transparent corners, elements
+  hanging off the frame, often its own shadow baked in — gets **no flag at all**.
+  Rounding it draws a rounded rectangle around something that is not rectangular,
+  and adds a second shadow under the one it already has. Vital and Shell's body
+  images are this; EchoCare's and H-E-B's are screenshots.
+
+```python
+# The check, run against the file itself
+Image.open(path).convert("RGBA").getchannel("A").getextrema()   # (0, 255) -> floating
+```
+
+**No black borders on imagery anywhere.** The `1px solid #000` hairline came from
+the dark template this section began as, where a rule was the only thing
+separating an image from the surface. On white it framed things that already had
+edges. Controls keep their borders; images do not.
+
+**A case study image has two render paths and they do not share code.** The hero
+goes through `CoverImage` in `app/work/[slug]/page.js`; body images go through
+`imageFigure` in `CaseStudyBody.js` and the `.work-prose-shot` rules. Changing
+one changes nothing about the other — a fix verified on the body while the hero
+stayed square shipped exactly that way once.
+
+**A composited image bakes its own treatment in.** Rounding a flat composite of
+three phones rounds the outer edge of the picture, not the phones. If screens
+have to share one file, mask and shadow each one at composite time — or better,
+use `srcs: [...]` and let the markup put them side by side, which keeps each at
+its own resolution and needs no plate behind it.
+
+**Block types beyond `image`:** `srcs` puts two or three screens under one
+caption; `split` sets a paragraph beside its screens, alternating sides with
+`flip`; `scroll` caps a very tall screen and scrolls it. A run of full-width
+phone screens separated by paragraphs gives the page a tall-thin rhythm with
+nothing to break it, which is what `split` exists to fix. Do not apply `scroll`
+to an ordinary phone screen — it is for the outliers, the ones near 0.37 and
+below.
+
+**Exports from Figma never upscale.** `get_screenshot`'s `maxDimension` only
+caps, so a 390-wide phone frame comes back at 390 and looks soft on any retina
+display. Use `download_assets` with `defaultScale: 3`.
+
+### Editing `app/work/data.js`
+
+It is a large hand-written object literal, and two things have gone wrong in it:
+
+- **Measure indentation off the line, never from terminal output.** Anything
+  piped through `sed 's/^/  /'` has been shifted, and anchors built from that
+  silently fail to match. Several edits failed this way, and one script that
+  parsed blocks by assumed indent found none and wrote an **empty `body: []`**,
+  deleting a whole case study's content.
+- **Never rebuild the array from parsed blocks.** Insert and replace lines in
+  place, and verify by loading the module afterwards:
+
+```bash
+node --input-type=module -e "import {caseStudies} from './app/work/data.js'; ..."
+```
+
+Compare that count against the file's own (`grep -c`). They must agree —
+**duplicate keys in an object literal collapse silently**, so a re-applied edit
+looks correct while being wrong.
 
 ### Images and icons
 
@@ -179,8 +271,20 @@ a pure function. What can break is geometric, and geometry can be measured:
 
 ```bash
 bun run dev            # one shell
-bun run check:landing  # another
+bun run check:landing  # another -- where things sit
+bun run check:scroll   #         -- what happens when the page is driven
 ```
+
+`check-landing.mjs` measures geometry. `check-scroll.mjs` measures behaviour,
+and exists because every scroll bug in this project was reported as a feeling
+("impossible to scroll", "it kinda freaks out", "super weird") and every one had
+a specific cause a browser could measure. It asserts that one trackpad flick
+moves exactly one view, that the wheel and the keyboard each leave the other
+usable straight afterwards, that typing and modified keys are handed back, and
+that "Back to Work" lands on its own panel. **A synthetic wheel event is not a
+trackpad** — a flick is a burst of small deltas plus a decaying tail, and an
+earlier round of tuning passed with single large deltas while the real trackpad
+was unusable. The check emits the burst.
 
 `scripts/check-landing.mjs` drives real Chrome across five viewports and asserts
 the two things that have actually gone wrong: that landing on a case study leaves

@@ -247,10 +247,10 @@ export default function DesignSystemPage() {
       <Section
         id="shape"
         title="Shape"
-        intro="One radius for controls, none at all for imagery."
+        intro="One radius for controls, one for device screens, and none at all for other imagery. Screens also carry the site’s only shadow."
       >
         <Row
-          name="--radius-button"
+          name="--radius-control"
           meaning="9999px, and the only radius on anything pill-shaped. Named for controls rather than for buttons, because it covers pills too — a token that sounds like it applies to one thing is how a third radius gets invented."
         >
           <div className="flex flex-wrap items-center gap-3">
@@ -263,10 +263,38 @@ export default function DesignSystemPage() {
           </div>
         </Row>
         <Row
-          name="Imagery: no radius"
-          meaning="Square corners on every image, everywhere. A 1px black hairline is the frame instead."
+          name="--radius-screen"
+          meaning="1.5rem. A device screen's own corner. Product screenshots are borderless, and a hard 90-degree corner on a phone reads as a crop rather than as a device."
         >
-          <div className="aspect-[1195/681] w-full max-w-md border border-black bg-surface" />
+          <div
+            className="h-40 w-24 bg-surface"
+            style={{
+              borderRadius: "var(--radius-screen)",
+              boxShadow: "var(--shadow-screen)",
+            }}
+          />
+        </Row>
+        <Row
+          name="--shadow-screen"
+          meaning="The one shadow, for one job: lifting a borderless screenshot off a white page. Two layers — a wide soft falloff and a tight contact edge — because a single blur reads as a smudge."
+        >
+          <div className="flex flex-wrap items-end gap-6">
+            <div className="h-24 w-40 bg-surface" />
+            <div
+              className="h-24 w-40 bg-surface"
+              style={{ boxShadow: "var(--shadow-screen)" }}
+            />
+          </div>
+          <p className="mt-3 text-sm tracking-tight text-muted">
+            Flat, then lifted. Deliberately low-opacity: the page is white and
+            quiet, and anything heavier looks like a sticker.
+          </p>
+        </Row>
+        <Row
+          name="Imagery: no radius, no border"
+          meaning="Square corners and no frame on photography and artwork. The hairline that used to sit here came from the dark template this site started as, where a rule was the only thing separating an image from the surface; on white it framed things that already had edges. Device screens are the exception above."
+        >
+          <div className="aspect-[1195/681] w-full max-w-md bg-surface" />
           <p className="mt-2 text-sm tracking-tight text-muted">
             aspect-[1195/681] — the case study frame, from the wireframe
           </p>
@@ -398,15 +426,23 @@ export default function DesignSystemPage() {
         />
         <Row
           name="PagedScroll"
-          meaning="One wheel gesture, one view, from the first case study down. Takes only the wheel — keyboard, touch, find-in-page and anchor links are untouched — and leaves the hero region free so its handover can still be scrubbed."
+          meaning="One gesture, one view. Takes the wheel and the bare arrow and page keys, and nothing else — touch, find-in-page, anchor links, Home and End, and every modified key stay the browser's. Keys and wheel share one lock, but only the wheel holds it through its momentum tail, because a keystroke has none."
         />
         <Row
           name="Hero handover"
           meaning="The block rises with the page, catches 72px from the top, is held there by a transform while everything fades and the mark flies into the masthead, then releases. The hold's length is derived from the distance to the first panel, never tuned by hand."
         />
         <Row
+          name="Back to Work"
+          meaning="Returns to the panel of the study it was clicked from, centred, rather than to the top of the work section — matching the hero, which flies its cover back to the same place. The href is a panel anchor; HashTarget does the centring, since an anchor alone top-aligns."
+        />
+        <Row
           name="bun run check:landing"
-          meaning="Drives real Chrome across five viewports and asserts the hero is fully faded and the panel centred at every stop, and that the definition block never overlaps a case study image mid-scroll. Both guard bugs that shipped."
+          meaning="Drives real Chrome across seven viewports and asserts the hero is fully faded and the panel centred at every stop, and that the definition block never overlaps a case study image mid-scroll. Both guard bugs that shipped."
+        />
+        <Row
+          name="bun run check:scroll"
+          meaning="The companion check, for what the page does when it is driven rather than where things sit: one trackpad flick moves one view, keys and wheel each leave the other usable, typing and modified keys are handed back, and Back to Work lands on its own panel. Every scroll bug here was reported as a feeling and turned out to be measurable."
         />
       </Section>
 
@@ -428,9 +464,9 @@ export default function DesignSystemPage() {
           <Issue
             n={2}
             severity="low"
-            title="The landing page jacks the scroll wheel"
-            evidence="paged-scroll.js calls preventDefault on wheel events from the first case study down."
-            why="It was asked for and it is scoped carefully — keyboard, touch and the hero region are all untouched — but it is a deliberate exception to a rule this codebase otherwise holds, and exceptions get copied."
+            title="The landing page jacks the scroll wheel and the arrow keys"
+            evidence="paged-scroll.js calls preventDefault on wheel events, and on unmodified arrow and page keys."
+            why="It was asked for and it is scoped carefully — touch, find-in-page, typing, Home, End and every modified key are handed straight back — but it is a deliberate exception to a rule this codebase otherwise holds, and exceptions get copied. The keyboard came under it late, because leaving it out was worse: an arrow key scrolled 40px and proximity snapping dragged the page back, so the press did nothing at all."
             fix="Nothing, unless it stops feeling right. Recorded here so the next person knows it was a decision rather than an accident."
           />
         </ol>
@@ -483,6 +519,19 @@ export default function DesignSystemPage() {
               Renamed for what it governs, and applied to pills as well as
               buttons. The generic full-round utility is gone from the markup;
               there is one radius decision and one name for it.
+            </p>
+          </li>
+          <li className="border-b border-black/10 py-6">
+            <p className="text-sm font-medium tracking-tight">
+              Screens are rounded and lifted, by token
+            </p>
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+              --radius-screen and --shadow-screen. Product screenshots lost their
+              borders because the app&rsquo;s own chrome is the frame, which left
+              them sitting flat on white with square corners — reading as a crop
+              of a screen rather than a screen. Both are tokens rather than values
+              in work.css, so the next surface that needs a device does not invent
+              its own.
             </p>
           </li>
           <li className="border-b border-black/10 py-6">
