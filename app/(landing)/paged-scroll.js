@@ -89,8 +89,17 @@ export default function PagedScroll() {
       const list = stops();
       if (!list.length) return;
 
-      // Above the first case study the hero owns the scroll. Nothing here.
-      if (window.scrollY < list[0] - EDGE) return;
+      const down = delta > 0;
+
+      // The hero is free going *down* only.
+      //
+      // Scrolling down out of it, the handover is scrubbed rather than paged --
+      // paging there would replace the whole thing with one jump. Going up is
+      // the opposite case: there is no stop above the first case study, so
+      // leaving it free meant a gesture upward drifted to a halt somewhere
+      // between the hero and the first panel, showing half of each. Upward, the
+      // top of the page is the stop.
+      if (down && window.scrollY < list[0] - EDGE) return;
 
       if (locked) {
         // Momentum from the gesture already handled. Swallow it, and hold the
@@ -108,11 +117,14 @@ export default function PagedScroll() {
         return;
       }
 
-      const down = delta > 0;
       const y = window.scrollY;
+      const previous = [...list].reverse().find((stop) => stop < y - EDGE);
       const target = down
         ? list.find((stop) => stop > y + EDGE)
-        : [...list].reverse().find((stop) => stop < y - EDGE);
+        : // Nothing above the first case study but the hero, so that is where
+          // going up leads. Undefined once already at the top, which hands the
+          // gesture back to the browser.
+          (previous ?? (y > EDGE ? 0 : undefined));
 
       // Past the last stop in that direction: let the browser have it, so the
       // page can still be scrolled to its very top or bottom.
