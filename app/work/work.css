@@ -71,7 +71,7 @@
 .work-prose-kicker {
   font-size: 0.875rem;
   letter-spacing: -0.01em;
-  color: #525252; /* neutral-600, the grey the landing panels' summaries use */
+  color: var(--color-muted); /* the one secondary text colour, see globals.css */
 }
 
 .work-prose ul {
@@ -100,7 +100,7 @@
   margin-top: 0.625rem;
   font-size: 0.875rem;
   letter-spacing: -0.01em;
-  color: #525252;
+  color: var(--color-muted);
 }
 
 /* --- Quote -------------------------------------------------------------- */
@@ -130,7 +130,7 @@
   margin-top: 0.85rem;
   font-size: 0.9375rem;
   letter-spacing: -0.01em;
-  color: #525252;
+  color: var(--color-muted);
 }
 
 /* --- Expandable images + lightbox --------------------------------------- */

@@ -5,7 +5,8 @@ import CaseStudyBody from "../CaseStudyBody";
 import { Mark } from "../../lockup";
 import ViewTransitionLink from "../../view-transition-link";
 import { caseStudies, workPageTitle } from "../data";
-import { closer, cta } from "../../(landing)/content";
+import BookACall from "../../(landing)/book-a-call";
+import { closer } from "../../(landing)/content";
 
 // A case study, built from the landing page's vocabulary rather than its own.
 //
@@ -120,7 +121,7 @@ export default async function CaseStudyPage({ params }) {
             too many. */}
         <Link
           href="/#work"
-          className="text-control tracking-tight text-neutral-500 underline-offset-4 transition-colors hover:text-black hover:underline"
+          className="text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
         >
           Back to Work
         </Link>
@@ -149,7 +150,7 @@ export default async function CaseStudyPage({ params }) {
             list could ever hold and no entry has carried one since the studies
             were rewritten, so the list was scaffolding around a single line. */}
         {cs.role && (
-          <p className="mt-5 text-control tracking-tight text-neutral-500">
+          <p className="mt-5 text-control tracking-tight text-muted">
             {cs.role}
           </p>
         )}
@@ -186,7 +187,7 @@ export default async function CaseStudyPage({ params }) {
           "work-bleed relative mt-10 aspect-[1195/681] lg:mt-14 " +
             (cover.floating
               ? ""
-              : "overflow-hidden border border-black bg-neutral-100")
+              : "overflow-hidden border border-black bg-surface")
           }
           imageClassName={cover.floating ? "object-contain" : "object-cover"}
           objectPosition={cover.heroPosition ?? cover.cardPosition}
@@ -214,12 +215,7 @@ export default async function CaseStudyPage({ params }) {
           landing page ends. */}
       <footer className="mt-24 flex flex-col items-center gap-5 pb-24 text-center lg:mt-32 lg:pb-32">
         <p className="text-display font-medium tracking-tight">{closer}</p>
-        <a
-          href="https://cal.com/kalos/intro"
-          className="inline-flex h-11 w-44 items-center justify-center rounded-button border border-current bg-transparent text-control tracking-tight text-black transition-colors duration-200 hover:bg-black hover:text-white lg:h-12 lg:w-48"
-        >
-          {cta}
-        </a>
+        <BookACall variant="outline" />
       </footer>
     </div>
   );

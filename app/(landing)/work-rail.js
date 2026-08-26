@@ -272,7 +272,7 @@ export default function WorkRail({ items }) {
         // Hidden from pointers and from assistive tech together: a rail faded to
         // nothing is still focusable, and tabbing into an invisible list of
         // links is worse than the clutter it was hiding.
-        "transition-opacity duration-500 " +
+        "transition-opacity duration-[var(--duration-settle)] " +
         (retired ? "pointer-events-none opacity-0" : "opacity-100")
       }
     >
@@ -303,16 +303,16 @@ export default function WorkRail({ items }) {
               onClick={(event) => centreOnClick(event, item.slug)}
               aria-current={active === item.slug ? "true" : undefined}
               className={
-                "flex h-9 items-center justify-center whitespace-nowrap rounded-full border border-black px-4 text-control tracking-tight " +
+                "flex h-9 items-center justify-center whitespace-nowrap rounded-control border border-black px-4 text-control tracking-tight " +
                 // Colour only. All the scaling belongs to the dock effect on the
                 // <li>; giving the active pill its own scale meant the two
                 // multiplied, and the pill under the cursor reached 1.28.
-                "transition-colors duration-200 lg:h-11 lg:w-full lg:px-0 " +
+                "transition-colors duration-[var(--duration-quick)] lg:h-11 lg:w-full lg:px-0 " +
                 // Active is the loudest thing in the rail, because it is the one
                 // answering "where am I". Hover is quieter than it.
                 (active === item.slug
                   ? "bg-black text-white"
-                  : "bg-transparent text-black hover:bg-neutral-200")
+                  : "bg-transparent text-black hover:bg-surface")
               }
             >
               {item.shortName}

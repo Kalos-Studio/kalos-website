@@ -54,6 +54,48 @@
   /* Primary canvas background. */
   --color-obsidian-black: #040406;
 
+  /* --- Working palette, for the light ground ---------------------------- */
+
+  /* Secondary text: captions, kickers, sub-labels, panel summaries. One token,
+     used everywhere, so /work and the landing page cannot drift apart the way
+     they did the first time.
+   *
+   * Not dark-silver, and that is measured rather than preferred. On white
+   * dark-silver is 2.38:1, below the 3.0 that even large text needs and well
+   * below the 4.5 for body copy. On the brand's own obsidian ground it is
+   * 8.61:1 and completely correct -- it is a dark-ground colour, and the site is
+   * light. This value is 7.81:1 on white.
+   *
+   * Quieter shades come from the opacity modifier (`text-muted/60`) rather than
+   * from another token, so there is still one decision here.
+   *
+   * If the brand wants its secondary text to *be* dark-silver on light, that is
+   * a brand decision and the hex above is the thing to change, not this. */
+  --color-muted: #525252;
+
+  /* The one grey plate: behind a cover while it loads, and the pill hover fill.
+     Replaced neutral-50, neutral-100 and neutral-200, which were three separate
+     answers to one question. */
+  --color-surface: #f5f5f5;
+
+  /* --- Motion ----------------------------------------------------------- */
+
+  /* The one easing curve: fast out, long settle. It was a literal repeated in
+     two files, which is how a third animation quietly gets a different one.
+     Named, it becomes the `ease-brand` utility. */
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Three durations, and each is a different kind of event rather than an
+     arbitrary point on a scale:
+       quick  -- a colour changing under the pointer
+       settle -- something leaving or arriving on the page
+       morph  -- the cover flying between a panel and its case study
+     These do not generate utilities; they are referenced as
+     `duration-[var(--duration-quick)]` and directly in the CSS below. */
+  --duration-quick: 200ms;
+  --duration-settle: 500ms;
+  --duration-morph: 520ms;
+
   /* --- Shape ------------------------------------------------------------ */
 
   /* One radius for every control, and it is a full round.
@@ -65,10 +107,11 @@
    *
    * Imagery gets no radius at all, anywhere on this site.
    *
-   * Still named `button` rather than `control` because /work uses it too and
-   * renaming a token in shared use across two people's work in progress buys
-   * nothing. `rounded-button` is the one control radius. */
-  --radius-button: 9999px;
+   * Named `control` rather than `button`, because it covers pills too and a
+   * token that sounds like it only applies to buttons is how a third radius gets
+   * invented. `rounded-control` is the one control radius; `rounded-control` should
+   * not appear on anything interactive. */
+  --radius-control: 9999px;
 }
 
 /* Nothing else lives in this file, and that is the change worth knowing about.
@@ -164,8 +207,8 @@
      timing, and listing seven of them would mean an eighth case study silently
      animating at the browser default. */
   ::view-transition-group(.cover) {
-    animation-duration: 520ms;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-duration: var(--duration-morph);
+    animation-timing-function: var(--ease-brand);
   }
 
   /* A matched pair is the same file at the same crop, so there is nothing to

@@ -12,7 +12,7 @@ export default function WorkNotFound() {
         </p>
         <Link
           href="/#work"
-          className="inline-flex h-11 w-44 items-center justify-center rounded-button border border-current bg-transparent text-control tracking-tight text-black transition-colors duration-200 hover:bg-black hover:text-white lg:h-12 lg:w-48"
+          className="inline-flex h-11 w-44 items-center justify-center rounded-control border border-current bg-transparent text-control tracking-tight text-black transition-colors duration-[var(--duration-quick)] hover:bg-black hover:text-white lg:h-12 lg:w-48"
         >
           Back to work
         </Link>

@@ -16,9 +16,9 @@ export default function BookACall({ variant = "filled", className = "" }) {
   const openModal = useCalModal();
 
   const base =
-    "inline-flex h-11 w-44 items-center justify-center rounded-button " +
+    "inline-flex h-11 w-44 items-center justify-center rounded-control " +
     "border border-current text-control tracking-tight " +
-    "transition-colors duration-200 lg:h-12 lg:w-48";
+    "transition-colors duration-[var(--duration-quick)] lg:h-12 lg:w-48";
 
   const treatment =
     variant === "filled"

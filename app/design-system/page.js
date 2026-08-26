@@ -18,6 +18,13 @@ export const metadata = {
  *
  * The Issues section at the foot is the point of it as much as the catalogue is.
  * All of it is checked -- each entry says how to verify it.
+ *
+ * One trap when editing this page: Tailwind scans it for class names like any
+ * other source file, and it cannot tell markup from prose. Writing a bare
+ * utility name in a sentence emits that utility into the production CSS. This
+ * was caught describing a class the site had just stopped using -- the sentence
+ * saying it was gone is what kept it in the bundle. Refer to a retired class
+ * descriptively, or wrap it so it is not a bare candidate.
  */
 
 function Section({ id, title, intro, children }) {
@@ -25,7 +32,7 @@ function Section({ id, title, intro, children }) {
     <section id={id} className="scroll-mt-8 border-t border-black/15 py-14 lg:py-20">
       <h2 className="text-display font-medium tracking-tight">{title}</h2>
       {intro && (
-        <p className="mt-3 max-w-[62ch] text-lead tracking-tight text-neutral-600">
+        <p className="mt-3 max-w-[62ch] text-lead tracking-tight text-muted">
           {intro}
         </p>
       )}
@@ -40,7 +47,7 @@ function Row({ name, meaning, children }) {
       <div>
         <code className="text-sm tracking-tight">{name}</code>
         {meaning && (
-          <p className="mt-1 max-w-[40ch] text-sm tracking-tight text-neutral-500">
+          <p className="mt-1 max-w-[40ch] text-sm tracking-tight text-muted">
             {meaning}
           </p>
         )}
@@ -56,12 +63,12 @@ function Issue({ n, title, evidence, why, fix, severity }) {
       ? "border-black bg-black text-white"
       : severity === "medium"
         ? "border-black text-black"
-        : "border-black/30 text-neutral-600";
+        : "border-black/30 text-muted";
   return (
     <li className="border-b border-black/10 py-7">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
         <span
-          className={`inline-flex h-7 items-center rounded-full border px-3 text-xs tracking-tight ${tone}`}
+          className={`inline-flex h-7 items-center rounded-control border px-3 text-xs tracking-tight ${tone}`}
         >
           {severity}
         </span>
@@ -70,11 +77,11 @@ function Issue({ n, title, evidence, why, fix, severity }) {
         </h3>
       </div>
       <dl className="mt-4 grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-[8rem_1fr]">
-        <dt className="text-sm tracking-tight text-neutral-500">Evidence</dt>
+        <dt className="text-sm tracking-tight text-muted">Evidence</dt>
         <dd className="max-w-[70ch] text-sm tracking-tight">{evidence}</dd>
-        <dt className="text-sm tracking-tight text-neutral-500">Why it matters</dt>
+        <dt className="text-sm tracking-tight text-muted">Why it matters</dt>
         <dd className="max-w-[70ch] text-sm tracking-tight">{why}</dd>
-        <dt className="text-sm tracking-tight text-neutral-500">Fix</dt>
+        <dt className="text-sm tracking-tight text-muted">Fix</dt>
         <dd className="max-w-[70ch] text-sm tracking-tight">{fix}</dd>
       </dl>
     </li>
@@ -89,16 +96,12 @@ const BRAND = [
   ["obsidian-black", "#040406", "Primary canvas background"],
 ];
 
-// Every grey the site actually renders, found by grepping the app directory.
-const GREYS_IN_USE = [
-  ["#525252", "work.css", "Case study kickers, captions, quote attributions"],
-  ["text-neutral-600", "Tailwind", "Section intros on this page, panel summaries"],
-  ["text-neutral-500", "Tailwind", "Placeholder panel copy, sub-labels"],
-  ["text-neutral-400", "Tailwind", "Placeholder discipline tags"],
-  ["bg-neutral-200", "Tailwind", "Pill hover fill"],
-  ["bg-neutral-100", "Tailwind", "Panel plate behind a cover"],
-  ["bg-neutral-50", "Tailwind", "Placeholder panel plate"],
+// The working palette: what the light ground is actually built from.
+const WORKING = [
+  ["--color-muted", "#525252", "7.81:1 on white", "All secondary text: captions, kickers, sub-labels, panel summaries. Quieter shades come from the opacity modifier, not another token."],
+  ["--color-surface", "#F5F5F5", "the one grey plate", "Behind a cover while it loads, and the pill hover fill. Replaced neutral-50, 100 and 200."],
 ];
+
 
 export default function DesignSystemPage() {
   const { markWidth, wordmarkWidth, gapWidth, height } = LOCKUP_GEOMETRY;
@@ -110,7 +113,7 @@ export default function DesignSystemPage() {
         <h1 className="mt-8 text-display font-medium tracking-tight">
           Design system
         </h1>
-        <p className="mt-4 max-w-[64ch] text-lead tracking-tight text-neutral-600">
+        <p className="mt-4 max-w-[64ch] text-lead tracking-tight text-muted">
           Everything this site is built from, read out of the code rather than
           out of intent. Where something is inconsistent it is listed at the
           foot, with evidence and a fix.
@@ -128,7 +131,7 @@ export default function DesignSystemPage() {
             <a
               key={id}
               href={`#${id}`}
-              className="inline-flex h-9 items-center rounded-full border border-black px-4 text-control tracking-tight transition-colors hover:bg-black hover:text-white"
+              className="inline-flex h-9 items-center rounded-control border border-black px-4 text-control tracking-tight transition-colors hover:bg-black hover:text-white"
             >
               {label}
             </a>
@@ -169,7 +172,7 @@ export default function DesignSystemPage() {
           <p className="text-sm tracking-tight">
             text-sm — captions, discipline tags, fine print
           </p>
-          <p className="mt-1 text-xs tracking-tight text-neutral-500">
+          <p className="mt-1 text-xs tracking-tight text-muted">
             text-xs — the smallest thing that ships
           </p>
         </Row>
@@ -186,7 +189,7 @@ export default function DesignSystemPage() {
       <Section
         id="colour"
         title="Colour"
-        intro="Five brand colours are declared in @theme. None of them are used yet — the site is deliberately being built in black and white first. That gap is issue 1."
+        intro="Five brand colours are declared in @theme and none of them are used — the site is deliberately being built in black and white first. That gap is issue 1. Below them is the working palette the light ground actually runs on."
       >
         <h3 className="text-lead font-medium tracking-tight">Brand palette</h3>
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -197,12 +200,12 @@ export default function DesignSystemPage() {
                 style={{ backgroundColor: hex }}
               />
               <p className="mt-2 text-sm tracking-tight">{name}</p>
-              <p className="text-sm tracking-tight text-neutral-500">{hex}</p>
-              <p className="mt-1 max-w-[24ch] text-xs tracking-tight text-neutral-500">
+              <p className="text-sm tracking-tight text-muted">{hex}</p>
+              <p className="mt-1 max-w-[24ch] text-xs tracking-tight text-muted">
                 {role}
               </p>
               <p className="mt-2 text-xs tracking-tight">
-                <span className="rounded-full border border-black/30 px-2 py-0.5 text-neutral-600">
+                <span className="rounded-control border border-black/30 px-2 py-0.5 text-muted">
                   0 uses in app/
                 </span>
               </p>
@@ -211,25 +214,29 @@ export default function DesignSystemPage() {
         </div>
 
         <h3 className="mt-14 text-lead font-medium tracking-tight">
-          What the site actually renders
+          Working palette
         </h3>
-        <p className="mt-2 max-w-[64ch] text-sm tracking-tight text-neutral-600">
-          Black, white, and seven separate greys — none of them tokens. This is
-          issue 2.
+        <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+          Two tokens, where there were seven ungoverned greys. Secondary text has
+          one definition now, so /work and the landing page cannot drift apart
+          the way they did before.
+        </p>
+        <p className="mt-3 max-w-[72ch] text-sm tracking-tight text-muted">
+          Neither resolves against dark-silver, and that is measured rather than
+          preferred: on white it scores 2.38:1, below the 3.0 even large text
+          needs. On the brand&rsquo;s own obsidian ground it is 8.61:1 and
+          entirely correct. It is a dark-ground colour, and this site is light.
         </p>
         <div className="mt-5">
-          {GREYS_IN_USE.map(([value, source, use]) => (
-            <Row key={value} name={value} meaning={use}>
+          {WORKING.map(([token, hex, note, use]) => (
+            <Row key={token} name={token} meaning={use}>
               <div className="flex items-center gap-3">
                 <span
-                  className={`inline-block h-8 w-16 border border-black/15 ${
-                    value.startsWith("#") ? "" : value.replace("text-", "bg-")
-                  }`}
-                  style={value.startsWith("#") ? { backgroundColor: value } : undefined}
+                  className="inline-block h-8 w-16 border border-black/15"
+                  style={{ backgroundColor: hex }}
                 />
-                <span className="text-sm tracking-tight text-neutral-500">
-                  {source}
-                </span>
+                <span className="text-sm tracking-tight">{hex}</span>
+                <span className="text-sm tracking-tight text-muted">{note}</span>
               </div>
             </Row>
           ))}
@@ -244,14 +251,14 @@ export default function DesignSystemPage() {
       >
         <Row
           name="--radius-button"
-          meaning="9999px. Buttons and pills share it — they are the same kind of object. Named 'button' though it covers both; see issue 3."
+          meaning="9999px, and the only radius on anything pill-shaped. Named for controls rather than for buttons, because it covers pills too — a token that sounds like it applies to one thing is how a third radius gets invented."
         >
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex h-11 w-44 items-center justify-center rounded-button border border-black text-control tracking-tight">
-              rounded-button
+            <span className="inline-flex h-11 w-44 items-center justify-center rounded-control border border-black text-control tracking-tight">
+              rounded-control
             </span>
-            <span className="inline-flex h-9 items-center rounded-full border border-black px-4 text-control tracking-tight">
-              rounded-full
+            <span className="inline-flex h-9 items-center rounded-control border border-black px-4 text-control tracking-tight">
+              rounded-control
             </span>
           </div>
         </Row>
@@ -259,15 +266,15 @@ export default function DesignSystemPage() {
           name="Imagery: no radius"
           meaning="Square corners on every image, everywhere. A 1px black hairline is the frame instead."
         >
-          <div className="aspect-[1195/681] w-full max-w-md border border-black bg-neutral-100" />
-          <p className="mt-2 text-sm tracking-tight text-neutral-500">
+          <div className="aspect-[1195/681] w-full max-w-md border border-black bg-surface" />
+          <p className="mt-2 text-sm tracking-tight text-muted">
             aspect-[1195/681] — the case study frame, from the wireframe
           </p>
         </Row>
         <Row name="Hairlines" meaning="border-black on imagery; border-black/10 to /30 for structure.">
           <div className="space-y-2">
             {["border-black", "border-black/30", "border-black/15", "border-black/10"].map((c) => (
-              <div key={c} className={`border-t ${c} pt-2 text-sm tracking-tight text-neutral-500`}>
+              <div key={c} className={`border-t ${c} pt-2 text-sm tracking-tight text-muted`}>
                 {c}
               </div>
             ))}
@@ -279,14 +286,14 @@ export default function DesignSystemPage() {
       <Section
         id="motion"
         title="Motion"
-        intro="Four values, all inline. None are tokens — issue 4."
+        intro="One easing curve and three durations, all named in @theme. Each duration is a kind of event rather than a point on a scale."
       >
-        <Row name="duration-200" meaning="Colour changes: button and pill hover, active state.">
-          <span className="inline-flex h-11 w-44 items-center justify-center rounded-button border border-black bg-transparent text-control tracking-tight transition-colors duration-200 hover:bg-black hover:text-white">
+        <Row name="duration-[var(--duration-quick)]" meaning="Colour changes: button and pill hover, active state.">
+          <span className="inline-flex h-11 w-44 items-center justify-center rounded-control border border-black bg-transparent text-control tracking-tight transition-colors duration-[var(--duration-quick)] hover:bg-black hover:text-white">
             Hover me
           </span>
         </Row>
-        <Row name="duration-500" meaning="The work rail retiring as the closer arrives." />
+        <Row name="duration-[var(--duration-settle)]" meaning="The work rail retiring as the closer arrives." />
         <Row
           name="520ms"
           meaning="The cover morph between a panel and its case study hero."
@@ -322,17 +329,17 @@ export default function DesignSystemPage() {
           meaning="Copies, not the live rail — it needs case study panels to track. Active is the loudest state, because it answers 'where am I'."
         >
           <div className="flex flex-wrap gap-3">
-            <span className="inline-flex h-11 w-44 items-center justify-center rounded-full border border-black text-control tracking-tight">
+            <span className="inline-flex h-11 w-44 items-center justify-center rounded-control border border-black text-control tracking-tight">
               Default
             </span>
-            <span className="inline-flex h-11 w-44 items-center justify-center rounded-full border border-black bg-neutral-200 text-control tracking-tight">
+            <span className="inline-flex h-11 w-44 items-center justify-center rounded-control border border-black bg-surface text-control tracking-tight">
               Hover
             </span>
-            <span className="inline-flex h-11 w-44 items-center justify-center rounded-full border border-black bg-black text-control tracking-tight text-white">
+            <span className="inline-flex h-11 w-44 items-center justify-center rounded-control border border-black bg-black text-control tracking-tight text-white">
               Active
             </span>
           </div>
-          <p className="mt-3 max-w-[60ch] text-sm tracking-tight text-neutral-500">
+          <p className="mt-3 max-w-[60ch] text-sm tracking-tight text-muted">
             Hovering also magnifies, Dock-style: the pill under the cursor grows
             9% and its neighbours taper off over 130px, on a raised cosine so the
             bulge has no corner. Transform only, so the column never reflows.
@@ -348,7 +355,7 @@ export default function DesignSystemPage() {
               .map((tag) => (
                 <li
                   key={tag}
-                  className="rounded-full border border-black/25 px-2.5 py-0.5 text-xs tracking-tight text-neutral-600"
+                  className="rounded-control border border-black/25 px-2.5 py-0.5 text-xs tracking-tight text-muted"
                 >
                   {tag}
                 </li>
@@ -367,7 +374,7 @@ export default function DesignSystemPage() {
               <Wordmark className="h-10 w-auto text-black" />
             </div>
           </div>
-          <p className="mt-3 max-w-[60ch] text-sm tracking-tight text-neutral-500">
+          <p className="mt-3 max-w-[60ch] text-sm tracking-tight text-muted">
             The halves exist so the hero can fly the mark into the masthead while
             the letterforms fade. Never re-export these from Figma — the paths
             here are the only copy in the repo.
@@ -414,46 +421,12 @@ export default function DesignSystemPage() {
             n={1}
             severity="high"
             title="The brand palette is declared and entirely unused"
-            evidence={`All five colours — ${BRAND.map(([n]) => n).join(", ")} — appear zero times outside globals.css. The site renders black, white and seven greys.`}
+            evidence={`All five colours — ${BRAND.map(([n]) => n).join(", ")} — appear zero times outside globals.css. The site renders black, white, and the two working tokens above.`}
             why="A design system whose colours nothing uses is a plan, not a system. Every day it stays this way, more black-and-white decisions get made that the palette will have to be retrofitted into."
-            fix="Apply it in one pass rather than piecemeal: obsidian-black and snow-white replace black/white, dark-silver replaces the grey sprawl in issue 2, vulcan-gold takes the active pill and the primary button."
+            fix="Apply it in one pass: obsidian-black and snow-white replace black and white, vulcan-gold takes the active pill and the primary button. dark-silver is the open question — it is a dark-ground colour, so either the site goes dark, or that hex is revised for a light ground, or it stays reserved for dark surfaces like the lightbox and --color-muted remains the light-ground answer."
           />
           <Issue
             n={2}
-            severity="high"
-            title="Seven greys, no token, two sources of truth"
-            evidence="#525252 hardcoded in work.css, plus neutral-400/500/600 for text and neutral-50/100/200 for surfaces. Meanwhile dark-silver (#A8A8A8) is defined as the brand's secondary text colour and used nowhere."
-            why="Secondary text has no single definition, so /work and the landing page can drift apart without anyone noticing — which is exactly how the two pages diverged the first time."
-            fix="Collapse to two tokens: one secondary text, one surface. Resolve them against dark-silver rather than picking a Tailwind neutral, or change the brand value if #A8A8A8 is genuinely too light on white."
-          />
-          <Issue
-            n={3}
-            severity="medium"
-            title="Two buttons that look identical behave differently"
-            evidence={
-              "app/work/[slug]/page.js hardcodes https://cal.com/kalos/intro in a plain anchor. Every other Book a call on the site is the BookACall component, which opens the Cal modal."
-            }
-            why="Same label, same shape, same size — one opens a modal over the page and one navigates away. It also duplicates booking.link, so changing the booking path leaves this one pointing at a dead URL."
-            fix="Use BookACall on the case study page. It already handles the fallback."
-          />
-          <Issue
-            n={4}
-            severity="medium"
-            title="Motion has no tokens"
-            evidence="duration-200, duration-500, 520ms and one cubic-bezier, all written inline at the point of use."
-            why="The easing curve in particular is a brand decision repeated as a literal in two files. A third animation will get a different one without anybody deciding to."
-            fix="Add --ease-brand and a small duration scale to @theme, the way the type sizes already are."
-          />
-          <Issue
-            n={5}
-            severity="low"
-            title="--radius-button covers pills too"
-            evidence="The token is named button; rounded-button and rounded-full are both in use for what is one shape decision."
-            why="Naming drift. Somebody will eventually add a third radius because the token did not sound like it applied to them."
-            fix="Rename to --radius-control and use it in both places, or accept rounded-full as the idiom and delete the token."
-          />
-          <Issue
-            n={6}
             severity="low"
             title="The landing page jacks the scroll wheel"
             evidence="paged-scroll.js calls preventDefault on wheel events from the first case study down."
@@ -466,9 +439,57 @@ export default function DesignSystemPage() {
         <ul className="mt-4">
           <li className="border-b border-black/10 py-6">
             <p className="text-sm font-medium tracking-tight">
+              Seven greys collapsed to two tokens
+            </p>
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+              --color-muted for every piece of secondary text and --color-surface
+              for the one grey plate, replacing #525252 in work.css and six
+              Tailwind neutrals. Quieter shades come from the opacity modifier
+              rather than another token, so there is still one decision.
+            </p>
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+              The fix asked for these to resolve against dark-silver. They do
+              not, and the measurement is why: 2.38:1 on white, below the 3.0
+              even large text needs, against 8.61:1 on obsidian. Changing the
+              brand hex is a brand decision rather than a housekeeping one, so it
+              stays as issue 1.
+            </p>
+          </li>
+          <li className="border-b border-black/10 py-6">
+            <p className="text-sm font-medium tracking-tight">
+              One Book a call, everywhere
+            </p>
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+              The case study page used the BookACall component instead of its own
+              anchor, so both open the modal and both fall back to the same URL.
+              No booking link is hardcoded outside content.js now.
+            </p>
+          </li>
+          <li className="border-b border-black/10 py-6">
+            <p className="text-sm font-medium tracking-tight">
+              Motion is named
+            </p>
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+              --ease-brand plus quick, settle and morph durations in @theme. The
+              easing curve was a literal in two files; it is one token now, and
+              the view-transition rules reference it rather than repeating it.
+            </p>
+          </li>
+          <li className="border-b border-black/10 py-6">
+            <p className="text-sm font-medium tracking-tight">
+              --radius-button is now --radius-control
+            </p>
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+              Renamed for what it governs, and applied to pills as well as
+              buttons. The generic full-round utility is gone from the markup;
+              there is one radius decision and one name for it.
+            </p>
+          </li>
+          <li className="border-b border-black/10 py-6">
+            <p className="text-sm font-medium tracking-tight">
               agentation no longer ships to production
             </p>
-            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-neutral-600">
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
               Moved to devDependencies, which fixed how it was classified and
               nothing else: the 428KB chunk was still built, because
               app/layout.js imports it statically and only the render was guarded
@@ -478,14 +499,14 @@ export default function DesignSystemPage() {
               stub for production builds only. Chunks went from 1.3M to 864K, and
               the real toolbar still loads in development — both measured.
             </p>
-            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-neutral-500">
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
               Worth keeping: the comment beside that import used to claim Next
               dropped the import along with the dead branch. It never did.
             </p>
           </li>
         </ul>
 
-        <p className="mt-10 max-w-[70ch] text-sm tracking-tight text-neutral-600">
+        <p className="mt-10 max-w-[70ch] text-sm tracking-tight text-muted">
           Not listed, because they are decisions rather than defects: the
           placeholder ConEdison entry ({workRail.length} pills against{" "}
           {caseStudies.length} case studies), the black-and-white build, and the

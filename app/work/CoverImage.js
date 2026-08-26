@@ -31,7 +31,7 @@ export default function CoverImage({
             and only applied under /work — this component is on the landing page
             too, which never imports that stylesheet, so a coverless entry there
             would have rendered the fallback completely unstyled. */}
-        <div className="flex h-full w-full items-center justify-center bg-neutral-100 text-sm tracking-tight text-neutral-500">
+        <div className="flex h-full w-full items-center justify-center bg-surface text-sm tracking-tight text-muted">
           Cover image coming soon
         </div>
         {children}

@@ -90,8 +90,8 @@ export default function LandingPage() {
                     id={`case-${cs.slug}`}
                     className="snap-always snap-center"
                   >
-                    <div className="flex aspect-[1195/681] items-center justify-center border border-dashed border-black/30 bg-neutral-50">
-                      <p className="text-control tracking-tight text-neutral-500">
+                    <div className="flex aspect-[1195/681] items-center justify-center border border-dashed border-black/30 bg-surface">
+                      <p className="text-control tracking-tight text-muted">
                         Case study coming soon
                       </p>
                     </div>
@@ -105,7 +105,7 @@ export default function LandingPage() {
                             className="h-8 w-auto [filter:brightness(0)] lg:h-12"
                           />
                         ) : (
-                          <span className="text-lead font-medium tracking-tight text-neutral-500">
+                          <span className="text-lead font-medium tracking-tight text-muted">
                             {cs.title}
                           </span>
                         )}
@@ -114,7 +114,7 @@ export default function LandingPage() {
                         {disciplines(cs.role).map((tag) => (
                           <li
                             key={tag}
-                            className="rounded-full border border-black/15 px-2.5 py-0.5 text-xs tracking-tight text-neutral-400"
+                            className="rounded-control border border-black/15 px-2.5 py-0.5 text-xs tracking-tight text-muted/55"
                           >
                             {tag}
                           </li>
@@ -173,7 +173,7 @@ export default function LandingPage() {
                         "relative aspect-[1195/681] " +
                         (cover.floating
                           ? ""
-                          : "overflow-hidden border border-black bg-neutral-100")
+                          : "overflow-hidden border border-black bg-surface")
                       }
                       imageClassName={
                         cover.floating ? "object-contain" : "object-cover"
@@ -232,7 +232,7 @@ export default function LandingPage() {
                         {disciplines(cs.role).map((tag) => (
                           <li
                             key={tag}
-                            className="rounded-full border border-black/25 px-2.5 py-0.5 text-xs tracking-tight text-neutral-600"
+                            className="rounded-control border border-black/25 px-2.5 py-0.5 text-xs tracking-tight text-muted"
                           >
                             {tag}
                           </li>
