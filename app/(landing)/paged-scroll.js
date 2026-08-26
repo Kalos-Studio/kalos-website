@@ -73,6 +73,27 @@ export default function PagedScroll() {
     const onWheel = (event) => {
       if (event.ctrlKey) return; // pinch zoom, not a scroll
 
+      // The lock comes first, and swallows everything.
+      //
+      // This used to sit below the noise threshold, which meant every event too
+      // small to count as a gesture returned early *without* preventDefault --
+      // and a momentum tail is mostly such events. They went straight to the
+      // browser and scrolled the page natively while the lock believed it held
+      // it. Swiping hard up and down let you park the page anywhere between two
+      // panels for a second or two before it caught up, because the lock was
+      // only ever stopping the large events.
+      //
+      // Nothing about a wheel event's size makes it safe to let through while a
+      // paged scroll is running.
+      if (locked) {
+        event.preventDefault();
+        window.clearTimeout(quiet);
+        quiet = window.setTimeout(() => {
+          locked = false;
+        }, QUIET_MS);
+        return;
+      }
+
       // Normalise before thresholding. Firefox reports mouse-wheel events in
       // lines rather than pixels, with deltaY around 1-3 -- so a bare pixel
       // threshold discarded every genuine wheel gesture there as noise and
@@ -99,17 +120,6 @@ export default function PagedScroll() {
       // handover still plays -- it runs across the paged scroll instead of
       // across the reader's gesture -- and consistency turned out to matter more
       // than scrubbing it.
-
-      if (locked) {
-        // Momentum from the gesture already handled. Swallow it, and hold the
-        // lock open until the wheel actually goes quiet.
-        event.preventDefault();
-        window.clearTimeout(quiet);
-        quiet = window.setTimeout(() => {
-          locked = false;
-        }, QUIET_MS);
-        return;
-      }
 
       if (!ready) {
         event.preventDefault();
