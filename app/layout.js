@@ -24,13 +24,24 @@ const spaceGrotesk = Space_Grotesk({
 // og:image has to be an absolute URL or iMessage and friends can't resolve it,
 // which is the only reason metadataBase is set at all.
 //
-// Netlify exposes the deploy's own address as URL at build time, so this needs
-// no configuration: previews get their own URL and production gets the site's.
+// DEPLOY_PRIME_URL before URL, and the order is the whole point.
+//
+// On Netlify, URL is the *production* address on every build, including deploy
+// previews. Reading it alone meant a preview emitted an og:image pointing at
+// production -- so the card on a preview was whatever main happened to be
+// serving, no matter what the branch contained. That is a confusing bug to look
+// at, because the preview's own /opengraph-image.png is correct the whole time;
+// only the tag pointing at it is wrong.
+//
+// DEPLOY_PRIME_URL is the address of the deploy being built, and on a production
+// build it is the production URL, so this is right in both contexts with no
+// branching.
 // A NEXT_PUBLIC_SITE_URL override and a .env.example documenting it used to sit
 // here; both went, because a landing page should not need environment setup to
 // build. When there is a custom domain and the pretty one matters on the share
 // card, hardcode it below rather than reintroducing an env var.
-const siteUrl = process.env.URL ?? "http://localhost:3000";
+const siteUrl =
+  process.env.DEPLOY_PRIME_URL ?? process.env.URL ?? "http://localhost:3000";
 
 // The site's one-line description, shared by the page metadata, the share card
 // and Twitter. It is the landing page's own positioning line, so the card says
