@@ -109,25 +109,58 @@ async function clearance(page) {
 const browser = await chromium.launch({ channel: "chrome" });
 let failed = false;
 
+// Warm the server before measuring anything.
+//
+// Against `next dev` the first request compiles the route, which can take longer
+// than any sane per-check timeout — and the cost lands on whichever viewport
+// happens to go first, so runs failed at the top of the list and passed at the
+// bottom for no reason to do with the page. One throwaway request pays that cost
+// once, outside the results.
+{
+  const warm = await browser.newPage();
+  try {
+    await warm.goto(BASE, { waitUntil: "domcontentloaded" });
+    await warm.waitForSelector("nav a[href^='#case-']", { timeout: 90000 });
+  } catch {
+    console.log(`Could not reach ${BASE}. Is \`bun run dev\` running?`);
+    await browser.close();
+    process.exit(1);
+  } finally {
+    await warm.close();
+  }
+}
+
 for (const [width, height, label] of VIEWPORTS) {
   const page = await browser.newPage({ viewport: { width, height } });
   try {
-    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    // Wait for the things being measured, not for the network. `networkidle` is
+    // unreliable against a dev server (HMR keeps a socket open) and it says
+    // nothing about whether React has hydrated — an earlier version of this
+    // passed four viewports by measuring a page that had not rendered yet.
+    await page.waitForSelector("nav a[href^='#case-']", { timeout: 15000 });
+    await page.waitForSelector('[id^="case-"]', { timeout: 15000 });
     await page.evaluate(() => document.fonts.ready);
 
     const gap = await clearance(page);
     const rest = await restingStates(page);
 
+    // Vacuous passes are the failure mode to guard hardest against: a run that
+    // finds no pills asserts nothing, and reported PASS on four viewports here
+    // before this existed.
+    const measured = rest.count > 0 && gap !== null;
     const ok =
+      measured &&
       rest.worstOpacity < FADED &&
       rest.worstOffset <= CENTRE_TOLERANCE &&
-      (gap === null || gap.gap >= MIN_CLEARANCE);
+      gap.gap >= MIN_CLEARANCE;
     if (!ok) failed = true;
 
     console.log(
       `${ok ? "PASS" : "FAIL"}  ${String(`${width}x${height}`).padEnd(10)} ${label.padEnd(17)} ` +
         `panels ${rest.count}  hero ${rest.worstOpacity.toFixed(2)}  ` +
-        `off-centre ${rest.worstOffset}px  clearance ${gap ? `${gap.gap}px` : "n/a"}`,
+        `off-centre ${rest.worstOffset}px  clearance ${gap ? `${gap.gap}px` : "NOT MEASURED"}` +
+        (measured ? "" : "   <- measured nothing"),
     );
   } catch (error) {
     failed = true;

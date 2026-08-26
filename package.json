@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "check:landing": "node scripts/check-landing.mjs"
   },
   "dependencies": {
     "@calcom/embed-react": "^1.5.3",
