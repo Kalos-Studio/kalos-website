@@ -90,7 +90,9 @@ export const VARIANTS = {
   },
 };
 
-export const DEFAULT_VARIANT = "drastic";
+// What a first-time visitor gets. Chosen, not left over — `drastic` was the
+// default while the three were being compared and `soft` is the one that won.
+export const DEFAULT_VARIANT = "soft";
 const KEY = "kalos:sunrise-variant";
 
 /**

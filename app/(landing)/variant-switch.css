@@ -1,0 +1,167 @@
+/* ---------- the variant switch ----------
+ *
+ * A dev tool, in its own stylesheet rather than in landing.css because the
+ * switch is on every page now and landing.css is only loaded by one of them.
+ * It comes out before launch along with variant-switch.js, sunrise-variants.js
+ * and sand-variants.js.
+ *
+ * Top centre, and invisible until the pointer is over it.
+ *
+ * Two decisions that were made separately and are worth keeping apart, because
+ * one of them has now been reversed and the other has not.
+ *
+ * The position stays: this used to sit in the hero's top left corner, on the
+ * argument that the corner should hold nothing but the lockup. That stopped
+ * being the whole story when the switch went site-wide, and top centre is the
+ * one part of the row neither the lockup nor the menu occupies.
+ *
+ * The visibility goes back. It was briefly lit at rest — 40% — on the argument
+ * that a control nobody can find on a deploy preview is a control that is not
+ * there. True of a stranger, false of the two people who use it, and the cost
+ * is that every screenshot of every page carries a debug widget across the top
+ * of the composition. So it is `opacity: 0` again and reveals on hover.
+ *
+ * `opacity: 0` rather than `visibility: hidden` or `display: none`, and that is
+ * the whole trick: a fully transparent element still hit-tests, so the spot
+ * stays hoverable, tabbable and clickable while showing nothing. The other two
+ * would take the hover target away with the paint and leave nothing to find.
+ *
+ * On a touch screen there is no hover, and a tap in the spot still opens it for
+ * the same reason.
+ *
+ * z-index 6, one above .site-masthead--fixed and the hero's grain, because it
+ * shares the band with the masthead and has to be the thing on top of it. */
+.ln-variants {
+  position: fixed;
+  top: 0;
+  /* Centred on the window, not on the page grid. It is chrome sitting over the
+     top of whatever is underneath, the same argument .site-masthead makes for
+     living on the viewport rather than on --page-max. */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  /* Centres the tab and the panel under it on the same line, so opening the
+     menu does not shift the label that opened it. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  font-size: var(--type-micro);
+}
+
+/* A real button, so it can be clicked and tabbed to, and transparent until
+   something is pointing at it. See the note at the top for why this is opacity
+   rather than visibility.
+
+   Centred text, because the two lines are different lengths and this is a thing
+   sitting on a centre line rather than hanging off an edge. */
+.ln-variants-tab {
+  display: block;
+  min-width: 4.5rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: none;
+  font: inherit;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--color-dark-silver);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.ln-variants:hover .ln-variants-tab,
+.ln-variants:focus-within .ln-variants-tab,
+.ln-variants.is-open .ln-variants-tab {
+  opacity: 0.85;
+  border-color: var(--color-eerie-gray);
+  background: var(--color-obsidian-black);
+}
+
+/* Rendered only when open, so there is no hover rule here: hover-only was tried
+   and the panel vanished the moment the pointer left the tab on its way to it. */
+.ln-variants-menu {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.35rem;
+  gap: 0.25rem;
+  width: 15rem;
+  /* Six entries over two groups no longer fit a short laptop viewport, and this
+     panel is fixed so it cannot be scrolled to. */
+  max-height: calc(100dvh - 4rem);
+  overflow-y: auto;
+  padding: 0.4rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--color-eerie-gray);
+  /* Opaque, because it sits over a moving 3D object and a translucent panel
+     over that is unreadable. */
+  background: var(--color-obsidian-black);
+}
+
+
+/* Two axes now, so the tab carries two lines. Tight leading, because these are
+   two labels on one control rather than two paragraphs. */
+.ln-variants-tab-line {
+  display: block;
+  line-height: 1.35;
+}
+.ln-variants-tab-line + .ln-variants-tab-line {
+  opacity: 0.75;
+}
+
+/* Grouped rather than one flat list: the sunrise and the ground are independent,
+   and a divider between them says so more cheaply than naming every combination
+   would. */
+.ln-variants-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.ln-variants-group + .ln-variants-group {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-eerie-gray);
+}
+.ln-variants-title {
+  padding: 0 0.6rem 0.3rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-dark-silver);
+  opacity: 0.55;
+}
+
+.ln-variants-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--color-dark-silver);
+  cursor: pointer;
+}
+
+.ln-variants-option:hover {
+  border-color: var(--color-eerie-gray);
+  color: var(--color-snow-white);
+}
+
+.ln-variants-option.is-current {
+  border-color: color-mix(in srgb, var(--color-vulcan-gold) 55%, transparent);
+  color: var(--color-vulcan-gold);
+}
+
+.ln-variants-name {
+  display: block;
+  font-weight: 500;
+}
+
+.ln-variants-note {
+  display: block;
+  margin-top: 0.15rem;
+  line-height: 1.4;
+  opacity: 0.7;
+}
