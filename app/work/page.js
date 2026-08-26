@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Lockup from "../(landing)/lockup";
 import CoverImage from "./CoverImage";
 import { caseStudies } from "./data";
 
@@ -9,10 +8,11 @@ export default function WorkIndexPage() {
       {/* The "temporary repository, more coming soon" note is gone with the
           password gate. It was true while this was an unlisted holding page and
           it is an apology now: the homepage sends people here on purpose. */}
+      {/* The lockup that used to sit above this title is in the masthead now,
+          pinned to the window rather than to this shell's left margin, which on
+          a laptop was 164px in from the edge of the screen. What is left here is
+          the page's headline. */}
       <header className="work-header">
-        <Link href="/" className="work-wordmark" aria-label="Kalos, home">
-          <Lockup className="work-lockup" />
-        </Link>
         <h1 className="work-title">Work</h1>
       </header>
 

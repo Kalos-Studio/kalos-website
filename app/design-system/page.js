@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Lockup from "../(landing)/lockup";
+import Masthead from "../masthead";
 import "./design-system.css";
 
 // Internal reference sheet. Not linked from anywhere and kept out of search
@@ -119,9 +120,15 @@ function Section({ label, title, children }) {
 export default function DesignSystem() {
   return (
     <main className="ds-root">
-      <div className="mx-auto max-w-5xl px-6 pb-24 pt-16">
+      {/* The same masthead every other page has. This one is unlisted and is
+          reference rather than a destination, but it is still a page you can end
+          up on with no way off it, and it had its own copy of the lockup in the
+          header below doing half that job. pt-28 rather than pt-16 for the same
+          reason /work's shell grew: the row is fixed, so content has to start
+          below it. */}
+      <Masthead className="site-masthead--fixed" />
+      <div className="mx-auto max-w-5xl px-6 pb-24 pt-28">
         <header className="pb-14">
-          <Lockup className="mb-10 block h-7 w-auto" />
           <h1 className="ds-h1 max-w-2xl">Design system</h1>
           <p className="ds-lead mt-5 max-w-2xl">
             The palette and typeface are taken from the brand file itself, with

@@ -26,6 +26,30 @@ export const cta = {
   // lives in `booking` above.
 };
 
+// The hero's menu, top right. The site has no navigation anywhere else, so this
+// is it: the work first, who we are second, how to reach us last.
+//
+// Contact's href is the real Cal.com page and its click opens the booking modal,
+// the same one the homepage's button opens. It went out as a plain link first,
+// on the reading that cta.js's one-primary-action rule forbade a second thing
+// that books a call. That was the wrong reading: the rule is about not growing a
+// second competing button, and a nav item opening the same modal is the same
+// action reached from the menu, not a rival to it. The href stays because it is
+// the fallback when the embed is blocked or still loading. See cal.js.
+export const menu = {
+  // Sits to the right of the dots once the card opens. Sentence case, because
+  // it is a label on a control rather than a heading.
+  label: "Menu",
+  // What the button says to a screen reader, which cannot see four dots move.
+  a11yOpen: "Open menu",
+  a11yClose: "Close menu",
+  links: [
+    { label: "Work", href: "/work" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: `https://cal.com/${booking.link}`, external: true },
+  ],
+};
+
 // The dictionary entry, and now the only prose above the work.
 //
 // This section used to carry a heading and two paragraphs after the definition,

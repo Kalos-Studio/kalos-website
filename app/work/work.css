@@ -82,7 +82,11 @@
 .work-shell {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 4rem 1.5rem 6rem;
+  /* Top padding clears the fixed masthead rather than just spacing the page.
+     The row sits 20 to 32px down and its lockup is up to 30px tall, so anything
+     under about 62px would have the first line of the page tucked against the
+     logo. This leaves air below it at every width. */
+  padding: clamp(6.5rem, 11vw, 8.5rem) 1.5rem 6rem;
 }
 
 /* The listing page's card grid wants a bit more room per card than a single
@@ -100,25 +104,13 @@
   margin-bottom: clamp(2.5rem, 6vw, 4rem);
 }
 
-.work-title {
-  margin-top: clamp(1.75rem, 5vw, 3rem);
-}
+/* The margin that used to separate this from the lockup above it went with the
+   lockup. .work-shell's top padding is what holds the headline off the masthead
+   now, and doing both put a 3rem hole under a logo that is no longer there. */
 
-/* The masthead is the real lockup now, not "kalos / work" set in bold. The
-   wordmark existed because this section was unlisted and had no relationship to
-   the homepage; it has one now, and the mark is how every other surface says who
-   this is. Sized to match .lab-lockup on the landing hero. */
-.work-wordmark {
-  display: block;
-  text-decoration: none;
-  color: var(--color-snow-white);
-}
-
-.work-lockup {
-  display: block;
-  width: clamp(98px, 9vw, 124px);
-  height: auto;
-}
+/* .work-wordmark and .work-lockup have gone to masthead.css. They were this
+   section's own copy of a rule the hero and /about also had, kept in sync by
+   luck, and the lockup they styled is no longer in this column at all. */
 
 /* Set at the page's own headline size rather than as a label, because it is the
    page's headline. */
@@ -251,11 +243,6 @@
 /* Used inline within a sentence on the not-found page instead of standalone
    above a title — plain inline flow instead of inline-flex, so it doesn't
    pick up the standalone variant's block-ish vertical margin. */
-.work-not-found .work-back {
-  display: inline;
-  margin-bottom: 0;
-}
-
 .work-case-header {
   margin-bottom: 2.5rem;
 }
@@ -475,10 +462,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-}
-
-.work-not-found {
-  color: #b8b8b8;
 }
 
 /* --- More case studies (bottom of a case study page) ------------------- */
