@@ -41,6 +41,13 @@ const VIEWPORTS = [
   [1920, 1080, "design frame"],
   [1280, 720, "small laptop"],
   [1024, 1366, "tall / portrait"],
+  // Below lg the layout is structurally different -- the rail becomes a
+  // horizontal strip and the panels' 35svh runway does not apply -- and that is
+  // where the clearance invariant broke while every row above it passed. The
+  // header of this file already said both bugs it guards "were invisible at some
+  // window sizes and obvious at others"; the list did not act on it.
+  [768, 1024, "tablet portrait"],
+  [390, 844, "phone"],
 ];
 
 // A panel is "centred" if it is within this of the middle. Not zero: browsers
@@ -83,8 +90,13 @@ async function clearance(page) {
     const panel = document.querySelector('[id^="case-"]');
     if (!block || !panel) return null;
 
+    // Infinity means every sample was skipped, which is not the same as a large
+    // clearance -- and `Math.round(Infinity) >= MIN_CLEARANCE` is true, so this
+    // reported PASS having measured nothing. It is returned as null instead and
+    // the caller treats that as unmeasured.
     let worst = Infinity;
     let at = null;
+    let sampled = 0;
     const limit = window.innerHeight * 2;
     for (let y = 0; y <= limit; y += 10) {
       window.scrollTo(0, y);
@@ -93,6 +105,7 @@ async function clearance(page) {
         requestAnimationFrame(() => requestAnimationFrame(r)),
       );
       if (+getComputedStyle(header).opacity <= 0.01) continue;
+      sampled += 1;
       const gap =
         panel.getBoundingClientRect().top -
         block.getBoundingClientRect().bottom;
@@ -102,6 +115,7 @@ async function clearance(page) {
       }
     }
     window.scrollTo(0, 0);
+    if (!sampled || worst === Infinity) return null;
     return { gap: Math.round(worst), at };
   });
 }

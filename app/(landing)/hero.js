@@ -57,7 +57,6 @@ const HEADROOM = 72;
 // clearance at 0.14 opacity. That did not technically overlap, and would have on
 // the first viewport that wrapped the definition onto another line.
 const CLEARANCE = 96; // px kept between the block's bottom and the panel's top
-const RUNWAY_MIN = 0.1; // of the window, so the hold never disappears entirely
 const RUNWAY_MAX = 0.45; // of the window, so it never becomes a marathon
 
 // The fade finishes before the hold does, so the block is gone before it starts
@@ -175,7 +174,16 @@ export default function Hero() {
       available = panelTopY - HEADROOM - blockHeight - CLEARANCE - catchY;
     }
 
-    const runway = Math.max(Math.min(available, vh * RUNWAY_MAX), vh * RUNWAY_MIN);
+    // Clamped by what the geometry allows, never floored above it.
+    //
+    // The floor used to win when `available` was small, which is precisely the
+    // case below lg: the 35svh that buys the hold its room is an lg-only class,
+    // so on a phone the runway was longer than the distance to the first panel
+    // and the fade did not finish in time. Measured at 36px of clearance on a
+    // 390-wide window, against the 96 this is supposed to keep -- the same
+    // failure the derivation was written to prevent, just at a width nothing
+    // was testing. A short hold is fine; an overlapping one is not.
+    const runway = Math.min(Math.max(available, 0), vh * RUNWAY_MAX);
     // How far past the catch point the page has scrolled, as a fraction of the
     // runway. Zero before the block arrives, one once the handover is done and
     // it is released to scroll away with everything else.

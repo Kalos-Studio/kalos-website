@@ -255,7 +255,12 @@ export default function WorkRail({ items }) {
     <nav
       ref={navRef}
       aria-label="Case studies"
-      aria-hidden={retired ? "true" : undefined}
+      // inert, not aria-hidden. aria-hidden hides the rail from assistive tech
+      // but leaves its links in the tab order, so keyboard focus lands on eight
+      // invisible things that screen readers have been told do not exist -- the
+      // exact state the note below says it is avoiding. inert removes them from
+      // both at once.
+      inert={retired ? true : undefined}
       className={
         // Below lg: a horizontal strip stuck to the top, because a 9.4% column
         // would be 37px wide on a phone.
@@ -269,9 +274,9 @@ export default function WorkRail({ items }) {
         // is half the leftover space (see the effect above). The fallback of 2rem
         // only applies for the frame before the measurement lands.
         "lg:top-[var(--rail-sticky-top,2rem)] lg:col-start-2 lg:row-start-1 lg:items-end lg:bg-transparent lg:py-0 " +
-        // Hidden from pointers and from assistive tech together: a rail faded to
-        // nothing is still focusable, and tabbing into an invisible list of
-        // links is worse than the clutter it was hiding.
+        // Faded, unclickable and inert together. A rail faded to nothing is
+        // still focusable otherwise, and tabbing into an invisible list of links
+        // is worse than the clutter it was hiding.
         "transition-opacity duration-[var(--duration-settle)] " +
         (retired ? "pointer-events-none opacity-0" : "opacity-100")
       }

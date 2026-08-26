@@ -72,7 +72,19 @@ export default function PagedScroll() {
 
     const onWheel = (event) => {
       if (event.ctrlKey) return; // pinch zoom, not a scroll
-      if (Math.abs(event.deltaY) < MIN_DELTA) return;
+
+      // Normalise before thresholding. Firefox reports mouse-wheel events in
+      // lines rather than pixels, with deltaY around 1-3 -- so a bare pixel
+      // threshold discarded every genuine wheel gesture there as noise and
+      // paging silently never engaged, leaving the 1026px gap before the closer
+      // with no stop in it.
+      const LINE_HEIGHT = 16;
+      const PAGE_HEIGHT = window.innerHeight;
+      const scale =
+        event.deltaMode === 1 ? LINE_HEIGHT : event.deltaMode === 2 ? PAGE_HEIGHT : 1;
+      const delta = event.deltaY * scale;
+
+      if (Math.abs(delta) < MIN_DELTA) return;
 
       const list = stops();
       if (!list.length) return;
@@ -96,7 +108,7 @@ export default function PagedScroll() {
         return;
       }
 
-      const down = event.deltaY > 0;
+      const down = delta > 0;
       const y = window.scrollY;
       const target = down
         ? list.find((stop) => stop > y + EDGE)

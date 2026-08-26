@@ -78,7 +78,7 @@ export default function LandingPage() {
               lg only. Below that the rail is a horizontal strip above the panels
               rather than a column beside them, so there is no shared row to
               offset and a 17svh hole would just be a gap. */}
-          <ul className="flex flex-col gap-10 lg:col-start-1 lg:row-start-1 lg:gap-24 lg:pt-[35svh]">
+          <ul className="flex flex-col gap-10 lg:col-start-1 lg:row-start-1 pt-[18svh] lg:gap-24 lg:pt-[35svh]">
             {workRail.map((cs, i) => {
               // The placeholder has no page, no cover and no logo. It renders as
               // an empty framed slot in the same rhythm as the rest, and is not a
