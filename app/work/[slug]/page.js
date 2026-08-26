@@ -157,10 +157,10 @@ export default async function CaseStudyPage({ params }) {
       </header>
 
       {/* The landing panel, drawn again at page width: same 1195/681 ratio,
-          same square hairline frame, same floating treatment for artwork that
-          carries its own transparent ground. It was 16/9 with a 12px radius over
-          a #111 plate, so the image a visitor clicked and the image they landed
-          on were cropped differently and cornered differently.
+          same square corners, same floating treatment for artwork that carries
+          its own transparent ground. It was 16/9 with a 12px radius over a #111
+          plate, so the image a visitor clicked and the image they landed on were
+          cropped differently and cornered differently.
 
           `heroPosition` still wins over `cardPosition` if an entry sets it, but
           the two boxes are identical now so nothing needs to.
@@ -183,11 +183,11 @@ export default async function CaseStudyPage({ params }) {
           cover={cover}
           className={
             // work-bleed takes the hero edge to edge below 640px -- see the
-          // phone block at the foot of work.css.
-          "work-bleed relative mt-10 aspect-[1195/681] lg:mt-14 " +
+            // phone block at the foot of work.css.
+            "work-bleed relative mt-10 aspect-[1195/681] lg:mt-14 " +
             (cover.floating
               ? ""
-              : "overflow-hidden border border-black bg-surface")
+              : "overflow-hidden bg-surface")
           }
           imageClassName={cover.floating ? "object-contain" : "object-cover"}
           objectPosition={cover.heroPosition ?? cover.cardPosition}

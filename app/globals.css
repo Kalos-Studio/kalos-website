@@ -105,13 +105,30 @@
    * same kind of job, and two radii on one screen read as an inconsistency
    * rather than as a distinction. Everything interactive is a pill.
    *
-   * Imagery gets no radius at all, anywhere on this site.
+   * Imagery gets no radius either, with exactly one exception: a device
+   * screenshot, which takes `--radius-screen` below. Which images qualify is not
+   * a judgement call -- see "Case study imagery" in CLAUDE.md for the test.
    *
    * Named `control` rather than `button`, because it covers pills too and a
    * token that sounds like it only applies to buttons is how a third radius gets
-   * invented. `rounded-control` is the one control radius; `rounded-control` should
-   * not appear on anything interactive. */
+   * invented. Everything interactive takes this token, and nothing interactive
+   * should carry a radius written out by hand. */
   --radius-control: 9999px;
+
+  /* A device screen's own corner radius. Product screenshots are rendered
+     borderless -- the app's chrome is the frame -- and a hard 90-degree corner on
+     a phone screen reads as a crop rather than as a device. */
+  --radius-screen: 1.5rem;
+
+  /* --- Elevation --------------------------------------------------------- */
+
+  /* The one shadow, and it exists for one job: lifting a borderless screenshot
+     off a white page. Two layers, because a single blur reads as a smudge -- a
+     wide soft one for the ambient falloff and a tight one for the contact edge.
+     Tuned low-opacity on purpose; the page is white and quiet, and anything
+     heavier looks like a sticker. */
+  --shadow-screen:
+    0 18px 40px -12px rgb(4 4 6 / 0.18), 0 3px 10px -3px rgb(4 4 6 / 0.10);
 }
 
 /* Nothing else lives in this file, and that is the change worth knowing about.

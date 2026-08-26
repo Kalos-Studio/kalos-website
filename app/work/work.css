@@ -14,9 +14,11 @@
  * surface any more; the section inherits the white ground from <body> like every
  * other page.
  *
- * Two rules the rest of the site keeps and this file must not break again:
- * no border-radius on imagery anywhere, and black hairlines rather than the
- * template's #1f1f1f on black.
+ * The imagery rules the rest of the site keeps, and this file must not break
+ * them again: no borders on imagery at all, and no radius on it either except
+ * on a device screenshot. Which images count as one is not a judgement call --
+ * see "Case study imagery" in CLAUDE.md for the test. Both of these were the
+ * other way round when this was a dark template.
  */
 
 /* --- Prose ------------------------------------------------------------- */
@@ -93,7 +95,145 @@
 .work-prose figure img {
   width: 100%;
   display: block;
-  border: 1px solid #000;
+}
+
+/* The black hairline that used to sit on every figure image is gone.
+ *
+ * It came from the dark template this page started as, where a 1px rule was the
+ * only thing separating a screenshot from the surface behind it. On white it is
+ * a frame drawn around images that already have their own edges -- and around
+ * product screenshots, a frame around a frame. Screens carry a radius and a
+ * shadow instead; see --radius-screen and --shadow-screen. */
+
+/* --- Product screenshots ------------------------------------------------
+ *
+ * The one exception to "no radius on imagery": a screenshot is a picture of a
+ * device, and a device has round corners. Square ones make it read as a crop of
+ * a screen rather than as a screen. The shadow is what lifts it off a white page
+ * now that nothing draws an edge around it.
+ *
+ * Nothing here caps the width. A `max-width: 24rem` lived on this class once,
+ * which is right for a 390-wide phone and wrong for everything else -- it
+ * squeezed a 1920x1080 dashboard into 384px. A phone screen gets its width from
+ * the split column it sits in, which is what that layout is for. */
+.work-prose-shot img {
+  border-radius: var(--radius-screen);
+  box-shadow: var(--shadow-screen);
+}
+
+/* Two or three screens under one caption, side by side. Below 640px they stack
+ * -- three phones abreast on a phone is three unreadable slivers. */
+.work-prose-screens {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+  justify-items: center;
+}
+
+@media (min-width: 640px) {
+  .work-prose-screens {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    gap: clamp(1rem, 2.5vw, 2rem);
+  }
+}
+
+/* --- Text beside the screens ---------------------------------------------
+ *
+ * The `split` block, and the reason it exists: a run of full-width phone
+ * screens separated by paragraphs gave the page a tall-thin, tall-thin rhythm
+ * with nothing to break it. A phone screen is 390 wide and the reading column is
+ * far wider, so a screen on its own leaves most of the line empty either side
+ * and then the text starts again underneath.
+ *
+ * Setting the text alongside gives the screens somewhere to sit and the page a
+ * horizontal beat. Sides alternate down the page so it does not become a
+ * column of its own.
+ *
+ * One column below 900px. Text beside a 390px screen on a phone is two things
+ * too narrow to read. */
+.work-prose-split {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+  margin: 3rem 0;
+}
+
+.work-prose-split p {
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  .work-prose-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  }
+
+  /* Two screens side by side need the room, so they take the wider half. */
+  .work-prose-split--pair {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
+  }
+
+  /* Flipping has to swap the track widths, not just the order.
+   *
+   * `order: 2` alone moves the text into the second track and leaves the figure
+   * in the first -- which is the *wide* one. So every flipped row came out
+   * inverted: the paragraph squeezed into 352px while a 390-wide phone screen
+   * was blown up to 848. It read as a different layout rather than as the same
+   * one mirrored, which is the opposite of what alternating sides is for.
+   *
+   * Measured, not eyeballed: the widths are what caught it. The compound
+   * selector below has to stay more specific than `--pair` above, or a flipped
+   * pair takes the unflipped tracks. */
+  .work-prose-split--flip {
+    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+  }
+
+  .work-prose-split--flip.work-prose-split--pair {
+    grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+  }
+
+  .work-prose-split--flip .work-prose-split-text {
+    order: 2;
+  }
+}
+
+/* The figure inside a split has already been given its margins by the grid. */
+.work-prose-split figure {
+  margin: 0;
+}
+
+/* A screen too tall to show whole scrolls inside a capped frame.
+ *
+ * The affordance is a fade at the bottom edge rather than a border, because
+ * imagery on this page does not get borders. It is a static mask -- it
+ * stays faded even at the end of the scroll -- which is a small lie in exchange
+ * for not needing a scroll listener to maintain.
+ *
+ * overscroll-behavior stops the page scrolling on once this reaches its end,
+ * which matters most on a trackpad where the gesture carries past it. */
+.work-prose-scroller {
+  border-radius: var(--radius-screen);
+  max-height: min(70svh, 34rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - 3rem),
+    transparent
+  );
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent);
+}
+
+/* The scrollbar is the other half of the affordance, so it stays visible rather
+   than being hidden the way the pill rail's is. */
+.work-prose-scroller::-webkit-scrollbar {
+  width: 6px;
+}
+
+.work-prose-scroller::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 0.25);
+  border-radius: 3px;
 }
 
 .work-prose figcaption {

@@ -157,15 +157,17 @@ export default function LandingPage() {
                     className="group block"
                     vtName={vtName}
                   >
-                    {/* 1195x681 in the frame. Square corners by decision -- no
-                        rounding on imagery anywhere on this site.
+                    {/* 1195x681 in the frame. Square corners, and no shadow:
+                        a panel is a picture of the work, not a picture of a
+                        device. The one thing on this site allowed a radius is a
+                        product screenshot inside a case study's prose.
 
-                        A floating cover drops the border and the grey plate and
-                        switches to object-contain: the artwork carries its own
-                        transparent ground, so the frame would be a second box
-                        drawn around something already framed, and a crop would
-                        cut the very edges that make it read as floating. The
-                        aspect box stays either way, so the panels keep their
+                        A floating cover drops the grey plate and switches to
+                        object-contain: the artwork carries its own transparent
+                        ground and its own shadow, so the plate would be a second
+                        box drawn around something already framed, and a crop
+                        would cut the very edges that make it read as floating.
+                        The aspect box stays either way, so the panels keep their
                         rhythm down the column whatever is inside them. */}
                     <CoverImage
                       cover={cover}
@@ -173,7 +175,7 @@ export default function LandingPage() {
                         "relative aspect-[1195/681] " +
                         (cover.floating
                           ? ""
-                          : "overflow-hidden border border-black bg-surface")
+                          : "overflow-hidden bg-surface")
                       }
                       imageClassName={
                         cover.floating ? "object-contain" : "object-cover"

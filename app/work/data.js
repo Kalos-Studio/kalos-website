@@ -248,6 +248,7 @@ const allWork = [
       {
         type: "image",
         src: "/work/echocare/dispatch-board.jpg",
+        screenshot: true,
         alt: "The EchoCare dispatch board, showing a live timeline of units, trips, and delay states across a service area",
         caption: "The dispatch board: every unit, every trip, and every delay, live.",
       },
@@ -258,6 +259,7 @@ const allWork = [
       {
         type: "image",
         src: "/work/echocare/trip-tracking.jpg",
+        screenshot: true,
         alt: "An EchoCare trip detail view with live GPS tracking, route, and a dispatch tracking timeline",
         caption: "A trip's whole life, from assignment through to arrival.",
       },
@@ -348,9 +350,10 @@ const allWork = [
       alt: "The Vital Energy dynamic routing dashboard, showing task counts by priority, well battery readings, and a daily oil production chart",
     },
     // The file already has a transparent ground and its own drop shadow, so the
-    // panel's border and grey plate were a second frame drawn around artwork
-    // that came pre-framed. Only `floating` is set here: the rest falls through
-    // to `cover` above.
+    // panel's grey plate would be a second frame drawn around artwork that came
+    // pre-framed -- and a crop would cut the very edges that make it read as
+    // floating. Only `floating` is set here: the rest falls through to `cover`
+    // above.
     landingCover: { floating: true },
     body: [
       {
@@ -418,23 +421,23 @@ const allWork = [
       src: "/work/my-heb-app/cover.webp",
       alt: "Three My H-E-B app screens: a shopping list, the trip drawn as a route across the store map with an estimated total, and an in-store camera view with a turn arrow and a running total",
     },
-    // Same artwork with the dark maroon ground knocked out and the dead margin
-    // trimmed off, so the three phones sit on the page instead of on a plate.
-    // A separate file rather than a replacement: the case study hero crops to
-    // `object-fit: cover` over a #111 surface, and the trimmed version would
-    // have that crop slicing through the phones.
-    landingCover: {
-      src: "/work/my-heb-app/cover-floating.webp",
-      floating: true,
-    },
+    // No `landingCover`. There used to be one, carrying a second trimmed copy
+    // of the artwork, because the cover had a dark maroon ground that had to be
+    // knocked out for the landing panel while the hero cropped over a #111
+    // surface. Neither exists any more: the cover is three real screens on
+    // white, exported at exactly 2x the 1195/681 both frames use, so it fills
+    // them without a crop and there is nothing for a plate to show behind.
+    //
+    // It briefly carried `floating: true` as well, which was wrong twice over:
+    // the file is opaque, and at this aspect the flag changed nothing it could
+    // be checked by. `floating` means artwork with a transparent ground -- see
+    // vital-energy above for the real thing.
     body: [
       {
-        type: "paragraph",
+        type: "split",
         text: "Everyone brings their phone to the grocery store. In Texas that store is very often an H-E-B, the largest grocery chain in the state, and on most of those phones the My H-E-B app is already installed, already open, and being used as a list and not much else. It is the one piece of software present at the exact moment a shopper is standing in an aisle deciding what to do next, and it was doing almost nothing with that.",
-      },
-      {
-        type: "image",
         src: "/work/my-heb-app/list.webp",
+        screenshot: true,
         alt: "The H-E-B app shopping list, with items grouped under In Produce, In Dairy on the Back Wall and Aisle 32",
         caption: "The list as the app holds it today: things to buy, in no particular order.",
       },
@@ -455,46 +458,56 @@ const allWork = [
       {
         type: "image",
         src: "/work/my-heb-app/wireframes.webp",
+        screenshot: true,
         alt: "Hand-drawn wireframes of the Spree flow, showing an aisle view with a route arrow beside a scrolling list of items and turn-by-turn steps",
         caption: "Working the trip out on paper before any of it was drawn properly.",
       },
       {
-        type: "paragraph",
+        type: "split",
+        flip: true,
         text: "The proposal starts from the list a shopper already keeps and turns it into a route, a trip the app calls a Spree. It orders that list the way the store is actually laid out, walks the shopper through it aisle by aisle, and adds each item to a running total as it goes into the cart. Groceries stop being a search problem. The trip has a shape, a length and a number attached to it, and the number is true the whole way round.",
-      },
-      {
-        type: "image",
-        src: "/work/my-heb-app/route.webp",
+        srcs: [
+          "/work/my-heb-app/route.webp",
+          "/work/my-heb-app/total.webp",
+        ],
+        screenshot: true,
+        alts: [
+          "The Spree camera view showing distance to the next item and a running total",
+          "The expanded drawer listing the whole route aisle by aisle",
+        ],
         alt: "The Spree camera view showing distance to the next item and a running total, beside the expanded drawer listing the whole route aisle by aisle",
         caption: "The next turn, the running total, and the whole route behind it.",
       },
       {
-        type: "paragraph",
+        type: "split",
         text: "A running total is only worth having if it is right, and that is where most of the design went. Produce is sold by weight, so the flow takes a weight before it takes a price. Half of what ends up in a cart was never on the list, so anything picked up on impulse can be scanned into the trip where it is picked up. A total that is right most of the time is worse than no total at all, and the distance between those two is the work.",
-      },
-      {
-        type: "image",
-        src: "/work/my-heb-app/total.webp",
+        srcs: [
+          "/work/my-heb-app/scale.webp",
+          "/work/my-heb-app/barcode.webp",
+        ],
+        screenshot: true,
+        alts: [
+          "A scale step asking for the weight of loose apples over the store map",
+          "A barcode scan confirming an item to add to the trip",
+        ],
         alt: "A scale step asking for the weight of loose apples over the store map, beside a barcode scan confirming an item to add to the trip",
         caption: "Weight for produce, a scan for everything that was never on the list.",
       },
       {
-        type: "paragraph",
+        type: "split",
+        flip: true,
         text: "The trip ends with a code. No form, no account wall, no review screen to be sent back through. A shopper hands it to a cashier or scans it at self checkout, and the part of the experience the whole question started with takes a few seconds, because the rest of it already happened on the way around the store.",
-      },
-      {
-        type: "image",
         src: "/work/my-heb-app/finish.webp",
+        screenshot: true,
+        scroll: true,
         alt: "The finished Spree screen, showing a QR code to hand to a cashier, the items picked up and an estimated total of $11.34",
         caption: "The trip ends with a code and a number that has been right all along.",
       },
       {
-        type: "paragraph",
+        type: "split",
         text: "Lists, finding an item on a store map, a cart that follows a shopper around the aisles: the shape of what was proposed here is close to the shape of how the app works today. Ideas rarely travel with attribution attached, and finding them in the product later is the version of being right that counts.",
-      },
-      {
-        type: "image",
         src: "/work/my-heb-app/receipt.webp",
+        screenshot: true,
         alt: "The receipt screen, thanking the shopper and listing the items with a subtotal, tax and total",
         caption: "What is left of checkout.",
       },
