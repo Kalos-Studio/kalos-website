@@ -120,6 +120,28 @@
   letter-spacing: -0.02em;
   line-height: 1.14;
   color: var(--color-snow-white);
+  /* Same as .ln-h2. Two words break badly on a narrow window without it. */
+  text-wrap: balance;
+}
+
+/* The line under the headline, and the reason the headline no longer floats.
+ *
+ * Held to a measure rather than to the shell. The column is 1160px wide here to
+ * give the card grid room, and a sentence set across all of it runs to about 140
+ * characters a line, which is roughly twice a comfortable measure. 34rem lands
+ * it near 70.
+ *
+ * Dark Silver, not Snow White. /about's one sentence is Snow White because it is
+ * that page's entire content; this one is supporting a headline, and the palette
+ * note in globals.css is explicit that prose you read takes Dark Silver. */
+.work-standfirst {
+  margin-top: 1.125rem;
+  max-width: 34rem;
+  font-size: var(--type-lead);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+  color: var(--color-dark-silver);
 }
 
 /* --- Case study list -------------------------------------------------- */
@@ -226,23 +248,54 @@
 
 /* --- Case study page --------------------------------------------------- */
 
+/* The case study back control, which sits in the masthead band rather than in
+   the page. See app/work/back-link.js for why it moved and why it goes back
+   rather than to a fixed destination.
+ *
+ * No margin of any kind. In the flow it carried margin-bottom: 2.5rem, which is
+ * what made it read as an interruption: a lone grey fragment on its own line
+ * between the header and the title, aligned to the content column and so to
+ * nothing above it. Here it is centred against the lockup by the flex row. */
 .work-back {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: #b8b8b8;
+  /* The row above disables pointer events; this is one of the things that
+     opts back in. */
+  pointer-events: auto;
+  color: var(--color-dark-silver);
   text-decoration: none;
   font-size: var(--type-small);
-  margin-bottom: 2.5rem;
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 240ms ease;
 }
 
+/* A hairline before it, so "Back" reads as its own control rather than as a
+   word attached to the wordmark. Sized off the text rather than a fixed height
+   so it tracks the type. */
+.work-back::before {
+  content: "";
+  width: 1px;
+  height: 1.1em;
+  margin-right: clamp(0.875rem, 2vw, 1.25rem);
+  background: color-mix(in srgb, var(--color-snow-white) 18%, transparent);
+}
+
+/* Gold on hover, the same answer the lockup beside it gives. */
 .work-back:hover {
-  color: #fff;
+  color: var(--color-vulcan-gold);
 }
 
-/* Used inline within a sentence on the not-found page instead of standalone
-   above a title — plain inline flow instead of inline-flex, so it doesn't
-   pick up the standalone variant's block-ish vertical margin. */
+/* The arrow moves, the word does not. Same idea as .ln-more on the landing. */
+.work-back-arrow {
+  transition: transform 240ms ease;
+}
+
+.work-back:hover .work-back-arrow {
+  transform: translateX(-0.15rem);
+}
+
 .work-case-header {
   margin-bottom: 2.5rem;
 }
@@ -326,13 +379,23 @@
   max-width: 40rem;
 }
 
+/* The opening paragraph, one step up the scale. Every entry starts on a
+   paragraph, and at body size it was the first of six identical blocks, so the
+   story began with no way in. A token, not a literal: --type-lead is the step
+   the summary above it already uses. */
+.work-case-body > p:first-child {
+  font-size: var(--type-lead);
+  line-height: 1.55;
+  max-width: 42rem;
+}
+
 /* A client testimonial, set to interrupt the read rather than sit inside it.
    Wider than the 40rem prose measure on purpose: the quote is the one thing on
    the page the studio did not write, and pulling it out of the column is what
    says so. The rule is Vulcan Gold because the palette gives gold to accents
    and this is the page's one accent. */
 .work-case-quote {
-  margin: 2.5rem 0 1rem;
+  margin: 4rem 0 1rem;
   max-width: 46rem;
   border-left: 2px solid var(--color-vulcan-gold);
   padding-left: clamp(1.25rem, 4vw, 2rem);
@@ -385,15 +448,55 @@
    the bodyLayout field went together rather than sitting here as an option the
    format doc tells you not to use. */
 
+/* Figures get far more air than the 1.5rem the column's gap gives paragraphs.
+   That difference is the page's rhythm: with everything at one spacing, prose
+   and pictures read as one undifferentiated column, which is what made these
+   pages feel like text image text image all the way down. Paragraphs stay tight
+   so a run of them reads as one movement, and a figure is the break between
+   movements rather than another item in the list. */
 .work-case-body figure {
-  margin: 0.5rem 0;
+  margin: 2.75rem 0;
+}
+
+/* No extra air where a figure is the first or last thing: the header above and
+   the "More case studies" block below bring their own. */
+.work-case-body figure:first-child {
+  margin-top: 0;
+}
+
+.work-case-body figure:last-child {
+  margin-bottom: 0;
 }
 
 /* border-radius/border come from the shared frame rule above; this just
-   handles layout (figure img isn't a fixed-aspect crop like the covers). */
+   handles layout (figure img isn't a fixed-aspect crop like the covers).
+ *
+ * `width: auto` rather than 100%, and this fixes two things at once.
+ *
+ * It stops the column upscaling images past their own pixels. orders.webp is
+ * 654px wide and was being drawn at 1032, so the one screenshot on the Shell
+ * page was soft, and on a retina screen it was being asked for 2064px of detail
+ * from a 654px file. An image narrower than the column now sits at its true
+ * size and is sharp.
+ *
+ * And max-height catches the portrait ones. These pages carry phone screens and
+ * full-page captures: services-page.jpg is 1920x2959, which at column width drew
+ * a slab 1590px tall, taller than the window and impossible to take in. Capped,
+ * it is a legible object on the page, and ExpandableImage is right there for
+ * anyone who wants to read the detail. That is what the lightbox is for. */
 .work-case-body figure img {
-  width: 100%;
   display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 78vh;
+  margin-inline: auto;
+}
+
+/* ExpandableImage wraps each image in a full-width button, so an image narrower
+   than the column would sit against the left edge of it rather than under the
+   middle of the text. */
+.work-case-body figure .work-expandable-image {
+  text-align: center;
 }
 
 /* The <button> wrapper ExpandableImage renders around each body image —

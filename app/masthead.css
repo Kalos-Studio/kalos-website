@@ -384,6 +384,44 @@
   z-index: 5;
 }
 
+/* The optional slot beside the lockup. Only /work uses it, for the case study
+   back control. The row itself is pointer-events: none so an invisible bar does
+   not swallow clicks across the top of the page; anything in here opts back in
+   the way .site-wordmark and the menu do. */
+.site-masthead-lead {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.875rem, 2vw, 1.25rem);
+  min-width: 0;
+}
+
+/* Faded all the way out, written by the scroll handler in masthead.js.
+ *
+ * The row keeps its place in the tab order while it is invisible, so what has to
+ * go is the pointer-events opt-in its two children make: an invisible menu card
+ * would otherwise go on taking clicks in the corner for the rest of the page.
+ * The children rather than the row, because the row is already
+ * pointer-events: none and a descendant that has opted back in ignores it. */
+.site-masthead[data-faded] :is(.site-wordmark, .site-menu) {
+  pointer-events: none;
+}
+
+/* Tabbing to it is what reveals it.
+ *
+ * `!important` because the handler writes opacity inline and an inline
+ * declaration outranks everything except this. It is load-bearing rather than a
+ * shortcut: a pointer user scrolls back up and the masthead returns, and there
+ * is no equivalent gesture for a keyboard user, who cannot scroll a page up in
+ * order to see the thing they are trying to tab to. Without this the site's only
+ * navigation is unreachable from the keyboard below 200px of scroll. */
+.site-masthead:focus-within {
+  opacity: 1 !important;
+}
+
+.site-masthead:focus-within :is(.site-wordmark, .site-menu) {
+  pointer-events: auto;
+}
+
 /* The lockup is a link everywhere except the homepage, where it would be a link
    to the page you are on. */
 .site-wordmark {

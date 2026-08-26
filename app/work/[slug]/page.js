@@ -31,22 +31,16 @@ export default async function CaseStudyPage({ params }) {
 
   if (!cs) notFound();
 
-  // The client is dropped when it is the title again, which it is on more than
-  // half of these. "Vital Energy / Vital Energy / Head of Design" is not a fact
-  // list, it is a stutter.
-  const facts = [
-    cs.client !== cs.title && cs.client,
-    cs.role,
-  ].filter(Boolean);
+  // Just the role. It used to be the client name and the role joined by a
+  // slash, with the client dropped whenever it repeated the title: that fired
+  // on four of the six entries, so some pages read "Shell / Mobile App Design"
+  // and the rest read the role alone. Same field, two shapes, no rule a reader
+  // could infer.
 
   const otherCaseStudies = caseStudies.filter((c) => c.slug !== cs.slug);
 
   return (
     <div className="work-shell">
-      <Link href="/work" className="work-back">
-        ← Work
-      </Link>
-
       {/* No "Case study" eyebrow above the title any more. It was a label
           announcing what the reader can already see, and the brand file has no
           eyebrow-above-heading pattern anywhere in it — the same invention that
@@ -60,7 +54,7 @@ export default async function CaseStudyPage({ params }) {
       <div className="work-case-header">
         <h1 className="work-case-title">{cs.title}</h1>
         <p className="work-case-summary">{cs.summary}</p>
-        {facts.length > 0 && <p className="work-case-facts">{facts.join(" / ")}</p>}
+        {cs.role && <p className="work-case-facts">{cs.role}</p>}
       </div>
 
       <CoverImage

@@ -30,8 +30,19 @@
 //   summary: "One line describing the project.", // required — shown on the
 //                                                  // listing card and at the
 //                                                  // top of the case study
-//   client: "Client name",     // optional — shown as a fact on the case study
-//   role: "What we did",       // optional — shown as a fact on the case study
+//   role: "What we did",       // optional — the facts line under the summary.
+//                              // Disciplines, not a job title, and drawn from
+//                              // one vocabulary across every entry: "User
+//                              // Research", "<domain> Strategy", "<surface>
+//                              // Design", "Development". Three to five.
+//
+//                              // `client` went the way `year` did. It was
+//                              // rendered beside the role and dropped whenever
+//                              // it repeated the title, which was most entries,
+//                              // so half these pages read "Shell / ..." and
+//                              // half read nothing. The client's name is in
+//                              // the title and the first paragraph of every
+//                              // study already.
 //   cover: {                   // optional — omit to show a placeholder
 //     src: "/work/kebab-case-id/cover.jpg", // put images in /public/work/<slug>/
 //     alt: "Description of the cover image for screen readers",
@@ -80,6 +91,27 @@ export function workPageTitle(title) {
   return `${title} — Kalos`;
 }
 
+// The index page's headline and the line under it.
+//
+// It was a bare "Work" with nothing around it. That read as a label rather than
+// as a page opening, and it got worse when the lockup moved to the masthead: the
+// word had been sitting under a logo, and on its own at the top of a wide column
+// it was one word floating in a lot of nothing.
+//
+// So: the word says what the set is rather than what the section is called, and
+// it has a sentence under it. Both together are the pattern /about already uses
+// and the one the brand file uses on every slide that opens something. No
+// eyebrow above it, which is the other obvious fix and the one this codebase
+// has already rejected: the file has no eyebrow-above-heading anywhere in it.
+//
+// The tab still says "Work". A browser tab should be one word, for the same
+// reason the homepage's <title> is "Kalos" and its share card is not.
+export const workIndex = {
+  title: "Selected work",
+  standfirst:
+    "Brand identities, websites and products, from the first sketch to the thing that shipped.",
+};
+
 // Array order is render order on /work, so it is a decision rather than a
 // side effect of when things were added. Deepest engagements first, then the
 // range: Vital and Shell are the two multi-phase product builds, Priority is
@@ -92,7 +124,7 @@ export const caseStudies = [
     title: "Vital Energy",
     summary:
       "Intelligent field operations for an independent energy producer, from a ten week definition sprint to a multi-year platform.",
-    client: "Vital Energy",
+    role: "User Research, Product Strategy, Product Design, Development",
     cover: {
       src: "/work/vital-energy/cover.webp",
       alt: "The Vital Energy dynamic routing dashboard, showing task counts by priority, well battery readings, and a daily oil production chart",
@@ -151,8 +183,7 @@ export const caseStudies = [
     slug: "shell-tapup",
     title: "Shell TapUp",
     summary: "Native iOS and Android app design for Shell's global refueling service.",
-    client: "Shell",
-    role: "Mobile App Design & Development",
+    role: "User Research, Mobile App Design, Development",
     cover: {
       src: "/work/shell-tapup/cover.jpg",
       alt: "A Shell TapUp driver app screenshot, showing tank levels and fueling controls, composited over a photo of the Shell pecten logo at a refueling station",
@@ -200,8 +231,7 @@ export const caseStudies = [
     title: "Priority Ambulance Transfer",
     summary:
       "Texas-based medical transport company providing ambulance and wheelchair transport across the greater Houston area and beyond.",
-    client: "Priority Ambulance Transfer",
-    role: "Head of Design",
+    role: "Brand Strategy, Brand Identity, Fleet Livery, Web Design, Development",
     cover: {
       src: "/work/priority-ambulance-transfer/cover.jpg",
       alt: "The Priority Ambulance Transfer homepage hero, \"When every minute matters, we're already moving.\"",
@@ -245,8 +275,7 @@ export const caseStudies = [
     title: "EchoCare",
     summary:
       "B2B SaaS dispatch platform for emergency medical services and non-emergent medical transport operations.",
-    client: "EchoCare",
-    role: "Head of Design",
+    role: "Product Design, Design Systems",
     cover: {
       src: "/work/echocare/cover.jpg",
       alt: "The EchoCare login screen, \"The help you need, when you need it,\" with an animated network of service icons",
@@ -292,7 +321,6 @@ export const caseStudies = [
     title: "MARA",
     summary:
       "The in-house design function for an energy company's whole portfolio, from partner brand systems to the events that put them in front of governments.",
-    client: "MARA",
     role: "Brand Strategy, Brand Identity, Brand Guidelines, Art Direction",
     cover: {
       src: "/work/mara/cover.jpg",
@@ -341,8 +369,7 @@ export const caseStudies = [
     slug: "allganize-website-redesign",
     title: "Allganize Website Redesign",
     summary: "Pushing the future of workforce AI further.",
-    client: "Allganize",
-    role: "Development, Web Design",
+    role: "Web Design, Development",
     cover: {
       src: "/work/allganize-website-redesign/cover.webp",
       alt: "The Allganize homepage hero, \"The All-In-One LLM Enabler For Enterprise,\" shown on a laptop screen",
@@ -379,6 +406,94 @@ export const caseStudies = [
       {
         type: "paragraph",
         text: "We built and shipped it end to end, from responsive page templates through to production deployment, so the redesign went live without a handoff in the middle of it. The site reads clearly now whether the visitor is a first-time prospect working out what Allganize does, or a customer who knows exactly which product they came for.",
+      },
+    ],
+  },
+  // Last, and the only entry here that is not a client engagement. The order
+  // note above ranks by depth of the work; this one is a design exploration, so
+  // it closes the list rather than competing with the builds above it. It earns
+  // its place on the strength of the thinking, which is also why the copy never
+  // claims more about the relationship than "for H-E-B".
+  {
+    slug: "my-heb-app",
+    title: "My H-E-B App",
+    summary:
+      "A design exploration for H-E-B, the largest grocery chain in Texas, that fixes checkout by moving it out of checkout and turning a shopping list into a route through the store.",
+    role: "Design Exploration, User Research, Product Design",
+    cover: {
+      src: "/work/my-heb-app/cover.webp",
+      alt: "Three My H-E-B app screens: a shopping list, the trip drawn as a route across the store map with an estimated total, and an in-store camera view with a turn arrow and a running total",
+    },
+    body: [
+      {
+        type: "paragraph",
+        text: "Everyone brings their phone to the grocery store. In Texas that store is very often an H-E-B, the largest grocery chain in the state, and on most of those phones the My H-E-B app is already installed, already open, and being used as a list and not much else. It is the one piece of software present at the exact moment a shopper is standing in an aisle deciding what to do next, and it was doing almost nothing with that.",
+      },
+      {
+        type: "image",
+        src: "/work/my-heb-app/list.webp",
+        alt: "The H-E-B app shopping list, with items grouped under In Produce, In Dairy on the Back Wall and Aisle 32",
+        caption: "The list as the app holds it today: things to buy, in no particular order.",
+      },
+      {
+        type: "paragraph",
+        text: "The question on the table was checkout. Make it easier, make it faster, lose fewer people on the way out the door. We spent time with shoppers in stores to find where it actually broke, and the complaints did not stay inside checkout for long. People talked about the screens at the end, and then they talked about the forty minutes before them. One of them put it plainly: the app's navigation to an item is pretty pointless, you have to calculate where you are in the store.",
+      },
+      {
+        type: "image",
+        src: "/work/my-heb-app/painpoints.webp",
+        alt: "Two columns of frustrations, headed Checkout and Shopping, covering too many screens, editing that resets progress, signup gates, inaccurate in-store navigation and missing user location",
+        caption: "Two piles of complaints that turned out to be one problem.",
+      },
+      {
+        type: "paragraph",
+        text: "Those are not two problems. A shopper who cannot find the fourth thing on their list arrives at the till already tired of the trip, and an app that knows where someone is standing in a store also knows what they have picked up. The interesting move was not to redesign checkout. It was to make checkout something that had already happened.",
+      },
+      {
+        type: "image",
+        src: "/work/my-heb-app/wireframes.webp",
+        alt: "Hand-drawn wireframes of the Spree flow, showing an aisle view with a route arrow beside a scrolling list of items and turn-by-turn steps",
+        caption: "Working the trip out on paper before any of it was drawn properly.",
+      },
+      {
+        type: "paragraph",
+        text: "The proposal starts from the list a shopper already keeps and turns it into a route, a trip the app calls a Spree. It orders that list the way the store is actually laid out, walks the shopper through it aisle by aisle, and adds each item to a running total as it goes into the cart. Groceries stop being a search problem. The trip has a shape, a length and a number attached to it, and the number is true the whole way round.",
+      },
+      {
+        type: "image",
+        src: "/work/my-heb-app/route.webp",
+        alt: "The Spree camera view showing distance to the next item and a running total, beside the expanded drawer listing the whole route aisle by aisle",
+        caption: "The next turn, the running total, and the whole route behind it.",
+      },
+      {
+        type: "paragraph",
+        text: "A running total is only worth having if it is right, and that is where most of the design went. Produce is sold by weight, so the flow takes a weight before it takes a price. Half of what ends up in a cart was never on the list, so anything picked up on impulse can be scanned into the trip where it is picked up. A total that is right most of the time is worse than no total at all, and the distance between those two is the work.",
+      },
+      {
+        type: "image",
+        src: "/work/my-heb-app/total.webp",
+        alt: "A scale step asking for the weight of loose apples over the store map, beside a barcode scan confirming an item to add to the trip",
+        caption: "Weight for produce, a scan for everything that was never on the list.",
+      },
+      {
+        type: "paragraph",
+        text: "The trip ends with a code. No form, no account wall, no review screen to be sent back through. A shopper hands it to a cashier or scans it at self checkout, and the part of the experience the whole question started with takes a few seconds, because the rest of it already happened on the way around the store.",
+      },
+      {
+        type: "image",
+        src: "/work/my-heb-app/finish.webp",
+        alt: "The finished Spree screen, showing a QR code to hand to a cashier, the items picked up and an estimated total of $11.34",
+        caption: "The trip ends with a code and a number that has been right all along.",
+      },
+      {
+        type: "paragraph",
+        text: "Lists, finding an item on a store map, a cart that follows a shopper around the aisles: the shape of what was proposed here is close to the shape of how the app works today. Ideas rarely travel with attribution attached, and finding them in the product later is the version of being right that counts.",
+      },
+      {
+        type: "image",
+        src: "/work/my-heb-app/receipt.webp",
+        alt: "The receipt screen, thanking the shopper and listing the items with a subtotal, tax and total",
+        caption: "What is left of checkout.",
       },
     ],
   },

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import CoverImage from "./CoverImage";
-import { caseStudies } from "./data";
+import { caseStudies, workIndex } from "./data";
 
 export default function WorkIndexPage() {
   return (
@@ -13,7 +13,8 @@ export default function WorkIndexPage() {
           a laptop was 164px in from the edge of the screen. What is left here is
           the page's headline. */}
       <header className="work-header">
-        <h1 className="work-title">Work</h1>
+        <h1 className="work-title">{workIndex.title}</h1>
+        <p className="work-standfirst">{workIndex.standfirst}</p>
       </header>
 
       {caseStudies.length === 0 ? (

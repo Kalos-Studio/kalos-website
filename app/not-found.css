@@ -1,0 +1,41 @@
+/* The 404, shared by every route that does not resolve. */
+
+/* globals.css pins html/body to overflow:hidden, so this takes its own
+   full-height box the way .work-root and .landing-root do rather than
+   relying on the document to scroll. Centred rather than top-aligned: the
+   page is two lines long, and hung off the top of a 900px viewport it read
+   as a fragment of a page that had failed to load, which is exactly the wrong
+   impression for a page whose job is to say nothing is wrong. */
+.nf-root {
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--color-obsidian-black);
+  color: var(--color-snow-white);
+}
+
+.nf-shell {
+  min-height: 100dvh;
+  max-width: var(--page-max);
+  padding-inline: var(--page-pad);
+}
+
+/* Leading is set explicitly on both of these. html/body pin line-height to
+   normal while preflight sets the root to 1.5, so a new component that
+   inherits gets whichever of the two it happens to sit under. */
+.nf-heading {
+  font-size: var(--type-title);
+  line-height: 1.1;
+}
+
+/* Vulcan Gold is the accent for buttons and active indicators, and this is now
+   the only action on the page. */
+.nf-link {
+  font-size: var(--type-body);
+  line-height: 1.4;
+  color: var(--color-vulcan-gold);
+  transition: opacity 160ms ease;
+}
+
+.nf-link:hover {
+  opacity: 0.7;
+}
