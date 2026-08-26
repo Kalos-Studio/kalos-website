@@ -91,15 +91,14 @@ export default function PagedScroll() {
 
       const down = delta > 0;
 
-      // The hero is free going *down* only.
+      // The hero is a stop in both directions.
       //
-      // Scrolling down out of it, the handover is scrubbed rather than paged --
-      // paging there would replace the whole thing with one jump. Going up is
-      // the opposite case: there is no stop above the first case study, so
-      // leaving it free meant a gesture upward drifted to a halt somewhere
-      // between the hero and the first panel, showing half of each. Upward, the
-      // top of the page is the stop.
-      if (down && window.scrollY < list[0] - EDGE) return;
+      // It was free going down, so the handover could be scrubbed at the
+      // reader's own pace. In practice that made the two directions feel like
+      // different pages: up snapped cleanly to the hero, down drifted. The
+      // handover still plays -- it runs across the paged scroll instead of
+      // across the reader's gesture -- and consistency turned out to matter more
+      // than scrubbing it.
 
       if (locked) {
         // Momentum from the gesture already handled. Swallow it, and hold the
@@ -137,6 +136,19 @@ export default function PagedScroll() {
       const reduced = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
+
+      // Turn CSS snapping off for the duration of the scroll.
+      //
+      // The page also has `scroll-snap-type: y proximity`, which is a second
+      // thing deciding where the page should sit. As a programmatic smooth
+      // scroll lands, the snap engine re-adjusts the position it just arrived
+      // at, and on a trackpad -- where momentum keeps arriving after the
+      // gesture -- that reads as a jitter on the panel it settled on.
+      //
+      // Suppressed rather than removed, because snapping is what positions the
+      // page on touch, where none of this runs at all.
+      document.documentElement.style.scrollSnapType = "none";
+
       window.scrollTo({
         top: target,
         behavior: reduced ? "auto" : "smooth",
@@ -144,6 +156,7 @@ export default function PagedScroll() {
 
       window.setTimeout(() => {
         ready = true;
+        document.documentElement.style.scrollSnapType = "";
       }, SETTLE_MS);
 
       window.clearTimeout(quiet);
@@ -159,6 +172,8 @@ export default function PagedScroll() {
     return () => {
       window.removeEventListener("wheel", onWheel);
       window.clearTimeout(quiet);
+      // Never leave snapping off behind us.
+      document.documentElement.style.scrollSnapType = "";
     };
   }, []);
 
