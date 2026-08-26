@@ -18,11 +18,29 @@
  *               without holding the lock through that tail one flick paged three
  *               panels.
  *
+ *   TAIL        A firm flick's momentum runs for well over a second. The lock
+ *               used to be released on a fixed ceiling, which expired in the
+ *               middle of that tail while its deltas were still large, and the
+ *               remainder paged a second time -- every hard flick moved two
+ *               panels. FLICK below is deliberately short; TAIL_FLICK is the
+ *               one that outlives a ceiling.
+ *
+ *   CRAWL       A gentle two-finger drag emits deltas of one to three pixels.
+ *               Thresholding each event on its own discarded all of them as
+ *               noise, and a discarded event was also an unclaimed one, so the
+ *               browser scrolled natively on it: the page crawled ~120px and
+ *               snapping dragged it back when the fingers stopped. Reported as
+ *               "scrolling is sometimes not working".
+ *
+ *   AGAIN       A second flick shortly after the first must page again. The lock
+ *               outlives a short gesture, so a flick arriving while it is still
+ *               held was swallowed whole -- "I scroll once and then it gets
+ *               stuck".
+ *
  *   INTERLEAVE  The wheel and the keyboard share a lock, so the interesting case
  *               is one straight after the other. An early version had the
  *               keyboard take the wheel's momentum lock, which left the trackpad
- *               swallowed for up to MAX_LOCK_MS after a keystroke that had no
- *               momentum to absorb.
+ *               swallowed after a keystroke that had no momentum to absorb.
  *
  *   KEYS        Arrow and page keys must land on stops. Before they were handled
  *               at all, an arrow key scrolled ~40px and proximity snapping
@@ -60,6 +78,24 @@ const SETTLE = 1000;
 // trackpad was unusable.
 const FLICK = [6, 14, 28, 44, 52, 44, 30, 18, 10, 6, 4, 3, 2];
 
+// The same flick thrown harder: the tail decays for a second and a half rather
+// than a quarter of one. This is the gesture that used to page twice, and the
+// reason FLICK on its own is not enough -- it ends before any plausible ceiling
+// and so never exercises the case that broke.
+const TAIL_FLICK = [2, 3, 6, 14, 28, 44, 52, 44];
+for (let v = 30, i = 0; i < 70; i++) {
+  TAIL_FLICK.push(Math.max(1, Math.round(v)));
+  v *= 0.955;
+}
+
+// A slow, deliberate two-finger drag. Every event is below any per-event noise
+// threshold worth having, which is the point: the gesture is the sum.
+const DRAG = Array(40).fill(3);
+
+// A twitch. Must move nothing at all -- the counterpart to DRAG, since both are
+// made of events too small to mean anything on their own.
+const TWITCH = [2, 3, 2];
+
 const browser = await chromium.launch({ channel: "chrome" });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
@@ -92,12 +128,14 @@ const heroOpacity = () =>
 
 const scrollY = () => page.evaluate(() => window.scrollY);
 
-const flick = async (direction) => {
-  for (const delta of FLICK) {
+const emit = async (deltas, direction = 1) => {
+  for (const delta of deltas) {
     await page.mouse.wheel(0, delta * direction);
     await page.waitForTimeout(16);
   }
 };
+
+const flick = (direction) => emit(FLICK, direction);
 
 const step = async (act) => {
   await act();
@@ -137,6 +175,63 @@ try {
     up.join(",") === order.slice(0, 3).reverse().join(","),
     up.join(" -> "),
   );
+
+  // --- TAIL / CRAWL / AGAIN ----------------------------------------------
+  // Every gesture below is one gesture and must move exactly one view. They are
+  // separate checks rather than a loop because each is a different bug.
+  const oneView = async (label, deltas) => {
+    await load();
+    await page.mouse.move(700, 450);
+    // Off the hero first. From the top of the document a gesture lands on the
+    // first panel rather than stepping from one panel to the next, and it is
+    // the step between panels being measured here.
+    await emit(FLICK);
+    await page.waitForTimeout(SETTLE);
+    const from = (await nearest()).id;
+    await emit(deltas);
+    await page.waitForTimeout(SETTLE);
+    const to = await nearest();
+    const stepped = order.indexOf(to.id) - order.indexOf(from);
+    check(
+      label,
+      stepped === 1 && Math.abs(to.off) <= CENTRE_TOLERANCE,
+      `${from} -> ${to.id}@${to.off}px (${stepped} views)`,
+    );
+  };
+
+  await oneView("a flick with a long momentum tail moves one view", TAIL_FLICK);
+  await oneView("a gentle drag pages rather than crawling", DRAG);
+
+  await load();
+  await page.mouse.move(700, 450);
+  const stillY = await scrollY();
+  await emit(TWITCH);
+  await page.waitForTimeout(SETTLE);
+  check(
+    "a twitch too small to be a gesture moves nothing",
+    (await scrollY()) === stillY,
+    `${stillY} -> ${await scrollY()}`,
+  );
+
+  // AGAIN: the second flick is the one that used to be eaten by the first
+  // flick's lock. 150ms is the gap that failed -- long enough to have ended the
+  // gesture, short enough that the lock was still held.
+  for (const gap of [0, 150, 400]) {
+    await load();
+    await page.mouse.move(700, 450);
+    await emit(TAIL_FLICK);
+    await page.waitForTimeout(gap);
+    const between = (await nearest()).id;
+    await emit(TAIL_FLICK);
+    await page.waitForTimeout(SETTLE + 500);
+    const landed = await nearest();
+    check(
+      `a flick ${gap}ms after another one still pages`,
+      order.indexOf(landed.id) - order.indexOf(between) === 1 &&
+        Math.abs(landed.off) <= CENTRE_TOLERANCE,
+      `${between} -> ${landed.id}@${landed.off}px`,
+    );
+  }
 
   // --- KEYS --------------------------------------------------------------
   await load();

@@ -25,32 +25,58 @@ import { useEffect } from "react";
  *   which are better than anything reimplemented here.
  * - **Reduced motion jumps** rather than animating.
  *
- * The lock is the fiddly part. A trackpad emits a long tail of momentum events
- * after the fingers lift, and without holding the lock through them one flick
- * would page three views. So the lock is released only once the wheel has been
- * quiet, not on a timer from when the animation started.
+ * Two rules run this file, and both were learned the hard way:
+ *
+ * **A gesture is the sum of its events, never one of them.** A trackpad emits a
+ * scroll as dozens of small deltas. Thresholding each one on its own discards
+ * the whole of a gentle two-finger drag as noise -- and because a discarded
+ * event was also an unclaimed one, the browser scrolled natively on it. A slow
+ * scroll crawled a hundred pixels, snapping dragged it back when the fingers
+ * stopped, and the page read as frozen. That was "scrolling is sometimes not
+ * working", measured at 120px of native crawl and 0 panels moved.
+ *
+ * **Momentum is told from intent by shape, not by a stopwatch.** After the
+ * fingers lift, a trackpad keeps emitting for up to two seconds, decaying
+ * smoothly. This used to hold the lock for a fixed ceiling and then let go --
+ * so on any firm flick the tail outlived the ceiling while its deltas were
+ * still large, and paged a second time. Measured: every hard flick moved two
+ * panels. A tail never accelerates, so the tail is now recognised by its decay
+ * and held to the end, and a genuine second push during it is recognised by
+ * being suddenly bigger than what came before.
  */
 
-// Wheel deltas smaller than this are noise -- a resting trackpad, a shaking
-// hand, the tail end of momentum -- and must not count as a gesture.
-const MIN_DELTA = 4;
+// The distance a stream has to cover before it counts as a deliberate gesture.
+// Small enough that a slow drag pages almost immediately; large enough that a
+// stray twitch on the pad does not move the page.
+const GESTURE_PX = 20;
 
-// How long the wheel has to be quiet before another gesture is accepted. Long
-// enough to outlast trackpad momentum, short enough that deliberate consecutive
-// flicks still feel responsive.
+// A pause longer than this ends the stream. What follows is a new gesture and
+// starts accumulating from zero, rather than adding to whatever was left over.
+const STREAM_GAP_MS = 150;
+
+// How long the wheel has to be quiet before the lock lets go. There is no
+// ceiling beside it any more: a ceiling can only ever expire in the middle of
+// something, and the middle of a momentum tail is the one place it must not.
+// What used to need the ceiling -- a hand resting on the pad emitting forever
+// and holding the page hostage -- is handled by the push test below, which lets
+// a real flick through whatever the lock believes.
 const QUIET_MS = 220;
 
-// The hard ceiling on a single lock, and the reason it exists: every swallowed
-// event pushes the quiet timer out, and a trackpad emits events continuously
-// while a finger is anywhere near it. Without a ceiling, resting a hand on the
-// pad held the lock open indefinitely and the page simply would not scroll --
-// several attempts before one happened to land in a gap. A gesture can never
-// hold the page for longer than this.
-const MAX_LOCK_MS = 900;
+// Reading the shape of a stream.
+//
+// A delta this far below the stream's peak means the fingers have lifted and
+// what is arriving now is momentum. From that point a delta suddenly RESURGE
+// times bigger than the one before it is the user pushing again, not physics --
+// momentum only ever decays. The floor keeps a jittery tail from looking like a
+// push at the point where the numbers are down in the single digits.
+const DECAYED = 0.7;
+const RESURGE = 1.6;
+const PUSH_PX = 12;
 
-// A scroll of about a viewport takes roughly this long. The lock is not released
-// on it -- quiet is what releases the lock -- but paging again before the page
-// has moved would compute the next stop from a stale position.
+// A scroll of about a viewport takes roughly this long. The wheel does not wait
+// on it -- it aims from where the page is *heading* instead -- but the keyboard
+// does, because a held key repeats about thirty times a second and would
+// otherwise fly through the whole page.
 const SETTLE_MS = 500;
 
 // Treat a position within this of a stop as being at it.
@@ -82,7 +108,7 @@ const MODAL = "cal-modal-box, dialog[open]";
 
 export default function PagedScroll() {
   useEffect(() => {
-    const stops = () => {
+    const measureStops = () => {
       const vh = window.innerHeight;
       const out = [];
       // Case study panels are centred, so their stop is the position that puts
@@ -100,7 +126,33 @@ export default function PagedScroll() {
     let locked = false;
     let quiet;
     let ready = true;
-    let startedAt = 0;
+    let settle;
+
+    // Where a running scroll is heading, or undefined when the page is at rest.
+    //
+    // Every target is computed from this rather than from `window.scrollY`, so
+    // a second flick that arrives while the first is still animating aims at the
+    // stop after the one being travelled to. Aiming from the live position
+    // instead is how a fast pair of flicks used to land back where it started:
+    // the second read a position the first was in the middle of leaving.
+    let pending;
+
+    // The stream: one continuous run of wheel events, which is one flick plus
+    // whatever momentum follows it.
+    let stops = null; // cached for the stream -- these are document positions,
+    let acc = 0; //     so scrolling does not move them and a stream is short
+    let lastAt = 0;
+    let lastAbs = 0;
+    let peak = 0;
+    let decaying = false;
+
+    const endStream = () => {
+      stops = null;
+      acc = 0;
+      lastAbs = 0;
+      peak = 0;
+      decaying = false;
+    };
 
     // The stop a gesture in this direction should land on, or undefined for
     // "there is nothing that way, let the browser have it".
@@ -112,12 +164,12 @@ export default function PagedScroll() {
     // scroll instead of across the reader's gesture -- and consistency turned
     // out to matter more than scrubbing it.
     const nextStop = (down) => {
-      const list = stops();
-      if (!list.length) return undefined;
-      const y = window.scrollY;
-      const previous = [...list].reverse().find((stop) => stop < y - EDGE);
+      if (!stops) stops = measureStops();
+      if (!stops.length) return undefined;
+      const y = pending ?? window.scrollY;
+      const previous = [...stops].reverse().find((stop) => stop < y - EDGE);
       return down
-        ? list.find((stop) => stop > y + EDGE)
+        ? stops.find((stop) => stop > y + EDGE)
         : // Nothing above the first case study but the hero, so that is where
           // going up leads. Undefined once already at the top, which hands the
           // gesture back to the browser.
@@ -125,22 +177,17 @@ export default function PagedScroll() {
     };
 
     // The paging step itself, shared by the wheel and the keyboard so that the
-    // two can never run at once. That sharing is the whole point of the split:
-    // two independent locks would have let one compute its target from a
-    // position the other was still animating away from.
+    // two can never disagree about where the page is going.
     //
     // `absorbMomentum` is the one thing they do differently, and it is the
     // difference between the two input devices rather than a tuning knob. A
     // trackpad keeps emitting events after the fingers lift, so a wheel gesture
-    // has to hold the lock through its own tail or one flick pages three views.
-    // A key press has no tail. Locking after one would buy nothing and cost the
-    // trackpad up to MAX_LOCK_MS of being swallowed for a keystroke that was
-    // already finished -- so the keyboard relies on `ready` alone, which the
-    // wheel handler honours anyway, and the trackpad is free again as soon as
-    // the scroll it would have fought has landed.
+    // has to hold the lock through its own tail or one flick pages twice. A key
+    // press has no tail, so locking after one would only swallow the trackpad
+    // for a gesture that was already over.
     const pageTo = (target, absorbMomentum) => {
-      startedAt = performance.now();
       ready = false;
+      pending = target;
 
       const reduced = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
@@ -163,8 +210,13 @@ export default function PagedScroll() {
         behavior: reduced ? "auto" : "smooth",
       });
 
-      window.setTimeout(() => {
+      // Cleared first: two pages in quick succession would otherwise have the
+      // first one's timer restore snapping in the middle of the second scroll,
+      // which is the jitter this suppression exists to prevent.
+      window.clearTimeout(settle);
+      settle = window.setTimeout(() => {
         ready = true;
+        pending = undefined;
         document.documentElement.style.scrollSnapType = "";
       }, SETTLE_MS);
 
@@ -180,63 +232,88 @@ export default function PagedScroll() {
     const onWheel = (event) => {
       if (event.ctrlKey) return; // pinch zoom, not a scroll
 
-      // The lock comes first, and swallows everything.
-      //
-      // This used to sit below the noise threshold, which meant every event too
-      // small to count as a gesture returned early *without* preventDefault --
-      // and a momentum tail is mostly such events. They went straight to the
-      // browser and scrolled the page natively while the lock believed it held
-      // it. Swiping hard up and down let you park the page anywhere between two
-      // panels for a second or two before it caught up, because the lock was
-      // only ever stopping the large events.
-      //
-      // Nothing about a wheel event's size makes it safe to let through while a
-      // paged scroll is running.
+      // Normalise before anything else. Firefox reports mouse-wheel events in
+      // lines rather than pixels, with deltaY around 1-3 -- so a bare pixel
+      // threshold discarded every genuine wheel gesture there and paging
+      // silently never engaged, leaving the 1026px gap before the closer with
+      // no stop in it. A notched wheel is also not a stream: one click is one
+      // whole gesture, however few pixels the browser calls it.
+      const discrete = event.deltaMode !== 0;
+      const delta =
+        event.deltaY *
+        (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1);
+      const abs = Math.abs(delta);
+      const now = performance.now();
+
+      if (now - lastAt > STREAM_GAP_MS) {
+        endStream();
+        // A gap this long is the fingers leaving the pad. Momentum arrives at
+        // the frame rate and never pauses, so whatever the lock was absorbing is
+        // over and this is a new gesture -- release it here rather than making
+        // the push test below recognise a flick it has seen no decay in front
+        // of. Without this, a second flick a sixth of a second after the first
+        // was swallowed whole: the lock still had a hundred milliseconds to run
+        // and every event of a rising ramp looks like more of the same stream.
+        locked = false;
+        window.clearTimeout(quiet);
+      }
+      lastAt = now;
+
+      // Read the shape of the stream before deciding anything with it. Rising
+      // is still the flick itself; once a delta comes in well under the peak the
+      // fingers have lifted and the rest is momentum.
+      if (abs > peak) peak = abs;
+      else if (peak >= PUSH_PX && abs < peak * DECAYED) decaying = true;
+      const push = decaying && abs >= PUSH_PX && abs > lastAbs * RESURGE;
+      lastAbs = abs;
+
       if (locked) {
+        // The lock swallows everything. Nothing about a wheel event's size makes
+        // it safe to let through while a paged scroll is running: an event the
+        // handler declines to claim is one the browser scrolls on, and a page
+        // being scrolled natively underneath a programmatic smooth scroll
+        // cancels it outright, leaving the page stranded between two panels for
+        // snapping to drag back.
         event.preventDefault();
-        // Extend the lock, but never past the ceiling. Absorbing momentum is
-        // worth a short wait; holding the page hostage while a hand rests on the
-        // trackpad is not.
-        const remaining = startedAt + MAX_LOCK_MS - performance.now();
-        if (remaining <= 0) {
-          locked = false;
+        if (!push) {
+          window.clearTimeout(quiet);
+          quiet = window.setTimeout(() => {
+            locked = false;
+          }, QUIET_MS);
           return;
         }
-        window.clearTimeout(quiet);
-        quiet = window.setTimeout(
-          () => {
-            locked = false;
-          },
-          Math.min(QUIET_MS, remaining),
-        );
-        return;
+        // A real push arriving mid-tail. Let it through as a gesture of its own,
+        // starting a fresh stream so that its own ramp up is not read as yet
+        // another push a frame later.
+        locked = false;
+        endStream();
+        peak = abs;
+        lastAbs = abs;
       }
 
-      // Normalise before thresholding. Firefox reports mouse-wheel events in
-      // lines rather than pixels, with deltaY around 1-3 -- so a bare pixel
-      // threshold discarded every genuine wheel gesture there as noise and
-      // paging silently never engaged, leaving the 1026px gap before the closer
-      // with no stop in it.
-      const LINE_HEIGHT = 16;
-      const PAGE_HEIGHT = window.innerHeight;
-      const scale =
-        event.deltaMode === 1 ? LINE_HEIGHT : event.deltaMode === 2 ? PAGE_HEIGHT : 1;
-      const delta = event.deltaY * scale;
+      // The gesture is the sum of its events. A direction change starts the sum
+      // again rather than cancelling against what came before it.
+      if (acc !== 0 && Math.sign(delta) !== Math.sign(acc)) acc = 0;
+      acc += delta;
 
-      if (Math.abs(delta) < MIN_DELTA) return;
-
-      if (!ready) {
-        event.preventDefault();
-        return;
-      }
-
-      const target = nextStop(delta > 0);
+      const down = acc > 0;
+      const target = nextStop(down);
 
       // Past the last stop in that direction: let the browser have it, so the
       // page can still be scrolled to its very top or bottom.
-      if (target === undefined) return;
+      if (target === undefined) {
+        acc = 0;
+        return;
+      }
 
+      // Claimed either way. Below the threshold the event is still part of a
+      // gesture that is being measured, and letting it reach the browser is what
+      // made a slow drag crawl and spring back.
       event.preventDefault();
+
+      if (!discrete && Math.abs(acc) < GESTURE_PX) return;
+
+      acc = 0;
       pageTo(target, true);
     };
 
@@ -286,6 +363,8 @@ export default function PagedScroll() {
         return;
       }
 
+      // The keyboard is not a stream, so it measures fresh every time.
+      stops = null;
       const stop = nextStop(PAGING_KEYS[event.key]);
       if (stop === undefined) return;
 
@@ -302,6 +381,7 @@ export default function PagedScroll() {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKeyDown);
       window.clearTimeout(quiet);
+      window.clearTimeout(settle);
       // Never leave snapping off behind us.
       document.documentElement.style.scrollSnapType = "";
     };

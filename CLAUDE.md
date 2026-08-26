@@ -111,9 +111,30 @@ The wheel **and the unmodified arrow and page keys** are paged by
 typing and touch are handed straight back to the browser. The keyboard was left
 out at first and that was the bug: an arrow key scrolls about 40px, proximity
 snapping decides the page is still nearest the stop it just left and drags it
-back, so the press does nothing. Keys and wheel share one lock so neither can
-compute a target from a position the other is animating away from — but only the
-wheel holds it through a momentum tail, because a keystroke does not have one.
+back, so the press does nothing.
+
+Two rules run that file, and everything reported as "scrolling is sometimes not
+working" has been a violation of one of them:
+
+- **A gesture is the sum of its events, never one of them.** A trackpad emits a
+  scroll as dozens of deltas, and a gentle drag's are all one to three pixels.
+  Thresholding each event on its own threw the whole drag away — and because an
+  event the handler declines to claim is one the *browser* scrolls on, the page
+  crawled ~120px natively and snapping dragged it back. Every wheel event is now
+  claimed as long as there is a stop to move to; only the accumulated total
+  decides whether to page.
+- **Momentum is told from intent by shape, not by a stopwatch.** A firm flick
+  keeps emitting for up to two seconds after the fingers lift. The lock used to
+  be released on a fixed ceiling, which expired mid-tail while the deltas were
+  still large and paged a second time — measurably, every hard flick moved two
+  panels. A tail only ever decays, so it is now held to its end, and a genuine
+  second push during it is recognised by being suddenly bigger than what came
+  before. A pause of 150ms also ends it outright, because momentum never pauses.
+
+The wheel aims from where the page is *heading* rather than from where it is, so
+a second flick during a running scroll targets the stop after the one being
+travelled to. The keyboard still waits for the scroll to settle, because a held
+key repeats about thirty times a second.
 
 `app/lockup.js` holds the Kalos mark and wordmark as vector paths, in three
 exports: the full `Lockup`, and `Mark` / `Wordmark` separately so the hero can
@@ -279,12 +300,16 @@ bun run check:scroll   #         -- what happens when the page is driven
 and exists because every scroll bug in this project was reported as a feeling
 ("impossible to scroll", "it kinda freaks out", "super weird") and every one had
 a specific cause a browser could measure. It asserts that one trackpad flick
-moves exactly one view, that the wheel and the keyboard each leave the other
-usable straight afterwards, that typing and modified keys are handed back, and
-that "Back to Work" lands on its own panel. **A synthetic wheel event is not a
-trackpad** — a flick is a burst of small deltas plus a decaying tail, and an
-earlier round of tuning passed with single large deltas while the real trackpad
-was unusable. The check emits the burst.
+moves exactly one view — a short one, a hard one whose tail runs a second and a
+half, and a gentle drag made entirely of 3px events — that a twitch moves
+nothing, that a second flick 0/150/400ms after the first still pages, that the
+wheel and the keyboard each leave the other usable straight afterwards, that
+typing and modified keys are handed back, and that "Back to Work" lands on its
+own panel. **A synthetic wheel event is not a trackpad** — a flick is a burst of
+small deltas plus a decaying tail, and an earlier round of tuning passed with
+single large deltas while the real trackpad was unusable. The check emits the
+burst, and it emits a long one: a short tail ends before any plausible lock does
+and so never exercises the case that broke.
 
 `scripts/check-landing.mjs` drives real Chrome across five viewports and asserts
 the two things that have actually gone wrong: that landing on a case study leaves
@@ -321,6 +346,13 @@ Beyond that:
 
 ## Git
 
-Work on a feature branch and confirm before pushing anywhere else. Commit
-messages: short imperative subject, then prose explaining the reasoning — match
-the existing log, which is unusually descriptive and worth keeping that way.
+Work on a feature branch. Commit messages: short imperative subject, then prose
+explaining the reasoning — match the existing log, which is unusually descriptive
+and worth keeping that way.
+
+**Every local commit gets pushed to its own branch on GitHub, in the same
+breath.** Not at the end of the session, not when asked: commit then
+`git push origin <branch>`. Parallel sessions share this working tree and the
+remote is the only place they can see each other's work, so an unpushed commit is
+invisible to everything but this checkout. Pushing anywhere *other* than the
+current feature branch — `main` especially — still needs confirming first.
