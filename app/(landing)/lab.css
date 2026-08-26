@@ -1,0 +1,417 @@
+.lab {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  /* No background. It used to paint the page ground, which was correct while the
+     ground was flat; the sand is behind the whole page now and an opaque hero
+     would be a black rectangle sitting on top of it. The warm radial in ::before
+     and the vignette in ::after both stay, and both are translucent. */
+  display: block;
+  /* `pan-y`, not `none`.
+   *
+   * This was `touch-action: none` for as long as the hero was the entire page,
+   * where every touch was meant for the mark. It is the first section of a
+   * scrolling page now, and `none` swallows the vertical swipe too: a thumb
+   * starting anywhere on the hero, which is the whole first screen, would fail
+   * to scroll the page at all. `pan-y` hands vertical panning back to the
+   * browser and keeps horizontal drag for the mark. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* A warm radial sitting under everything. The Figma renders aren't on pure black
+   — there's a brown falloff around the object — and without it the canvas edges
+   read as a hard rectangle against the page. */
+.lab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 45%,
+    rgba(88, 60, 24, 0.4) 0%,
+    rgba(30, 20, 8, 0.25) 40%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
+/* Vignette. This used to be a postprocessing pass, which meant a full extra
+   render target every frame to do something a gradient does for free — and it
+   meant the mood changed on phones, which skip postprocessing entirely. As CSS
+   it costs nothing and looks identical everywhere. Painted after .lab-stage, so
+   it sits over the canvas but under the hero copy. */
+.lab::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* Held well clear of the mark. An earlier attempt started falling off at 42%,
+     which put the lockup itself inside the darkened zone and turned the gold to
+     bronze — the vignette should frame the object, never touch it. */
+  background: radial-gradient(
+    ellipse 92% 88% at 50% 40%,
+    transparent 58%,
+    rgba(0, 0, 0, 0.26) 84%,
+    rgba(0, 0, 0, 0.58) 100%
+  );
+  /* Faded out before the hero's bottom edge, which is what removes the hairline
+     that used to run across the page there.
+   *
+   * It was never a border or a rule, which is what it looked like: the vignette
+   * is a good way into its falloff by the time it reaches the bottom of .lab,
+   * and then the element ends and the darkening stops within one pixel. The sand
+   * runs continuously behind both sides, so the boundary read as a hard
+   * horizontal line ruled across an unbroken field.
+   *
+   * A mask rather than a shorter gradient, because the two ends of the falloff
+   * do different jobs. The radial has to keep reaching full strength at the left
+   * and right edges to frame the object; only the bottom has to arrive at
+   * nothing. 74% is below the mark and below the point the vignette is doing
+   * visible work in the middle of the frame.
+   *
+   * Measured at 1440x900, as the median over x of a ten-row band below the edge
+   * minus a ten-row band above it: 2.83 without this, 0.22 with it, where 0.22
+   * is also what the same page measures with the vignette removed entirely. So
+   * the step that is left is the sand's own structure and not a seam.
+   *
+   * Measure it that way if it comes back. Plain row means across the boundary
+   * cannot see this: the sand is generated as horizontal dune ridges, so row
+   * means legitimately swing by half a luminance step on their own and they
+   * swamp the thing being looked for. Differencing the same column above and
+   * below cancels the ridge out. Comparing two page loads cannot see it either,
+   * since the field is regenerated with a new seed each time.
+   *
+   * Prefixed as well as not: unprefixed mask-image only landed in Safari 15.4,
+   * and an unmasked vignette here is the visible bug rather than a nicety. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 74%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 74%, transparent 100%);
+}
+
+.lab-stage {
+  position: absolute;
+  inset: 0;
+  /* Deliberately under the masthead, which is z-index 3.
+   *
+   * Worth writing down, because it was raised above it once and it looks like
+   * the obvious thing to do: the object docks *into* the lockup, so surely it
+   * should be in front of it. It should not. Two things go wrong when it is.
+   *
+   * The flight's straight line passes about 8px under the wordmark's bottom
+   * left, and the object is still wider than its final size when it gets there,
+   * so an object in front clips the corner of the "K" for the last stretch of
+   * the approach — measured at roughly 20x17px, a gold shape cutting into a
+   * white letterform. Nothing about the path can avoid it; the two simply
+   * overlap.
+   *
+   * And what is left standing at the end is better as the flat mark. It is an
+   * SVG rather than an antialiased WebGL edge, and it is the thing that stays on
+   * screen; handing over to it rather than covering it means the last frame is
+   * the crisper of the two.
+   *
+   * So the object goes behind, which is also what "embeds into the logo"
+   * describes. It is visible right up to the point where it reaches the flat
+   * mark's own size, by which time both are the same gold, and it merges into
+   * it. See HANDOVER_FROM in variants/solid.js. */
+  /* Same reasoning as .lab above: horizontal drag turns the mark, vertical
+     swipe scrolls the page past it. */
+  touch-action: pan-y;
+}
+
+.lab-stage canvas {
+  display: block;
+}
+
+/* The renderer's chunk is a few hundred KB and only starts downloading once the
+   page is interactive, so on a phone the stage arrives seconds after the copy.
+   It fades up on its first painted frame instead of appearing at full strength.
+
+   Kept short deliberately. The mark's entrance — it swings from an off-target
+   rotation into place — begins on the same frame this fade does, and covers
+   most of its distance early. A longer fade would hide exactly the part that
+   tells you the thing moves. */
+.lab-canvas {
+  opacity: 0;
+  transition: opacity 260ms ease-out;
+}
+
+.lab-canvas.is-revealed {
+  opacity: 1;
+}
+
+.lab-loading {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- masthead ---------- */
+
+/* Top left, the way a logo sits on any site. `env()` rather than a flat inset so
+   the mark clears the notch and the rounded corner when this is opened on a
+   phone in landscape — where a fixed 1.5rem would put it under the sensor
+   housing. */
+/* Fixed, not absolute, and this is what makes the dock possible at all.
+ *
+ * Measured: as an absolutely positioned child of .lab, the lockup's screen top
+ * ran 26, -48, -122, -265, -389 over the scroll the mark takes to fly to it. It
+ * left the viewport inside about 56px of scroll, so the mark was landing on a
+ * target that had been off screen for most of the flight and the arrival — the
+ * lockup turning gold, the entire point — happened where nobody could see it.
+ *
+ * Fixed keeps it in place through the hero, which is what the annotation asking
+ * for it to "disappear once user scrolls past hero" implies: it has to be there
+ * to disappear from.
+ *
+ * Nothing here takes it away, though. It was `.lab-header.is-past`, a class with
+ * a 260ms fade fired at the end of the dock, and it is now a scroll-driven
+ * opacity written from the dock handler in variants/solid.js — from the end of
+ * the dock to the bottom of the hero, so the masthead is leaving across exactly
+ * the stretch of scroll that has nothing else happening on it, and is gone as
+ * the first case study arrives. Worth knowing before adding any transition to
+ * this element: that handler has to suppress the one below to work at all. */
+.lab-header {
+  position: fixed;
+  top: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-top));
+  /* Full width. Where the lockup and the menu land inside it is .site-masthead's
+     job, and that is no longer the page grid: see the note in masthead.css for
+     why the masthead is the one surface on this page pinned to the viewport. */
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 3;
+  /* Was `animation: lab-fade-in 1.2s ease 0.25s both`. The delay was the
+     problem: it is measured from when the CSS applies, which is when the page
+     shell paints, and the renderer behind it can be seconds away on a phone. The
+     lockup arrived over an empty background and had finished arriving before
+     there was a mark to sit above.
+     It waits for the sunrise now. hero.js adds .is-lit when the stage says the
+     light is up, with the same timeout fallback the stage itself has, so a lost
+     context cannot leave the masthead invisible. */
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 900ms ease, transform 900ms ease;
+}
+
+.lab-header.is-lit {
+  opacity: 1;
+  transform: none;
+}
+
+/* The lockup used to be wrapped in an <h1>, from when the hero was the entire
+   page and the logo was the only heading on it. The page has a real headline
+   now, so that left two h1 elements on one document: bad for a screen reader
+   walking the outline, and bad for search. It is just artwork here.
+
+   Its sizing rule went with it. Worth remembering why that rule was awkward:
+   `.lab-header h1` weighed (0,1,1) against `.lab-shell` at (0,1,0), so putting
+   the shell class on the h1 meant its `margin: 0` beat `margin: 0 auto` and the
+   masthead never centred on the grid at all. */
+
+/* Sized off its height rather than its width — 568×139 is a long lockup, and a
+   width that looks modest on a wide window is a hairline on a phone. These land
+   it between 24px and 30px tall, which is the range a site header logo lives in. */
+.lab-lockup {
+  display: block;
+  width: clamp(98px, 9vw, 124px);
+  height: auto;
+  color: var(--color-snow-white);
+}
+
+/* Where the mark lands.
+ *
+ * The gold is on the mark's own group, not on the whole svg. This used to set
+ * `color` on .lab-lockup, which carried every path in one change and turned
+ * "kalos" gold along with the triangle and the diamond — a logo swapping colour
+ * as you scroll past it. What the flight is describing is narrower than that:
+ * the 3D object comes down into the slot its flat twin occupies, and only that
+ * slot changes. The word stays Snow White throughout, so the mark reads as
+ * having set *into* the lockup rather than the lockup having been repainted.
+ *
+ * `fill` rather than `color` for the same reason — the two groups inherit
+ * currentColor from the svg, so overriding fill on one leaves the other on the
+ * inherited white with no second colour to keep in sync.
+ *
+ * Mixed against a scroll-driven ratio rather than transitioned between two
+ * states. It was `transition: fill 420ms` on a class, and a timed transition is
+ * the wrong instrument for this: the object above this mark is dissolving in
+ * step with the scroll, so the thing showing through has to come up in step with
+ * the scroll too. A 420ms ramp starting on a threshold is only in step at the
+ * one scroll speed it was tuned at.
+ *
+ * --mark-gold is written by the dock handler in variants/solid.js and reaches 1
+ * well before the dissolve does, so the object is still covering this when it
+ * finishes going gold. The 0 fallback is what every other surface gets: the
+ * mark stays Snow White with no JS, and on /work and /about this rule does not
+ * apply at all. */
+.lab-lockup .lockup-mark {
+  fill: color-mix(
+    in oklab,
+    var(--color-snow-white),
+    var(--color-vulcan-gold) calc(var(--mark-gold, 0) * 100%)
+  );
+}
+
+/* The hero copy is gone: the mock's hero is the lockup, the sand and the mark,
+   and nothing else. .lab-copy, .lab-measure, .lab-h1, .lab-sub and the
+   lab-copy-in keyframes went with it, along with --lab-copy-shift, the custom
+   property that existed because an entrance with fill-mode both would otherwise
+   cancel the centring transform. Worth remembering that trap even though the
+   thing it applied to has gone; it is written up in CLAUDE.md. */
+
+/* Puts hero content on the same grid as every section below it. */
+.lab-shell {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding-inline: max(var(--page-pad), env(safe-area-inset-left));
+}
+
+/* ---------- scroll cue ---------- */
+
+/* Where the chevron sits. What it looks like is .ln-cue in landing.css.
+ *
+ * Absolute inside .lab rather than fixed, so it leaves with the hero instead of
+ * following the reader down a page it has already told them about. z-index 2:
+ * over the vignette (.lab::after at 1), which otherwise darkens it along with
+ * the corner it is sitting in.
+ *
+ * It waits for the sunrise exactly as the masthead does, and for the same
+ * reason. A CSS delay is measured from when the page shell paints and the
+ * renderer behind it can be seconds away on a phone, so "there is more below"
+ * would fade in over an empty black rectangle. hero.js adds .is-lit on the
+ * stage's own signal, with the same timeout fallback, so a lost context cannot
+ * leave it invisible forever either. */
+.lab-cue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(1.75rem, calc(env(safe-area-inset-bottom) + 1rem));
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+.lab-cue.is-lit {
+  opacity: 1;
+}
+
+/* Gone once the reader starts scrolling, which is the moment the cue has been
+   answered. It scrolls off the top of the screen with the hero either way, but
+   riding all the way up the viewport while it goes is an instruction still being
+   given to someone already following it.
+ *
+ * Faster leaving than arriving, and deliberately so: 900ms is the sunrise
+ * handing the page over, 240ms is a thing getting out of the way. Coming back is
+ * the slow transition again, because .is-lit is what applies then, which suits
+ * a reader who has scrolled back to the top and is being offered it a second
+ * time rather than shown it.
+ *
+ * Same weight as .is-lit at (0,2,0), so this has to stay below it in the file to
+ * win. hero.js can set both classes at once and does. */
+.lab-cue.is-gone {
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+/* ---------- iOS motion prompt ---------- */
+
+/* Positioned against the viewport rather than sitting in anything's flow, so it
+   can appear and disappear without moving a pixel of the rest of the page. It
+   takes the lower margin the lockup used to occupy: an instruction about
+   handling the phone belongs near the thumbs, not up by the masthead. */
+.lab-tilt-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* Was at the bottom of the viewport, which the hero copy now occupies. Moved
+     to just under the masthead: still clear of the mark, still nowhere near the
+     headline. */
+  top: max(5.25rem, calc(env(safe-area-inset-top) + 4rem));
+  display: block;
+  /* Tappable, which it was not. This is a <button> now: it is the one element on
+     screen that says "tap", so it had no business being pointer-events: none. */
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0.5rem 1rem;
+  margin: 0 auto;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  z-index: 3;
+  /* Matched to the deck's label treatment like the rest: Regular, sentence
+     case, negative tracking. It was 0.72rem uppercase at +0.2em. */
+  font-size: var(--type-small);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  /* An earlier pass sat at #4c4132, which made the one line on the page that's
+     actually an instruction effectively invisible on an OLED phone. */
+  color: var(--color-vulcan-gold);
+  /* Delays are measured from the moment this mounts, which is now the stage's
+     first frame rather than page load. 0.9s lets the mark's entrance swing play
+     and settle first — motion, then the instruction about motion. */
+  animation: lab-hint-in 1s ease 0.9s both,
+    lab-hint-pulse 2.6s ease-in-out 1.9s infinite;
+}
+
+.lab-tilt-hint:focus-visible {
+  outline: 2px solid var(--color-vulcan-gold);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+@keyframes lab-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A slow breath, so the eye catches it without it becoming a button. Shallow on
+   purpose — dipping to 0.5 meant half the cycle was spent at a brightness that
+   defeated the point of the hint existing. */
+@keyframes lab-hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 640px) {
+  /* Vertical only. The horizontal inset used to live here too, and once the
+     masthead moved onto the page grid it was adding to the shell's padding
+     instead of replacing it, putting the lockup 22px right of the text below. */
+  .lab-header {
+    top: max(1.35rem, env(safe-area-inset-top));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Same entrance, no travel: the fade is information (the page is arriving),
+     the 6px of movement is decoration. The lockup is still cued by the sunrise
+     rather than a delay, and the sunrise itself is shortened rather than
+     removed — see sunriseSeconds() in device.js for why cutting straight to the
+     lit state reads as broken instead of restrained. */
+  .lab-header {
+    transform: none;
+  }
+
+  .lab-header.is-lit {
+    transform: none;
+  }
+
+  .lab-tilt-hint {
+    animation: lab-hint-in 1s ease 0.9s both;
+  }
+}

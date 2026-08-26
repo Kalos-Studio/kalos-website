@@ -1,5 +1,138 @@
 @import "tailwindcss";
 
+/* ---------- brand tokens ---------- */
+
+/* The palette, verbatim from "Our colors." in the brand file (node 132:9101),
+   names and roles included. Earlier versions of this block were sampled off
+   renders because that slide had not been found yet; the sampling was close
+   (Snow White came out exact) but these are the real values and, more usefully,
+   the real names and jobs. Use the role, not the vibe: silver is secondary
+   text, eerie gray is borders and card grounds, vulcan gold is the accent and
+   nothing else.
+ *
+ * Tailwind v4 has no config file — `@theme` is where tokens live, and each
+ * entry also generates the matching utility, so `--color-vulcan-gold` gives you
+ * `bg-vulcan-gold`, `text-vulcan-gold` and the rest. */
+@theme {
+  /* Primary canvas background. */
+  --color-obsidian-black: #040406;
+
+  /* Primary text and key headlines. */
+  --color-snow-white: #f5fefd;
+
+  /* Secondary text and sub-labels. Replaces the assorted rgba(snow, 0.4-0.6)
+     values that were standing in for it before the palette turned up.
+   *
+   * SECONDARY TEXT, THE RULE. The brand file supports two readings and the site
+   * was quietly using both, so this is the decision:
+   *
+   *   prose you read      -> --color-dark-silver          (#A8A8A8)
+   *   chrome you glance at -> snow white at 32%           (about #545454)
+   *
+   * Body copy, captions, step descriptions and client names are prose. Running
+   * heads, step numbers and page indices are chrome. Both readings are honestly
+   * in the file: the palette board says Dark Silver is "secondary text and
+   * sub-labels", while every piece of secondary text the deck actually draws is
+   * white at 32% — and those two are nowhere near each other. Split by role
+   * because the deck is right about chrome and the board is right about prose:
+   * 32% is correct for a label you never read twice and genuinely hard to read
+   * for a paragraph on a phone in daylight.
+   *
+   * Body copy stays Dark Silver rather than following the deck to Snow White.
+   * That is a deliberate departure: a slide is read once from across a room,
+   * where its only competition is the wall, and a landing page is read at arm's
+   * length while scrolling, where the headline has to stay the loudest thing in
+   * its section. Recorded here so it reads as a decision and not as drift.
+   *
+   * Do not invent a third value. Where something needs to sit quieter than
+   * Dark Silver, it should come from size and measure, not from a new grey. */
+  --color-dark-silver: #a8a8a8;
+
+  /* Borders, grid lines and card backgrounds. */
+  --color-eerie-gray: #212225;
+
+  /* Accent: buttons, callouts, active indicators. One gold, used sparingly.
+     The brand file is explicit about the job, so it should not start showing up
+     as a fill or a body-text colour. */
+  --color-vulcan-gold: #ae9357;
+
+  /* Space Grotesk, Medium, with five OpenType features deliberately on. The
+     alternates are not decoration: they are why the wordmark and the deck's
+     headlines have the letterforms they do. */
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Not brand palette: values measured off the 3D renders, for the hero material
+   only. The mark is a lit object rather than a flat fill, so it needs a ramp
+   the palette does not carry. Kept out of @theme deliberately, so they cannot
+   be reached as `bg-*` utilities and drift into the page as if they were brand
+   colours. */
+:root {
+  --gold-render-face: #ac9267;
+  --gold-render-rim: #f4eeda;
+}
+
+/* The page grid, in one place, because two places is how it drifted.
+ *
+ * The hero used to inset from the viewport edge (a flat 2rem) while every
+ * section below sat in a centred 1080px container. Both look deliberate on a
+ * phone, where they happen to land on the same pixel, and diverge as the screen
+ * grows: measured, the hero headline started 108px left of the section text at
+ * 1280, 188px at 1440 and 332px on a 16in laptop. Nothing on the page shared a
+ * left edge, which is the thing you feel before you can name it.
+ *
+ * Anything that wants to sit on the page's left edge uses .page-shell now. */
+:root {
+  --page-max: 1080px;
+  --page-pad: clamp(1.25rem, 5vw, 2.5rem);
+}
+
+/* The type scale, in one place, because it was in three and none of them agreed.
+ *
+ * work.css alone carried twenty ad-hoc sizes — 0.8, 0.85, 0.9, 0.95, 1.05, 1.1,
+ * 1.25, 1.4, 1.5, 1.75rem and more — which is not a scale, it is a list of
+ * numbers that each looked right on the day. Two pages of one site were also
+ * running two different ladders, so a case study title and a section headline
+ * were set differently for no reason anyone could state.
+ *
+ * Seven steps, each with a job. Adjacent steps are roughly a 1.25 ratio apart,
+ * which is the smallest gap two sizes can sit at and still read as deliberately
+ * different rather than as a mistake.
+ *
+ * Deliberately in :root rather than @theme. @theme would generate `text-*`
+ * utilities, and a scale that can be applied ad hoc from markup is a scale that
+ * drifts — which is how the twenty numbers happened.
+ *
+ * The brand file has four sizes (160 / 116 / 26 / 16 on a 1920 frame) and no
+ * intermediates, because a deck has no card titles, no captions and no facts
+ * line. Display and body are its numbers brought onto a 1080 grid. The rest are
+ * derived from what this site actually has to set.
+ */
+:root {
+  /* 40 - 80. The word, and nothing else. */
+  --type-display: clamp(2.5rem, 5.6vw, 5rem);
+  /* 32 - 60. Section headlines and case study titles. */
+  --type-title: clamp(2rem, 5vw, 3.75rem);
+  /* 22 - 28. Sub-headings, pull quotes, anything leading a paragraph. */
+  --type-heading: clamp(1.375rem, 2.2vw, 1.75rem);
+  /* 17 - 22. A first sentence: the definition, a case study summary. */
+  --type-lead: clamp(1.0625rem, 2vw, 1.375rem);
+  /* 16 - 18. Reading size. */
+  --type-body: clamp(1rem, 1.6vw, 1.125rem);
+  /* 15. Secondary text that is still meant to be read. */
+  --type-small: 0.9375rem;
+  /* 13. Captions, facts, credits. Below this the brand face stops working — it
+     is a display grotesk and it gets brittle. */
+  --type-micro: 0.8125rem;
+}
+
+/* Applied wherever the brand face is set. Kept as a custom property rather than
+   repeated, because forgetting it renders Space Grotesk's default forms and the
+   type quietly stops matching the logo. */
+:root {
+  --brand-features: "salt" 1, "ss01" 1, "ss02" 1, "ss03" 1, "ss04" 1;
+}
+
 /* Everything below this line is unlayered, which is what keeps it winning.
  *
  * Tailwind v4 puts its own reset inside `@layer base`, and unlayered CSS beats
@@ -24,13 +157,26 @@
  *
  * If Tailwind is ever removed, this reset has to come back. */
 
+/* The ground and the primary text colour, from the tokens above rather than from
+   pure black and pure white. Those two predate the palette by a long way, and
+   `#000` in particular is not a brand value: Obsidian Black is `#040406`, which
+   is very slightly blue and very slightly lifted. The difference is small on a
+   monitor and clearly visible on an OLED phone, which is where most of the
+   traffic is.
+ *
+ * Kept in sync with `themeColor` in app/layout.js, or the browser chrome and
+ * the page ground are two different blacks meeting at the top of the screen. */
 html,
 body {
   height: 100%;
   overflow: hidden;
-  background: #000;
-  color: #fff;
+  background: var(--color-obsidian-black);
+  color: var(--color-snow-white);
   -webkit-font-smoothing: antialiased;
+  /* The brand face ships with five stylistic sets deliberately on. Set here so
+     no surface can forget them and quietly render the default letterforms,
+     which stop matching the logo. */
+  font-feature-settings: var(--brand-features);
   /* Preflight sets the root to line-height 1.5. Every page here was composed
      against the browser default, and adopting 1.5 silently moved things — the
      work login card grew 17px, the home hero shifted 3px. Restoring `normal`
@@ -39,149 +185,30 @@ body {
   line-height: normal;
 }
 
-main {
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  position: relative;
-  overflow: hidden;
-}
+/* The `main`, `h1` and `p` element rules that used to sit here are gone.
+ *
+ * They were art direction for the spotlight homepage: a full-viewport centred
+ * flex column, an 11rem headline, and uppercase letter-spaced grey body copy.
+ * That page was deleted, and the rules outlived it as a trap. Being unlayered
+ * they outranked every Tailwind utility, so `text-4xl` on an h2 silently did
+ * nothing, and every surface built since had to spend a rule buying its own
+ * type back. Two separate bugs in this branch came from exactly that, both
+ * found by measuring computed styles rather than by looking.
+ *
+ * What they were still quietly providing has moved to the page that wanted it:
+ * the paragraph size to .work-root, the heading leading to .work-login-card.
+ * Verified by diffing computed styles across every page before and after. */
 
-h1 {
-  font-size: clamp(3.5rem, 20vw, 11rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-p {
-  font-size: clamp(0.875rem, 2vw, 1.125rem);
-  font-weight: 400;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #888;
-}
-
-/* Entrances are CSS, not JS: if hydration is slow or an animation fails to
-   start, the page still resolves to a readable state on its own. */
-@keyframes spot-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.spot-layer {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.spot-layer.base {
-  animation: spot-in 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.spot-lens,
-.spot-glow {
-  animation: spot-in 2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
-}
-
-/* Dim, but never invisible — the wordmark should read as "there but unlit"
-   rather than as an empty page. */
-.spot-layer.base h1 {
-  color: #3a3a3a;
-}
-
-/* The subtitle stays legible without the light — the page should still say what
-   it is for someone who never moves their cursor. */
-.spot-layer.base p {
-  color: #6f6f6f;
-}
-
-.spot-layer.lit h1 {
-  color: #fff;
-}
-
-.spot-layer.lit p {
-  opacity: 0;
-}
-
-.spot-lens {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  will-change: transform;
-  -webkit-mask-image: radial-gradient(
-    circle at 50% 50%,
-    #000 0%,
-    rgba(0, 0, 0, 0.72) 42%,
-    transparent 70%
-  );
-  mask-image: radial-gradient(
-    circle at 50% 50%,
-    #000 0%,
-    rgba(0, 0, 0, 0.72) 42%,
-    transparent 70%
-  );
-}
-
-.spot-lens-inner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100dvh;
-  will-change: transform;
-}
-
-.spot-glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 255, 255, 0.06) 0%,
-    transparent 70%
-  );
-}
-
-/* A whisper of film grain — kills the flatness of pure #000 and hides the
-   banding in the glow's falloff. */
-.spot-grain {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* The static fallback lives here rather than in a JS branch, so the server and
-   client always render the same tree. */
-@media (prefers-reduced-motion: reduce) {
-  .spot-grain,
-  .spot-glow,
-  .spot-lens {
-    display: none;
-  }
-
-  .spot-layer.base {
-    animation: none;
-  }
-
-  .spot-layer.base h1 {
-    color: #fff;
-  }
-}
+/* Two notes for whatever replaces them, both measured off the brand file rather
+   than off habit, because the deleted rules had them wrong and the next headline
+   rule written from scratch will otherwise get them wrong the same way.
+ *
+ * Weight: the deck contains exactly two, Regular and Medium. There is no bold
+ * anywhere in it and the wordmark itself is Medium, so the `700` that used to be
+ * on `h1` here was heavier than anything the brand owns. Space Grotesk also tops
+ * out at 700, so nothing above that renders honestly either.
+ *
+ * Tracking: -0.02em at every size in the file, measured across four of them —
+ * -0.32px at 16px, -0.52px at 26px, -2.32px at 116px, -3.08px at 154px. One
+ * ratio, four sizes. The `-0.04em` that used to be here was roughly double it
+ * and was invented, and nothing in the file tracks positive at all. */

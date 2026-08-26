@@ -1,19 +1,27 @@
 import Link from "next/link";
 import CoverImage from "./CoverImage";
-import { caseStudies } from "./data";
+import { caseStudies, workIndex, workPageTitle } from "./data";
+
+// Moved off app/work/layout.js so a 404 under /work does not inherit it. The tab
+// keeps the one word; workIndex.title is the headline on the page, and the two
+// are deliberately different. See the note in layout.js.
+export const metadata = {
+  title: workPageTitle("Work"),
+};
 
 export default function WorkIndexPage() {
   return (
     <div className="work-shell work-shell--wide">
-      <p className="work-construction-note">
-        This is a temporary repository as we build out our website. More
-        case studies are coming soon.
-      </p>
-
+      {/* The "temporary repository, more coming soon" note is gone with the
+          password gate. It was true while this was an unlisted holding page and
+          it is an apology now: the homepage sends people here on purpose. */}
+      {/* The lockup that used to sit above this title is in the masthead now,
+          pinned to the window rather than to this shell's left margin, which on
+          a laptop was 164px in from the edge of the screen. What is left here is
+          the page's headline. */}
       <header className="work-header">
-        <Link href="/work" className="work-wordmark">
-          kalos <span>/ work</span>
-        </Link>
+        <h1 className="work-title">{workIndex.title}</h1>
+        <p className="work-standfirst">{workIndex.standfirst}</p>
       </header>
 
       {caseStudies.length === 0 ? (
@@ -26,12 +34,12 @@ export default function WorkIndexPage() {
                 <CoverImage
                   cover={cs.cover}
                   className="work-card-cover"
+                  sizes="(min-width: 640px) 50vw, 100vw"
                   objectPosition={cs.cover?.cardPosition}
                   priority={i === 0}
                 />
                 <h2 className="work-card-title">{cs.title}</h2>
                 <p className="work-card-summary">{cs.summary}</p>
-                <span className="work-card-link">View case study →</span>
               </Link>
             </li>
           ))}

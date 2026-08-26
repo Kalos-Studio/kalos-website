@@ -1,0 +1,605 @@
+/* Page-level structure for the landing page. Hero art direction stays in
+   lab.css; this file owns everything below the fold. */
+
+/* globals.css pins html/body to overflow:hidden, a holdover from when the
+   homepage was a single fixed viewport. The page scrolls now, so it takes its
+   own scroll container, the same escape /work uses. Changing the global is the
+   better fix and is deliberately not being done here: /work and the hero both
+   depend on the current behaviour, and untangling that belongs in its own
+   commit rather than buried in a page build. */
+.landing-root {
+  display: block;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior-y: none;
+  background: var(--color-obsidian-black);
+  color: var(--color-snow-white);
+  line-height: 1.5;
+  /* "Scroll stopping on titles", from the mock's own annotation.
+   *
+   * Proximity, never mandatory. Mandatory snap takes the scroll away from the
+   * reader: on a page whose longest section is 1261px against a 900px viewport,
+   * it means content taller than the screen cannot be stopped inside, and a
+   * trackpad flick that should travel half a page instead lands on a boundary
+   * the reader did not choose. Proximity only pulls when you have already
+   * stopped near one, which is the behaviour the note is asking for.
+   *
+   * It goes here rather than on html because html does not scroll on this page
+   * — see the note above about the fixed-viewport holdover. */
+  /* No scroll-snap. The mock annotates "scroll stopping on titles" and it was
+     built as proximity snap, which measured fine — nothing trapped, max drift
+     ~180px — and felt janky in the hand, which is the only test that counts for
+     something that intercepts the reader's own scrolling. Proximity is the
+     gentle version already; there is no gentler one, so it goes rather than gets
+     tuned. If it comes back it wants a real device and a trackpad, not a
+     measurement. */
+  /* The sand sits at z-index -1, which paints above this element's own
+     background and below everything in flow — but only if this element is a
+     stacking context. Without `isolate` the negative child escapes into the root
+     context and disappears behind the page ground. */
+  isolation: isolate;
+}
+
+/* The generated black sand. Fixed, viewport sized, and taller than the viewport
+   by the parallax travel so there is always something under the visible area.
+   See sand.js for why it is generated rather than tiled. */
+.ln-sand-field {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  z-index: -1;
+  pointer-events: none;
+  /* The sand comes up with the sunrise. --dawn is written every frame by
+     applySunrise in variants/solid.js; the fallback is 1 so that a browser with
+     no WebGL, where the sunrise never runs, gets the lit field rather than a
+     black page. Fading toward the page ground rather than filtering brightness,
+     because opacity stays on the compositor. */
+  /* Floored at 0.32 rather than following --dawn all the way down. The sunrise
+     is meant to read on the mark, which is a mirror and can show light arriving;
+     the sand is a flat field and all it can do is fade, which at full range
+     turned the opening into a page-wide crossfade that out-shouted the object it
+     was supposed to be behind. */
+  opacity: calc(var(--sand-floor, 0.1) + (1 - var(--sand-floor, 0.1)) * var(--dawn, 1));
+  /* Only the transform is animated, and only from a rAF, so this stays on the
+     compositor rather than repainting six million pixels per scroll event. */
+  will-change: transform;
+}
+
+/* There used to be a `.landing-root :where(h1, h2, h3, p, ...)` reset here,
+   handing back the type properties globals.css was imposing through bare
+   element rules. Those rules are gone now, so there is nothing to hand back and
+   the reset went with them.
+ *
+ * Worth knowing what that unlocks: Tailwind's type utilities work on this page
+ * again. They could not before, because the reset was unlayered and unlayered
+ * CSS outranks `@layer utilities` no matter how specific the utility is. The
+ * .ln-* classes below stay, because a type scale belongs in one place rather
+ * than scattered across markup, but `text-sm` on a paragraph is now a normal
+ * thing to write here instead of a silent no-op. */
+
+/* ---------- rhythm ---------- */
+
+/* Was clamp(4.5rem, 11vw, 9rem), which gave a section 480 to 750px of height to
+   carry 50 to 80 words. The page measured 510 words over 6.4 screens, about 80
+   words a screen: you scrolled a lot and received little, and that ratio is what
+   read as "wordy" rather than the words themselves, which measure at grade 5. */
+.ln-section {
+  padding-block: clamp(3.25rem, 7vw, 5.5rem);
+}
+
+.ln-shell {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  /* Safe-area on the inline axis matters in landscape on a notched phone, where
+     the rounded corner and the sensor housing eat into the viewport. */
+  padding-inline: max(var(--page-pad), env(safe-area-inset-left));
+}
+
+/* The hairline between sections is gone. The mock has no rules on it at all:
+   sections are separated by the space around them and by the sand moving behind
+   them, which is what a rule would otherwise be doing less well. It also drew a
+   hard horizontal line across a field whose whole character is that it has no
+   hard horizontals in it.
+
+   The rule under the definition went too. The mock does draw one there, closing
+   the dictionary entry rather than dividing two sections, and it still read as a
+   divider on a page that no longer has any. */
+
+/* Heading in one column, prose in the other, instead of a heading stacked on a
+   672px paragraph inside a 1080px shell with the right half empty. Uses the
+   width the page already has, and breaks up a run of sections that were all the
+   same shape. Collapses to a stack below the breakpoint, where there is no
+   second column to be had. */
+.ln-cols {
+  display: grid;
+  gap: 2rem 3.5rem;
+}
+
+@media (min-width: 860px) {
+  .ln-cols {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: start;
+  }
+}
+
+/* ---------- type ----------
+ *
+ * Tracking is -0.02em everywhere, because that is what the brand file does at
+ * every size: its 16px label tracks -0.32px, its 26px body -0.52px, its 116px
+ * statement -2.32px. Three sizes, one ratio. The per-element values that used to
+ * be here (-0.01em, -0.025em, -0.035em, +0.24em) were invented.
+ *
+ * Leading is the one place this deliberately departs from the file. The deck
+ * sets body at `normal`, which is right for a presentation read from a distance
+ * and too tight for a paragraph someone actually reads on a phone. */
+
+/* The hierarchy, measured off the brand file rather than invented. Four levels
+   and no fifth:
+ *
+ *   section word   160px  Medium   -0.05em  leading 0.79   ("Mission", 206:223)
+ *   statement      116px  Medium   -0.02em  leading normal (209:10493)
+ *   body            26px  Regular  -0.02em  leading normal (194:10423)
+ *   running head    16px  Regular  -0.02em  32% white      (162:10194)
+ *
+ * Two things follow from that list. Tracking tightens as type grows, so -0.02em
+ * is not universal after all: the single-word display label takes -0.05em.
+ * And there is no eyebrow anywhere in the file. The 16px label is a running
+ * head at the top of a slide, not a tag above a headline.
+ *
+ * So the kicker over every section is gone. It was invented, and it is what made
+ * the page read as a template. Headings carry their own sections now, which also
+ * removed a redundancy: "Process" sat above "How it works". */
+
+/* Section headline. Sized up from a 3rem cap: the file sets its statements at
+   116px on a 1920 frame, roughly 6vw, and this was sitting at under 4vw, which
+   is quieter than the brand is anywhere. Leading loosens toward the `normal`
+   the file uses, rather than the 1.08 that came from web habit. */
+.ln-h2 {
+  font-size: var(--type-title);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.14;
+  text-wrap: balance;
+}
+
+.ln-body {
+  font-size: var(--type-body);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.6;
+  color: var(--color-dark-silver);
+}
+
+/* ---------- call to action ----------
+ *
+ * Modelled on the principle pills in the brand file, which are the only
+ * button-shaped objects the brand actually has. Sampled off the render rather
+ * than guessed, because the interesting part is not obvious from a screenshot:
+ * the stroke is not one colour. It runs bright cream at the top edge (#F4F0DF),
+ * falls to a duller gold at the sides (#CDB796), and goes dark at the bottom.
+ * It is a lit bevel, the same logic as the 3D mark's material, and a flat gold
+ * border misses the whole effect.
+ *
+ * So the border is a gradient (padding-box over border-box, which is the only
+ * way to get a gradient stroke with a solid interior), the interior stays the
+ * page ground rather than a fill, and a soft glow sits above it. */
+.ln-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem 2.25rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: var(--type-small);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  /* Between Vulcan Gold and the lit rim, which is where the pill's own label
+     sits when sampled. */
+  color: color-mix(in srgb, var(--color-vulcan-gold) 50%, var(--gold-render-rim));
+  background:
+    linear-gradient(var(--color-obsidian-black), var(--color-obsidian-black)) padding-box,
+    linear-gradient(
+        to bottom,
+        var(--gold-render-rim) 0%,
+        var(--color-vulcan-gold) 45%,
+        color-mix(in srgb, var(--color-vulcan-gold) 45%, var(--color-obsidian-black)) 100%
+      )
+      border-box;
+  box-shadow: 0 0 24px -6px color-mix(in srgb, var(--color-vulcan-gold) 45%, transparent);
+  cursor: pointer;
+  transition: box-shadow 220ms ease, color 220ms ease, transform 220ms ease;
+}
+
+.ln-cta:hover {
+  color: var(--gold-render-rim);
+  box-shadow: 0 0 34px -4px color-mix(in srgb, var(--color-vulcan-gold) 70%, transparent);
+  transform: translateY(-1px);
+}
+
+.ln-cta:active {
+  transform: translateY(0);
+}
+
+.ln-cta:focus-visible {
+  outline: 2px solid var(--color-vulcan-gold);
+  outline-offset: 4px;
+}
+
+/* ---------- proof strip ---------- */
+
+/* ---------- work cards ---------- */
+
+.ln-card-media {
+  position: relative;
+  /* 16:9, which is what the source images actually are. It was 16/10, and with
+     object-fit: cover that quietly took about 10% off each side of every 16:9
+     screenshot: the EchoCare tracking map lost the edges of the route. MARA's
+     cover is the only 16:10 file of the three and it is an edge-to-edge collage
+     with no focal subject, so it crops top and bottom without losing anything.
+     Match this to the covers rather than the other way round. */
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 0.625rem;
+  background: var(--color-eerie-gray);
+  box-shadow: inset 0 0 0 1px var(--color-eerie-gray);
+}
+
+.ln-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A project as a full-width row: copy left, screenshot right, three of them at
+   the same weight. It replaced a lead card over a grid of two, which ranked the
+   projects — the mock does not, and with six case studies on /work the homepage's
+   three are a sample rather than a podium. */
+.ln-work-row {
+  display: grid;
+  gap: 1.75rem;
+  margin-top: clamp(3rem, 7vw, 5rem);
+  align-items: center;
+}
+
+@media (min-width: 860px) {
+  .ln-work-row {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+}
+
+.ln-work-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+/* Sized off height, because these are five different lockups with five different
+   aspect ratios and a shared width would set them at five different weights.
+   Capped narrow as well, for the wide ones. */
+.ln-work-logo {
+  height: clamp(2rem, 3.4vw, 2.75rem);
+  width: auto;
+  max-width: 60%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+/* The stand-in for a client lockup that has not been supplied. Matched to the
+   logo's optical weight rather than to a type token: the logos beside it are
+   set by height, so a name in body size next to a 2.75rem mark reads as a
+   caption rather than as the row's title. Goes when the real file lands. */
+.ln-work-name {
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-snow-white);
+  /* Matches the logo box so the blurb below sits at the same offset either way. */
+  min-height: clamp(2rem, 3.4vw, 2.75rem);
+  display: flex;
+  align-items: center;
+}
+
+/* The media is a link, so it needs to say so on hover without moving: a
+   screenshot that jumps under the cursor reads as a glitch at this size. */
+.ln-card-media {
+  transition: box-shadow 240ms ease;
+}
+
+a.ln-card-media:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-vulcan-gold) 55%, transparent);
+}
+
+/* The one text link on the page. Gold, because the palette gives gold to
+   accents and active indicators and this is the page's only secondary action;
+   the arrow is a pseudo-element so it can move without the text moving with it. */
+.ln-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--type-small);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--color-vulcan-gold);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.ln-more::after {
+  content: "\2192";
+  transition: transform 200ms ease;
+}
+
+.ln-more:hover {
+  color: color-mix(in srgb, var(--color-vulcan-gold) 55%, var(--gold-render-rim));
+}
+
+.ln-more:hover::after {
+  transform: translateX(3px);
+}
+
+/* Centred under the work, where the mock puts it. */
+/* Closes the list of work rather than floating between it and the close.
+ *
+ * It was centred, and that was the whole problem. Every row is a two column
+ * grid, copy left and screenshot right, so nothing else in this section sits on
+ * the centre line: the link landed under the gap between the two columns,
+ * attached to neither. And the section below it is a centred headline over a
+ * centred button, so a small gold centred link directly above them read as a
+ * weak first attempt at the page's actual call to action.
+ *
+ * Left, on the same edge as every blurb above it, it is the last item in the
+ * list instead. */
+.ln-more--ends-list {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-more::after {
+    transition: none;
+  }
+}
+
+/* ---------- texture ----------
+ *
+ * A whisper of film grain over the whole page. The old spotlight homepage
+ * carried this and it went out with that page; it is worth having back, because
+ * every plate in the brand file is grainy (Gold_Sand is literally a photograph
+ * of grain) and because flat #040406 across five screens bands visibly on an
+ * OLED phone. Fixed rather than absolute, so it reads as a property of the
+ * screen instead of scrolling away with the content. */
+.landing-root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  /* Note this is the page's film grain, over everything including the mark, and
+     not the sand's own surface. The ripple ground paints its grain into the
+     canvas at device resolution instead — see grainLevels in sand-variants.js.
+     Driving both from here was tried and is why that ground's sparkle read as a
+     starfield: the field stayed smooth between the specks. */
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- entrance ----------
+ *
+ * Rise and fade on first scroll into view. Deliberately small: 14px and 620ms.
+ * The tell of a template is not that things animate, it is that they animate a
+ * long way and slowly enough to wait for. */
+.ln-reveal {
+  transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ln-reveal--out {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.ln-reveal--in,
+.ln-reveal--static {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-reveal {
+    transition: none;
+  }
+  .ln-reveal--out {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- closing plate ----------
+ *
+ * The final call to action sits on Gold_Ray from the brand file rather than on
+ * more flat black. It is the one full-bleed image moment on the page, and it is
+ * the studio's own artwork rather than a stock gradient. The scrim keeps the
+ * headline off the brightest part of the shaft. */
+/* No plate behind the close any more.
+ *
+ * There was a gold-ray image at 0.5 opacity with a radial scrim over it, from
+ * when the page ground was flat #040406 and the last screen needed something to
+ * happen on it. The sand does that now, across the whole page, and the plate was
+ * fighting it twice over: it drew a hard horizontal at the section's top edge —
+ * the same thing the hairline rules were doing, removed in the same pass — and
+ * it put a second, differently lit ground under a field that is already lit.
+ *
+ * public/home/gold-ray.webp goes with it. The design system page keeps its own
+ * copy under public/design-system, where it is a reference plate rather than
+ * page furniture. */
+.ln-closing {
+  position: relative;
+}
+
+/* ---------- the kalos entry ----------
+ *
+ * Built from the brand file's own treatment of the word (node 206:165), which
+ * sets it as a dictionary entry: the Greek at 120px, the grammatical labels at
+ * 50px in Vulcan Gold, then the definition and a rule. It was previously one
+ * mention inside a paragraph, which is a strange way to treat the studio's
+ * entire argument.
+ *
+ * Note the tracking. -0.05em, not the -0.02em the rest of the page uses. The
+ * file tightens display type as it grows: -8px at 160px on "Mission", -6px at
+ * 120px here, both landing on -0.05em. */
+/* "Kalos / καλός" on one line, which is how the mock sets it: the Latin
+   wordmark, a slash, the Greek in gold. It used to be the Greek alone at display
+   size with [adj] and [Greek] labels under it, a dictionary entry lifted from a
+   superseded node in the brand file. The mock is not making a dictionary entry,
+   it is naming the studio twice.
+
+   Set in Space Grotesk rather than as artwork. The wordmark IS Space Grotesk, so
+   rendering it as type is the same shape with none of the cost of an exported
+   asset, and it wraps and scales on a phone, which a fixed-width SVG does not. */
+.ln-word {
+  display: block;
+  /* Sized to hold "Kalos / καλός" on one line at the page's own width, which is
+     what the mock does. The mock is 1920 wide with a 667px column; ours is a
+     1080 grid, so its literal 100px does not transfer — at 100px the line
+     measures about 620px against a 600px column and breaks after the slash,
+     which puts the slash at the end of a line where it reads as punctuation
+     rather than as the join between two names for the same thing. */
+  font-size: var(--type-display);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--color-snow-white);
+}
+
+/* Vulcan Gold, which the palette assigns to accents. The slash goes with the
+   Greek rather than sitting between two colours as its own thing. */
+.ln-word-greek {
+  color: var(--color-vulcan-gold);
+}
+
+/* The mark takes a little under half. .ln-cols splits 5fr/6fr, which gives the
+   larger share to the right-hand column: right when that column held prose, and
+   wrong when it holds a square object next to a display headline. */
+@media (min-width: 860px) {
+  .ln-definition-row {
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    align-items: center;
+  }
+}
+
+.ln-definition {
+  margin-top: 1.25rem;
+  font-size: var(--type-lead);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+  color: var(--color-snow-white);
+}
+
+
+/* The Gold_Sand plate, as the slide has it: the word on the left, the material
+   on the right. Second image on the page, and it is the studio's own artwork. */
+/* 7:6, down from 4:5, and it is a slot being held rather than a picture being
+ * cropped. The web mock puts a second 3D mark exactly here, beside the
+ * dictionary entry, at 383x328 — which is this ratio. The plate stands in that
+ * space until the mark is live, so dropping the canvas in later is a swap and
+ * not a reflow. The plate becomes redundant at that point anyway: once the page
+ * ground is sand, a framed photograph of sand on top of it is a picture of the
+ * wall it is hanging on.
+ *
+ * Worth recording that this on its own bought no height, which is what it looked
+ * like it would do. The section is 176px of padding plus whichever column is
+ * taller, and that was never this one: the prose column measured 890px against
+ * the plate's 640. Shortening the plate only opened a void beside the
+ * paragraphs. What actually took 142px out of the section was splitting it into
+ * two rows at the rule (see page.js), and that had to happen because of this
+ * change rather than instead of it. */
+.ln-sand {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  aspect-ratio: 7 / 6;
+}
+
+/* The turning mark, when the slot is live. No background: the sand field behind
+   the whole page shows through, which is the point of the frame being empty. */
+.ln-mark-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ln-sand img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 859px) {
+  .ln-sand {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* ---------- scroll cue ----------
+ *
+ * One chevron, saying only that there is more below.
+ *
+ * The hero is what earns it: a full viewport with an object floating in the
+ * middle and no copy has no half-cut line of text at the bottom edge, which is
+ * what usually tells a reader to keep going without anyone having to draw
+ * anything. Vulcan Gold because the palette assigns gold to accents and
+ * indicators, and an indicator is exactly what this is.
+ *
+ * The class is deliberately generic rather than hero-specific: the intent is one
+ * of these at the foot of each section, and only the hero has it for now. A
+ * section places it and this owns what it looks like.
+ *
+ * Sized in px rather than off the type scale. It is a piece of artwork about the
+ * width of a word, not type, and clamping it against the viewport would grow it
+ * next to a lockup that does not grow. */
+.ln-cue {
+  display: flex;
+  justify-content: center;
+  color: var(--color-vulcan-gold);
+  /* The mark is behind it and stays draggable through it. */
+  pointer-events: none;
+}
+
+.ln-cue svg {
+  width: 26px;
+  height: auto;
+  /* The drift is what makes it read as an invitation rather than as a bullet.
+     Long and shallow: 4px over three seconds, which the eye catches in
+     peripheral vision without it ever asking to be watched. It rests at 0.6 and
+     peaks at 1 rather than the other way round, so the quiet state is the one it
+     spends most of the cycle in. */
+  animation: ln-cue-drift 3s ease-in-out infinite;
+}
+
+@keyframes ln-cue-drift {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: none;
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Motion the page starts by itself, so it goes entirely. The chevron still
+     says what it means standing still, which is the test for whether an
+     animation was carrying information or decorating. */
+  .ln-cue svg {
+    animation: none;
+    opacity: 0.85;
+  }
+}

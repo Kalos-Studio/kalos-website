@@ -1,0 +1,166 @@
+/* Scoped to /design-system.
+
+   globals.css sets html/body to overflow:hidden, because the landing page is a
+   single fixed viewport. This page is a long reference sheet, so it takes its
+   own scroll container — the same escape /work uses. */
+.ds-root {
+  display: block;
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--color-obsidian-black);
+  color: var(--color-snow-white);
+  font-family: var(--font-display);
+  font-feature-settings: var(--brand-features);
+  line-height: 1.5;
+}
+
+/* ---------- type ----------
+ *
+ * Every text style below is a plain class, and none of them are Tailwind type
+ * utilities. That is not a preference, it is the only thing that works here.
+ *
+ * globals.css styles bare h1 and p as art direction (an 11rem clamp, uppercase
+ * letter-spaced grey) and it does so *unlayered*, which outranks every Tailwind
+ * layer no matter the specificity. The first version of this file tried to hand
+ * the properties back with `:where(h1, h2, h3, p) { font-size: inherit }` and
+ * then set sizes with `text-4xl`. The reset is unlayered too, so it beat the
+ * utilities as well: every heading on the page rendered at 16px. Measured, not
+ * guessed.
+ *
+ * So: classes own type, utilities own layout. Same split CLAUDE.md prescribes.
+ * Tailwind is still doing the grids, spacing and borders throughout the page. */
+
+.ds-h1 {
+  font-size: var(--type-title);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  text-transform: none;
+  color: var(--color-snow-white);
+}
+
+.ds-h2 {
+  font-size: var(--type-heading);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-transform: none;
+  color: var(--color-snow-white);
+}
+
+/* The brand's label treatment, from its own slide header: Regular, 16px,
+   negative tracking, sentence case, white at 32%. Not small caps, not gold.
+   See the note in landing.css. */
+.ds-kicker {
+  display: block;
+  font-size: var(--type-body);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: color-mix(in srgb, var(--color-snow-white) 32%, transparent);
+}
+
+.ds-lead,
+.ds-body,
+.ds-note {
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.6;
+}
+
+.ds-lead {
+  font-size: var(--type-body);
+  color: rgba(245, 254, 253, 0.62);
+}
+
+.ds-body {
+  font-size: var(--type-small);
+  color: rgba(245, 254, 253, 0.62);
+}
+
+.ds-note {
+  font-size: var(--type-small);
+  color: rgba(245, 254, 253, 0.48);
+}
+
+.ds-swatch-name {
+  font-size: var(--type-small);
+  color: var(--color-snow-white);
+}
+
+.ds-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--type-micro);
+  letter-spacing: normal;
+}
+
+.ds-mono--dim {
+  color: rgba(245, 254, 253, 0.45);
+}
+
+.ds-mono--gold {
+  color: var(--color-vulcan-gold);
+}
+
+/* ---------- specimen ---------- */
+
+.ds-specimen {
+  display: block;
+  font-size: var(--type-title);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.ds-quote {
+  display: block;
+  font-size: var(--type-title);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.ds-quote-sub {
+  display: block;
+  font-size: var(--type-lead);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: rgba(245, 254, 253, 0.8);
+}
+
+/* The stylistic sets are the whole point of the type token, so the specimen
+   shows both states side by side. This class is the "before". */
+.ds-plain {
+  font-feature-settings: normal;
+}
+
+/* A swatch has to show its own colour honestly, including how it behaves on the
+   ground it will actually sit on. The hairline keeps the near-black chips from
+   vanishing into the page entirely. */
+.ds-chip {
+  aspect-ratio: 3 / 2;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 0 0 1px rgba(245, 254, 253, 0.14);
+}
+
+/* globals.css colours bare <li> nothing, but it does set <p>, and the open
+   questions list reads as body copy — keep it consistent with .ds-body. */
+.ds-list li {
+  font-size: var(--type-small);
+  line-height: 1.6;
+  color: rgba(245, 254, 253, 0.62);
+}
+
+/* One line of the scale, set at whatever size the token it is demonstrating
+   resolves to. No font-size here on purpose: the page passes it inline from the
+   token, so a change in globals.css shows up on this sheet without anyone having
+   to remember to come and update it. */
+.ds-specimen-line {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--color-snow-white);
+  text-wrap: balance;
+}

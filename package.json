@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "lint:copy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-copy.mjs",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "@calcom/embed-react": "^1.5.3",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "@react-three/postprocessing": "^3.0.5",

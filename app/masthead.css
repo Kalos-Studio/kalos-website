@@ -1,0 +1,485 @@
+/* Site chrome: the masthead row and its menu.
+ *
+ * This lived in the hero's lab.css while the hero was the only page with a
+ * masthead. It is every page's now, and importing an 8KB stylesheet of vignette
+ * falloff and stage geometry into /work to get a logo out of it was the kind of
+ * thing that reads as fine until someone wonders why the case studies ship the
+ * hero's CSS. The `lab-` prefix went with it: those names describe the WebGL
+ * hero specifically, and none of this is hero-specific any more.
+ *
+ * What stayed behind in lab.css is the part that genuinely is: .lab-header, which
+ * fixes this row to the viewport, gates it on the sunrise and takes it away when
+ * the mark docks into the lockup, and .lab-lockup, which is that mark's landing
+ * pad. Every other page wraps the same row in .site-masthead--fixed instead and
+ * gets it from first paint.
+ */
+
+/* ---------- masthead menu ---------- */
+
+/* The masthead is a row now rather than a lockup on its own: logo left, menu
+   right.
+ *
+ * It sits on the viewport rather than on the page grid, and that is a departure
+ * from the rule in globals.css worth being explicit about. --page-max centres
+ * the page's content at 1080px, so a masthead on that grid starts its lockup
+ * 180px in from the edge of a 1440px window and finishes its menu 180px short of
+ * the other one: correct as typography, and it reads as two controls drifting
+ * toward the middle rather than as a header. The rule exists because the hero
+ * and the sections below it once disagreed by 332px on a laptop, which is a real
+ * bug; a header pinned to the corners is not that bug, it is what a header is.
+ *
+ * The inset matches .lab-header's own top offset, so the lockup sits the same
+ * distance from the top of the window as from the side of it. */
+.site-masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-inline: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-left));
+  /* The row spans the window, so left to itself it is an invisible 30px bar
+     across the top of every page swallowing clicks. The two things in it opt
+     back in. .lab-header already did this on the hero for the same reason: a
+     drag that starts up here is usually meant for the mark behind it. */
+  pointer-events: none;
+
+  /* Closed, the card is a 44px square with the 10px icon centred in it. That is
+     a deliberate 44 and not the 40 it looks like it wants to be: shut, the card
+     is the entire tap target on a phone, and 40 is under the size a thumb is
+     reliably accurate at. Nothing about it reads as larger, because the only
+     part with any contrast is the icon. */
+  --site-menu-closed: 2.75rem;
+  --site-menu-pad: 1.0625rem;
+
+  /* The icon, and it is bigger than the 10px it was.
+   *
+   * Only about 60% of this box is ink: the dots sit between y=2 and y=8 of a
+   * 10-unit viewBox, so a 10px icon drew a 6px cluster next to a 29px lockup and
+   * read as a speck floating near the corner rather than as the lockup's
+   * opposite number. Measured at the time, the two were already sharing a centre
+   * line to a hundredth of a pixel, so what looked like bad vertical alignment
+   * was the size difference and nothing else. 20px puts 12px of ink on the
+   * screen, which holds the other end of the row. */
+  --site-menu-icon: 1.25rem;
+  /* Open: wide enough for "Contact" with air around it, narrow enough that it
+     stays a widget in the corner rather than becoming a drawer. 11.5rem was the
+     first guess and left the right half of the card empty, which read as a
+     panel waiting for content that never arrived. */
+  --site-menu-open: 10rem;
+
+  /* The ground, and it is deliberately not a palette colour.
+   *
+   * Eerie Gray is the token for card backgrounds and it was what this used
+   * first. It reads as a cold grey chip dropped onto a warm field: the hero's
+   * whole light is a sunrise, the sand under it is lit brown, and the one
+   * neutral surface on the screen looks like it belongs to a different page.
+   * This is the same warm brown the glow at the top of this file is built from,
+   * carried through at low alpha so the field shows through it.
+   *
+   * Kept local to the hero for the same reason --gold-render-face is: it is a
+   * value measured against this composition, not a brand colour, and it has no
+   * business being reachable as bg-* anywhere else. */
+  --site-menu-ground: color-mix(in srgb, #4a341c 46%, transparent);
+  --site-menu-edge: color-mix(in srgb, var(--gold-render-rim) 11%, transparent);
+
+  /* Slow open, quick close. Opening is the thing that was asked for and can
+     take its time arriving; closing is getting out of the way, and anything
+     that lingers on the way out reads as lag rather than as grace. Same
+     asymmetry the scroll cue uses on .is-gone, for the same reason. */
+  /* The gap between the wordmark and whatever is leading beside it. A token
+     rather than a literal because work.css needs the same number: the hairline
+     on .work-back sets its own margin, and the two have to stay equal or the
+     rule stops sitting centred between them. This file has already written up
+     what happens to copies kept in sync by luck, in the note on .site-lockup. */
+  --site-masthead-lead-gap: clamp(0.875rem, 2vw, 1.25rem);
+
+  --site-menu-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --site-menu-open-ms: 460ms;
+  --site-menu-close-ms: 240ms;
+}
+
+/* A zero-height flex item, and that is the whole job.
+ *
+ * The card is positioned against this, so nothing it does can change the height
+ * of the masthead. Sizing the anchor to the card's closed square instead grows
+ * the row to 44px and centres the lockup 8px lower than it sits today: a piece
+ * of conditional content moving the thing that anchors the page, which is the
+ * trap already written up against the gyroscope prompt.
+ *
+ * Height 0 puts the anchor on the row's centre line, so the card only has to
+ * offset itself by half its closed height to hang centred on the lockup. */
+.site-menu-anchor {
+  position: relative;
+  flex: none;
+  width: var(--site-menu-closed);
+  height: 0;
+}
+
+/* The card.
+ *
+ * One element through all three states, which is the point of the whole
+ * arrangement. The first build of this had a hover pill and a separate dropdown
+ * that crossfaded, and it read as two things swapping places, because that is
+ * what it was. Widening a single box means the ground the reader is already
+ * looking at is the ground that opens.
+ *
+ * Both children are laid out at the open width and pinned to the card's right
+ * edge, so the edge that moves when the box grows is the left one and the dots
+ * never shift. The first build had this the other way around, contents pinned
+ * left, and the whole row walked 116px leftwards on open: the control slid out
+ * from under the cursor that had just pressed it.
+ *
+ * `direction: rtl` is how they are pinned, and it is not a cute trick, it is the
+ * only thing here that is actually defined for the case. The obvious build is a
+ * grid with `justify-items: end`, and it silently does nothing: box alignment
+ * falls back to start when an item is *larger* than its area, which these two
+ * always are while the card is shut, so the 160px row laid out from the left
+ * edge and the icon sat 116px off the right side of the clip, invisible.
+ * Measured, not guessed at. In RTL the over-constrained margin resolves on the
+ * left instead, which is exactly "keep the right edge, overflow leftwards".
+ * The children set `direction: ltr` back for their own contents. */
+.site-menu {
+  position: absolute;
+  right: 0;
+  top: calc(var(--site-menu-closed) / -2);
+  width: var(--site-menu-closed);
+  direction: rtl;
+  /* Nearly square. A 12px radius on a 44px box is a pill with ambitions and it
+     softened the one hard-edged thing in a composition made of gradients. */
+  border-radius: 0.25rem;
+  /* A window onto a row that never reflows. The trigger inside is always the
+     open width and closing hides the rest of it rather than rewrapping it:
+     text that re-lays-out mid-transition is most of what makes an expanding
+     panel look cheap. It also clips the closed card's hit area down to the
+     square, so the invisible 9rem of button is not clickable. */
+  overflow: hidden;
+  /* .lab-header is pointer-events: none, so drags meant for the mark are not
+     eaten by the masthead. The one control living in it has to opt back in. */
+  pointer-events: auto;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition:
+    width var(--site-menu-close-ms) ease,
+    background-color var(--site-menu-close-ms) ease,
+    box-shadow var(--site-menu-close-ms) ease;
+}
+
+/* The ground, which only exists once you are looking at it.
+ *
+ * No backdrop blur, deliberately. Frosted glass is the obvious build for this
+ * and it buys nothing here: .lab::after vignettes the corners to within a few
+ * values of black, so there is no detail behind the card to blur, and a
+ * backdrop-filter over a live canvas re-filters on every frame the mark moves.
+ * A flat translucent tint is indistinguishable in this corner and free. The
+ * line to revisit if the hero ever gets a busy top right. */
+.site-menu:hover,
+.site-menu:focus-within,
+.site-menu.is-open {
+  background: var(--site-menu-ground);
+  box-shadow: inset 0 0 0 1px var(--site-menu-edge);
+}
+
+.site-menu.is-open {
+  width: var(--site-menu-open);
+  transition:
+    width var(--site-menu-open-ms) var(--site-menu-ease),
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.site-menu-trigger {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  /* Label to one end, icon to the other. The row is pinned to the card's right
+     edge and never changes width, so both ends are stationary in every state:
+     the icon stays 17px in from the right, the label sits 17px in from where the
+     card's left edge will be, and opening does not move either of them. It only
+     sweeps the clip past the label.
+   *
+     Which is also why the label lands exactly on the links below it, without
+     that being arranged: both are one --site-menu-pad in from the same edge. */
+  justify-content: space-between;
+  gap: 0.625rem;
+  /* Fixed at the open width, so the row is laid out exactly once. See .site-menu. */
+  width: var(--site-menu-open);
+  height: var(--site-menu-closed);
+  /* Derived rather than typed, so the icon stays centred in the shut square
+     whichever of the two sizes moves next. Type a number here instead and the
+     icon goes off centre the first time either changes, which is the kind of
+     drift nobody notices for a month. */
+  padding-right: calc((var(--site-menu-closed) - var(--site-menu-icon)) / 2);
+  padding-left: var(--site-menu-pad);
+  appearance: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  /* Snow White at 32%: the palette's value for chrome you glance at rather than
+     prose you read, which is exactly what an icon in a corner is. Dark Silver
+     would be correct for the links below and far too present for this. */
+  color: color-mix(in srgb, var(--color-snow-white) 32%, transparent);
+  transition: color 170ms ease;
+}
+
+.site-menu:hover .site-menu-trigger,
+.site-menu:focus-within .site-menu-trigger,
+.site-menu.is-open .site-menu-trigger {
+  color: color-mix(in srgb, var(--color-snow-white) 58%, transparent);
+}
+
+.site-menu-dots {
+  flex: none;
+  /* CSS owns the size; the width and height attributes on the element are a
+     fallback for the markup rendering without this sheet. */
+  width: var(--site-menu-icon);
+  height: var(--site-menu-icon);
+  /* The dots push outside the 10x10 viewBox when they spread. */
+  overflow: visible;
+}
+
+/* The spread.
+ *
+ * Each dot travels 1.9 *user units* along its own diagonal, taking the cluster
+ * from 4 units across to a shade under 8. Units, not screen pixels: the viewBox
+ * is 10 wide whatever --site-menu-icon says, so the gesture scales with the icon
+ * and this number does not have to move when the icon does. The proportion is
+ * fussier than it looks. Under about 1.5 it reads as the icon wobbling rather
+ * than opening, and past 2.5 the four stop being one object.
+ *
+ * Linear, and short. This is a state flipping rather than an object travelling
+ * anywhere, and an ease-out over 4px of distance reads as slower without
+ * reading as smoother. */
+.site-menu-dot {
+  transition: transform 170ms linear;
+}
+
+:is(.site-menu:hover, .site-menu:focus-within, .site-menu.is-open) .site-menu-dot:nth-child(1) {
+  transform: translate(-1.9px, -1.9px);
+}
+
+:is(.site-menu:hover, .site-menu:focus-within, .site-menu.is-open) .site-menu-dot:nth-child(2) {
+  transform: translate(1.9px, -1.9px);
+}
+
+:is(.site-menu:hover, .site-menu:focus-within, .site-menu.is-open) .site-menu-dot:nth-child(3) {
+  transform: translate(-1.9px, 1.9px);
+}
+
+:is(.site-menu:hover, .site-menu:focus-within, .site-menu.is-open) .site-menu-dot:nth-child(4) {
+  transform: translate(1.9px, 1.9px);
+}
+
+.site-menu-label {
+  flex: none;
+  font-size: var(--type-micro);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  /* A fade and nothing else. It had 4px of travel while it sat against the icon
+     and was arriving into space the card was still making; at the far end of the
+     row it is stationary and the opening edge is what uncovers it, so travel
+     would be the one thing on screen moving for no reason. */
+  transition: opacity var(--site-menu-close-ms) ease;
+}
+
+.site-menu.is-open .site-menu-label {
+  opacity: 1;
+  /* Behind the card's own edge on purpose. The label should be arriving into a
+     space that already exists rather than racing the box making room for it. */
+  transition: opacity 300ms ease 120ms;
+}
+
+/* 0fr to 1fr rather than an explicit height, so the open size is whatever the
+   list happens to be. A measured pixel height is a number that goes stale the
+   moment someone adds a fourth link, and it goes stale silently. */
+.site-menu-panel {
+  /* Explicit rather than inherited: the card is only as wide as the state it is
+     in, and a panel sized to its container would rewrap every link mid-open. */
+  width: var(--site-menu-open);
+  direction: ltr;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--site-menu-close-ms) ease;
+}
+
+.site-menu.is-open .site-menu-panel {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--site-menu-open-ms) var(--site-menu-ease);
+}
+
+.site-menu-clip {
+  overflow: hidden;
+  /* A grid item floors at min-content without this, so the row never collapses
+     and the shut card sits three lines tall instead of square. */
+  min-height: 0;
+}
+
+.site-menu-list {
+  width: var(--site-menu-open);
+  padding: 0 var(--site-menu-pad) 0.875rem;
+}
+
+.site-menu-link {
+  display: block;
+  padding-block: 0.4375rem;
+  font-size: var(--type-small);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  /* Dark Silver, the palette's one secondary text value. These are read rather
+     than glanced at, so they do not take the 32% the icon above them does. */
+  color: var(--color-dark-silver);
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    color 170ms ease;
+}
+
+/* --i comes off the list item as a plain number, so the stagger lives beside
+   the durations it is offset from rather than in JavaScript. The delay clears
+   the card's own width transition first: links appearing while the box is still
+   growing under them is the part that looks unresolved. */
+.site-menu.is-open .site-menu-link {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 280ms ease calc(140ms + var(--i) * 45ms),
+    transform 400ms var(--site-menu-ease) calc(140ms + var(--i) * 45ms),
+    color 170ms ease;
+}
+
+.site-menu-link:hover,
+.site-menu-link:focus-visible {
+  color: var(--color-snow-white);
+}
+
+/* Inside the card, because the card clips. An outline drawn outward here is an
+   outline drawn under the edge that hides it. */
+.site-menu-trigger:focus-visible {
+  outline: 2px solid var(--color-vulcan-gold);
+  outline-offset: -2px;
+  border-radius: 0.25rem;
+}
+
+.site-menu-link:focus-visible {
+  outline: 2px solid var(--color-vulcan-gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------- the row on every page that is not the hero ---------- */
+
+/* Fixed rather than in the flow, which is a change on both pages that had a
+   masthead already: /work had its lockup on the content shell's left margin,
+   164px in from the window on a laptop, and /about had it on the page grid. Both
+   read as a logo floating in the text column rather than as a header, and both
+   disagreed with the hero. This is the hero's position, without the hero's
+   gates: nothing on these pages has a sunrise to wait for. */
+.site-masthead--fixed {
+  position: fixed;
+  top: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  /* Over /work's fixed backdrop layers and over the sand on /about, under
+     nothing: this is the topmost furniture on every page it appears on. */
+  z-index: 5;
+}
+
+/* The optional slot beside the lockup. Only /work uses it, for the case study
+   back control. The row itself is pointer-events: none so an invisible bar does
+   not swallow clicks across the top of the page; anything in here opts back in
+   the way .site-wordmark and the menu do. */
+.site-masthead-lead {
+  display: flex;
+  align-items: center;
+  gap: var(--site-masthead-lead-gap);
+  min-width: 0;
+}
+
+/* Faded all the way out, written by the scroll handler in masthead.js.
+ *
+ * The row keeps its place in the tab order while it is invisible, so what has to
+ * go is the pointer-events opt-in its two children make: an invisible menu card
+ * would otherwise go on taking clicks in the corner for the rest of the page.
+ * The children rather than the row, because the row is already
+ * pointer-events: none and a descendant that has opted back in ignores it. */
+.site-masthead[data-faded] :is(.site-wordmark, .site-menu) {
+  pointer-events: none;
+}
+
+/* Tabbing to it is what reveals it.
+ *
+ * `!important` because the handler writes opacity inline and an inline
+ * declaration outranks everything except this. It is load-bearing rather than a
+ * shortcut: a pointer user scrolls back up and the masthead returns, and there
+ * is no equivalent gesture for a keyboard user, who cannot scroll a page up in
+ * order to see the thing they are trying to tab to. Without this the site's only
+ * navigation is unreachable from the keyboard below 200px of scroll. */
+.site-masthead:focus-within {
+  opacity: 1 !important;
+}
+
+.site-masthead:focus-within :is(.site-wordmark, .site-menu) {
+  pointer-events: auto;
+}
+
+/* The lockup is a link everywhere except the homepage, where it would be a link
+   to the page you are on. */
+.site-wordmark {
+  display: block;
+  pointer-events: auto;
+  color: var(--color-snow-white);
+  text-decoration: none;
+  transition: color 240ms ease;
+}
+
+/* Gold on hover, the palette's accent and the same colour the hero's lockup
+   takes when the mark docks into it. */
+.site-wordmark:hover {
+  color: var(--color-vulcan-gold);
+}
+
+.site-wordmark:focus-visible {
+  outline: 2px solid var(--color-vulcan-gold);
+  outline-offset: 6px;
+  border-radius: 0.25rem;
+}
+
+/* One measurement for the lockup everywhere. .lab-lockup, .work-lockup and
+   .ab-lockup were three copies of this rule that had so far stayed in sync by
+   luck. Sized off its width rather than its height because 568x139 is a long
+   lockup: these land it between 24 and 30px tall, which is the range a site
+   header logo lives in. */
+.site-lockup {
+  display: block;
+  width: clamp(98px, 9vw, 124px);
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The menu is motion the visitor is causing, so it is not silenced: it still
+     opens, and the dots still spread. What goes is the travel and the stagger,
+     which are decoration, and the durations come down to something that reads
+     as a state changing rather than as an animation playing. */
+  .site-menu,
+  .site-menu.is-open,
+  .site-menu-panel,
+  .site-menu.is-open .site-menu-panel {
+    transition-duration: 120ms;
+    transition-timing-function: ease;
+  }
+
+  .site-menu-link,
+  .site-menu.is-open .site-menu-link {
+    transform: none;
+    transition:
+      opacity 120ms ease,
+      color 170ms ease;
+  }
+}

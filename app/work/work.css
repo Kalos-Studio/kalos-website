@@ -12,35 +12,68 @@
   background: #000;
 }
 
-/* Backdrop: a faint magenta diagonal-line texture plus a soft glow in the
-   corner, echoing the reference template without competing with content.
-   Fixed (not absolute) so it reads as a static backdrop rather than
-   scrolling away with the page. */
+/* Backdrop: a soft corner glow in Vulcan Gold over film grain. Fixed (not
+   absolute) so it reads as a static backdrop rather than scrolling away with
+   the page.
+ *
+ * This was a magenta glow over a magenta diagonal-line texture, echoing a
+ * reference template from before anyone had opened the brand file. Magenta
+ * appears nowhere in the brand, and it was the single loudest off-brand value
+ * on the site — /work read as a different studio to the homepage.
+ *
+ * The replacement is not invented either. The brand file's About slide lights
+ * its corner with a Vulcan Gold plane at 20% opacity (node 199:10430), which is
+ * exactly this gesture, and every plate in the file is grainy — Gold_Sand is
+ * literally a photograph of grain. So: the file's own corner wash, and the same
+ * grain the landing page carries, at the same 0.03.
+ *
+ * The diagonal lines are gone rather than recoloured. A ruled texture has no
+ * precedent anywhere in the brand, and in gold it read as wallpaper. */
 .work-root::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse 60% 45% at 12% 8%,
-      rgba(255, 0, 170, 0.4),
-      transparent 62%
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 0, 170, 0.18) 0px,
-      rgba(255, 0, 170, 0.18) 2px,
-      transparent 2px,
-      transparent 22px
-    );
+  background: radial-gradient(
+    ellipse 60% 45% at 12% 8%,
+    color-mix(in srgb, var(--color-vulcan-gold) 20%, transparent),
+    transparent 62%
+  );
 }
 
-/* globals.css sets a blanket uppercase/letter-spaced style on <p> for the
-   homepage's "coming soon" subtitle — reset it here so /work's body copy
-   reads as normal sentence case. Classes below still set their own color
-   and font-size on top of this. */
+/* Grain sits in its own layer rather than in the gradient above, so the two can
+   carry different opacities — the wash needs to be visible and the grain needs
+   to be almost not. */
+.work-root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Two rules, at two different weights, and the difference between them is the
+   whole point.
+ *
+ * The size is the default /work's paragraphs were getting from a bare `p` rule
+ * in globals.css, written for the old spotlight homepage. That page is gone and
+ * the rule with it, so the value lives here now. It is wrapped in `:where()` so
+ * it weighs the same as a class and loses to one on source order, exactly as a
+ * bare element selector did. Setting it as `.work-root p` instead reads as
+ * tidier and quietly overrode nine class rules further down this file, blowing
+ * every card summary up from 15px to 18px. Caught by diffing computed styles.
+ *
+ * The reset below is deliberately the heavier of the two. It has to beat the
+ * classes rather than lose to them: several of them set their own uppercase,
+ * and /work has been rendering in sentence case because this rule outranks
+ * them. Changing that is a design decision, not a cleanup. */
+.work-root :where(p) {
+  font-size: var(--type-body);
+}
+
 .work-root p {
   text-transform: none;
   letter-spacing: normal;
@@ -49,7 +82,11 @@
 .work-shell {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 4rem 1.5rem 6rem;
+  /* Top padding clears the fixed masthead rather than just spacing the page.
+     The row sits 20 to 32px down and its lockup is up to 30px tall, so anything
+     under about 62px would have the first line of the page tucked against the
+     logo. This leaves air below it at every width. */
+  padding: clamp(6.5rem, 11vw, 8.5rem) 1.5rem 6rem;
 }
 
 /* The listing page's card grid wants a bit more room per card than a single
@@ -58,48 +95,56 @@
   max-width: 1160px;
 }
 
+/* Masthead above, page title under it, both on the left margin. They were a
+   space-between row, which pinned a 60px headline to the right edge of a 1200px
+   shell with nothing to balance it: every other headline on this site starts at
+   the left margin, and one that does not reads as a different site. */
 .work-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 4rem;
+  display: block;
+  margin-bottom: clamp(2.5rem, 6vw, 4rem);
 }
 
-.work-wordmark {
-  font-size: 1.5rem;
-  font-weight: 700;
+/* The margin that used to separate this from the lockup above it went with the
+   lockup. .work-shell's top padding is what holds the headline off the masthead
+   now, and doing both put a 3rem hole under a logo that is no longer there. */
+
+/* .work-wordmark and .work-lockup have gone to masthead.css. They were this
+   section's own copy of a rule the hero and /about also had, kept in sync by
+   luck, and the lockup they styled is no longer in this column at all. */
+
+/* Set at the page's own headline size rather than as a label, because it is the
+   page's headline. */
+.work-title {
+  font-size: var(--type-title);
+  font-weight: 500;
   letter-spacing: -0.02em;
-  text-decoration: none;
-  color: #fff;
+  line-height: 1.14;
+  color: var(--color-snow-white);
+  /* Same as .ln-h2. Two words break badly on a narrow window without it. */
+  text-wrap: balance;
 }
 
-.work-wordmark span {
-  color: #9a9a9a;
-  font-weight: 400;
-}
-
-.work-intro {
-  color: #b8b8b8;
-  font-size: 1rem;
-  line-height: 1.6;
+/* The line under the headline, and the reason the headline no longer floats.
+ *
+ * Held to a measure rather than to the shell. The column is 1160px wide here to
+ * give the card grid room, and a sentence set across all of it runs to about 140
+ * characters a line, which is roughly twice a comfortable measure. 34rem lands
+ * it near 70.
+ *
+ * Dark Silver, not Snow White. /about's one sentence is Snow White because it is
+ * that page's entire content; this one is supporting a headline, and the palette
+ * note in globals.css is explicit that prose you read takes Dark Silver. */
+.work-standfirst {
+  margin-top: 1.125rem;
   max-width: 34rem;
-  margin-bottom: 4rem;
+  font-size: var(--type-lead);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+  color: var(--color-dark-silver);
 }
 
 /* --- Case study list -------------------------------------------------- */
-
-.work-construction-note {
-  color: #ffcc66;
-  font-size: 0.9rem;
-  font-weight: 500;
-  line-height: 1.5;
-  background: rgba(255, 204, 102, 0.08);
-  border: 1px solid rgba(255, 204, 102, 0.4);
-  border-radius: 0.5rem;
-  padding: 0.85rem 1.1rem;
-  margin-bottom: 2.5rem;
-}
 
 .work-list {
   list-style: none;
@@ -174,41 +219,28 @@
   align-items: center;
   justify-content: center;
   color: #444;
-  font-size: 0.8rem;
+  font-size: var(--type-micro);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   background: radial-gradient(circle at 30% 20%, #1a1a1a, #050505);
 }
 
 .work-card-title {
-  font-size: 1.25rem;
+  font-size: var(--type-lead);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .work-card-summary {
   color: #b8b8b8;
-  font-size: 0.95rem;
+  font-size: var(--type-small);
   line-height: 1.5;
   margin-top: 0.4rem;
 }
 
-.work-card-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
-  color: #ccc;
-}
-
-.work-card:hover .work-card-link {
-  color: #fff;
-}
-
 .work-empty {
   color: #9a9a9a;
-  font-size: 0.95rem;
+  font-size: var(--type-small);
   border: 1px dashed #2a2a2a;
   border-radius: 0.75rem;
   padding: 2rem;
@@ -216,26 +248,75 @@
 
 /* --- Case study page --------------------------------------------------- */
 
+/* The case study back control, which sits in the masthead band rather than in
+   the page. See app/work/back-link.js for why it moved and why it goes back
+   rather than to a fixed destination.
+ *
+ * No margin of any kind. In the flow it carried margin-bottom: 2.5rem, which is
+ * what made it read as an interruption: a lone grey fragment on its own line
+ * between the header and the title, aligned to the content column and so to
+ * nothing above it. Here it is centred against the lockup by the flex row. */
 .work-back {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: #b8b8b8;
+  /* The row above disables pointer events; this is one of the things that
+     opts back in. */
+  pointer-events: auto;
+  color: var(--color-dark-silver);
   text-decoration: none;
-  font-size: 0.9rem;
-  margin-bottom: 2.5rem;
+  font-size: var(--type-small);
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 240ms ease;
 }
 
+/* A hairline before it, so "Back" reads as its own control rather than as a
+   word attached to the wordmark. Sized off the text rather than a fixed height
+   so it tracks the type. */
+.work-back::before {
+  content: "";
+  width: 1px;
+  height: 1.1em;
+  /* Inherited from .site-masthead, which is what puts the same gap on the other
+     side of this hairline. It was the literal clamp twice. */
+  margin-right: var(--site-masthead-lead-gap);
+  background: color-mix(in srgb, var(--color-snow-white) 18%, transparent);
+}
+
+/* The faded masthead has to withdraw this too.
+ *
+ * masthead.css does that for its own two children, `[data-faded] :is(.site-
+ * wordmark, .site-menu)`, because the row is pointer-events: none and anything
+ * that opts back in ignores it. This opted back in as a third child and so kept
+ * taking clicks after the row went invisible: past the fade end, a click in the
+ * top left of a case study silently fired router.back(). Exactly the failure
+ * that rule exists to prevent. Scoped here rather than added to the list over
+ * there, so a /work class stays in /work's stylesheet.
+ *
+ * The focus-within pair matters for the same reason it does there: tabbing is
+ * how a keyboard user reveals the masthead, and a revealed control that cannot
+ * be clicked is worse than one that is hidden. */
+.site-masthead[data-faded] .work-back {
+  pointer-events: none;
+}
+
+.site-masthead:focus-within .work-back {
+  pointer-events: auto;
+}
+
+/* Gold on hover, the same answer the lockup beside it gives. */
 .work-back:hover {
-  color: #fff;
+  color: var(--color-vulcan-gold);
 }
 
-/* Used inline within a sentence on the not-found page instead of standalone
-   above a title — plain inline flow instead of inline-flex, so it doesn't
-   pick up the standalone variant's block-ish vertical margin. */
-.work-not-found .work-back {
-  display: inline;
-  margin-bottom: 0;
+/* The arrow moves, the word does not. Same idea as .ln-more on the landing. */
+.work-back-arrow {
+  transition: transform 240ms ease;
+}
+
+.work-back:hover .work-back-arrow {
+  transform: translateX(-0.15rem);
 }
 
 .work-case-header {
@@ -244,52 +325,45 @@
 
 /* Shared look for small-caps labels — the case study eyebrow, each fact's
    label, and the login eyebrow all use it, differing only in size/spacing. */
-.work-case-eyebrow,
-.work-case-fact dt,
-.work-login-eyebrow {
-  color: #9a9a9a;
-  text-transform: uppercase;
-}
+/* The small-caps eyebrow rules are gone with the elements that used them. Worth
+   knowing they also covered .work-login-eyebrow, which went with the password
+   page. Nothing on this section sets type in uppercase now, which is how the
+   brand file has it: it has one small label, a running head, set in sentence
+   case. */
 
-.work-case-eyebrow {
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.75rem;
-}
-
+/* Weight 500 and the landing page's headline size. It was 700 at a smaller cap,
+   which is heavier and quieter than anything on the rest of the site: Space
+   Grotesk Medium is the brand's display weight and 3.75rem is what .ln-h2 tops
+   out at. Two surfaces of one site should not be running two type scales. */
 .work-case-title {
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 700;
+  font-size: var(--type-title);
+  font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 1.1;
+  line-height: 1.14;
   margin-bottom: 1rem;
+  text-wrap: balance;
 }
 
 .work-case-summary {
   color: #fff;
-  font-size: 1.05rem;
+  font-size: var(--type-body);
   line-height: 1.6;
   max-width: 40rem;
 }
 
+/* One quiet line under the summary, in the palette's single secondary value,
+   rather than a bordered slab of labelled facts. Dark Silver is what the brand
+   file gives to sub-labels and this is one. */
 .work-case-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #1f1f1f;
-}
-
-.work-case-fact dt {
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.25rem;
+  margin-top: 1.25rem;
+  font-size: var(--type-small);
+  letter-spacing: -0.02em;
+  color: var(--color-dark-silver);
 }
 
 .work-case-fact dd {
   color: #fff;
-  font-size: 0.95rem;
+  font-size: var(--type-small);
 }
 
 .work-case-cover {
@@ -314,24 +388,70 @@
   flex-direction: column;
   gap: 1.5rem;
   color: #fff;
-  font-size: 1.05rem;
+  font-size: var(--type-body);
   line-height: 1.7;
 }
 
-/* globals.css's blanket `p { color: #888 }` (for the homepage subtitle)
-   targets these paragraphs directly, so it wins over the inherited color
-   from .work-case-body above no matter what that's set to — override it
-   here instead. Also caps text at a comfortable reading width — the column
-   itself is wider than that so images (figure, below) can be bigger. */
+/* Caps text at a comfortable reading width — the column itself is wider than
+   that so images (figure, below) can be bigger. The colour here used to be
+   fighting a blanket `p { color: #888 }` in globals.css; that rule is gone, but
+   the value stays because it is what these paragraphs should be. */
 .work-case-body p,
 .work-case-body ul {
   color: #fff;
   max-width: 40rem;
 }
 
+/* The opening paragraph, one step up the scale. Every entry starts on a
+   paragraph, and at body size it was the first of six identical blocks, so the
+   story began with no way in. A token, not a literal: --type-lead is the step
+   the summary above it already uses. */
+.work-case-body > p:first-child {
+  font-size: var(--type-lead);
+  line-height: 1.55;
+  max-width: 42rem;
+}
+
+/* A client testimonial, set to interrupt the read rather than sit inside it.
+   Wider than the 40rem prose measure on purpose: the quote is the one thing on
+   the page the studio did not write, and pulling it out of the column is what
+   says so. The rule is Vulcan Gold because the palette gives gold to accents
+   and this is the page's one accent. */
+/* Scoped to beat `.work-case-body figure`, which is (0,1,1) and outweighed the
+   bare class no matter where it sat in the file. Measured: the quote was
+   rendering 44px top and 0px bottom rather than the 64px/16px written here, and
+   the 0 came from figure:last-child, since vital-energy and shell-tapup both end
+   on a quote. The tight bottom margin is deliberate, it ties the attribution to
+   what follows. */
+.work-case-body .work-case-quote {
+  margin: 4rem 0 1rem;
+  max-width: 46rem;
+  border-left: 2px solid var(--color-vulcan-gold);
+  padding-left: clamp(1.25rem, 4vw, 2rem);
+}
+
+.work-case-body .work-case-quote blockquote {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+/* The name matters more than the quote does, so it is not whispered. Dark
+   Silver is the palette's one secondary text value. */
+.work-case-body .work-case-quote figcaption {
+  margin-top: 0.85rem;
+  font-size: var(--type-small);
+  letter-spacing: -0.02em;
+  color: var(--color-dark-silver);
+}
+
 .work-case-body h2 {
   color: #fff;
-  font-size: 1.4rem;
+  font-size: var(--type-heading);
   font-weight: 600;
   margin-top: 1rem;
 }
@@ -350,64 +470,73 @@
   margin-top: 0;
 }
 
-/* --- Columns body layout (opt-in via bodyLayout: "columns") ------------ */
+/* The columns body layout is gone. It pinned each heading to the left of its
+   content and started a new row at every one, which is a spine made visible, and
+   the case studies are stories now. Every entry had opted into it and every
+   entry has dropped it, so the rules, the grouping pass in CaseStudyBody, and
+   the bodyLayout field went together rather than sitting here as an option the
+   format doc tells you not to use. */
 
-/* Each heading becomes a row: pinned as a label to the left, with the
-   paragraphs/images that followed it in the flat block list to the right.
-   Row-level margin-top replaces the plain layout's per-heading margin-top,
-   since the label's own h2 sits flush at the top of its row instead. */
-.work-case-body--columns .work-case-row {
-  display: grid;
-  grid-template-columns: 10rem 1fr;
-  gap: 0.75rem 2rem;
-  margin-top: 2.5rem;
-}
-
-.work-case-body--columns .work-case-row:first-child {
-  margin-top: 0;
-}
-
-.work-case-row-label {
-  grid-column: 1;
-  align-self: start;
-}
-
-.work-case-row-label h2,
-.work-case-row-label .work-case-section-header {
-  margin-top: 0;
-}
-
-.work-case-row-text {
-  grid-column: 2;
-}
-
-/* Images still get the full row width, not just the content column —
-   the whole point of widening the shell was bigger images. */
-.work-case-row-full {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 640px) {
-  .work-case-body--columns .work-case-row {
-    grid-template-columns: 1fr;
-  }
-
-  .work-case-row-label,
-  .work-case-row-text,
-  .work-case-row-full {
-    grid-column: 1;
-  }
-}
-
+/* Figures get far more air than the 1.5rem the column's gap gives paragraphs.
+   That difference is the page's rhythm: with everything at one spacing, prose
+   and pictures read as one undifferentiated column, which is what made these
+   pages feel like text image text image all the way down. Paragraphs stay tight
+   so a run of them reads as one movement, and a figure is the break between
+   movements rather than another item in the list. */
 .work-case-body figure {
-  margin: 0.5rem 0;
+  margin: 2.75rem 0;
+}
+
+/* No extra air where a figure is the first or last thing: the header above and
+   the "More case studies" block below bring their own.
+ *
+ * Quotes are excluded, and the reason is specificity rather than taste. A
+ * pseudo-class counts in the same column as a class, so `.work-case-body
+ * figure:last-child` is (0,2,1) and outweighed the (0,2,0) quote rule below even
+ * after that one was scoped: the quote's deliberate 1rem bottom margin still
+ * measured 0 on vital-energy and shell-tapup, the two studies that end on one.
+ * Excluding it here is honest about which figures this is for. */
+.work-case-body figure:not(.work-case-quote):first-child {
+  margin-top: 0;
+}
+
+.work-case-body figure:not(.work-case-quote):last-child {
+  margin-bottom: 0;
 }
 
 /* border-radius/border come from the shared frame rule above; this just
-   handles layout (figure img isn't a fixed-aspect crop like the covers). */
+   handles layout (figure img isn't a fixed-aspect crop like the covers).
+ *
+ * `width: auto` rather than 100%, and this fixes two things at once.
+ *
+ * It stops the column upscaling images past their own pixels. orders.webp is
+ * 654px wide and was being drawn at 1032, so the one screenshot on the Shell
+ * page was soft, and on a retina screen it was being asked for 2064px of detail
+ * from a 654px file. An image narrower than the column now sits at its true
+ * size and is sharp.
+ *
+ * And max-height catches the portrait ones. These pages carry phone screens and
+ * full-page captures: services-page.jpg is 1920x2959, which at column width drew
+ * a slab 1590px tall, taller than the window and impossible to take in. Capped,
+ * it is a legible object on the page, and ExpandableImage is right there for
+ * anyone who wants to read the detail. That is what the lightbox is for. */
 .work-case-body figure img {
-  width: 100%;
   display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 78vh;
+  margin-inline: auto;
+}
+
+/* ExpandableImage wraps each image in a button. That button used to be the
+   sizing element at width: 100%, which since the img went to width: auto left it
+   wider than the picture inside it: on the Shell page, measured, 270px of empty
+   column each side of a 491px image, still cursor: zoom-in and still opening the
+   lightbox. It shrinks to its image now and centres itself instead. */
+.work-case-body figure .work-expandable-image {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 /* The <button> wrapper ExpandableImage renders around each body image —
@@ -456,7 +585,7 @@
   border: 1px solid #333;
   background: #111;
   color: #fff;
-  font-size: 1.5rem;
+  font-size: var(--type-heading);
   line-height: 1;
   cursor: pointer;
 }
@@ -467,7 +596,7 @@
 
 .work-case-body figcaption {
   color: #9a9a9a;
-  font-size: 0.85rem;
+  font-size: var(--type-micro);
   margin-top: 0.6rem;
 }
 
@@ -476,10 +605,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-}
-
-.work-not-found {
-  color: #b8b8b8;
 }
 
 /* --- More case studies (bottom of a case study page) ------------------- */
@@ -499,14 +624,14 @@
 }
 
 .work-more-heading {
-  font-size: 1.1rem;
+  font-size: var(--type-body);
   font-weight: 600;
 }
 
 .work-more-view-all {
   color: #b8b8b8;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: var(--type-small);
   flex-shrink: 0;
 }
 
@@ -541,7 +666,7 @@
 
 .work-more-title {
   color: #fff;
-  font-size: 1rem;
+  font-size: var(--type-small);
   font-weight: 600;
   letter-spacing: -0.01em;
   transition: font-weight 0.2s ease;
@@ -555,67 +680,10 @@
   font-weight: 800;
 }
 
-/* --- Login page --------------------------------------------------------- */
-
-.work-login {
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-}
-
-.work-login-card {
-  width: 100%;
-  max-width: 22rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.work-login-eyebrow {
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-}
-
-.work-login-card h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
-}
-
-.work-login-card input[type="password"],
-.work-login-card button {
-  border-radius: 0.5rem;
-  padding: 0.85rem 1rem;
-  font-size: 1rem;
-}
-
-.work-login-card input[type="password"] {
-  background: #111;
-  border: 1px solid #2a2a2a;
-  color: #fff;
-  outline: none;
-}
-
-.work-login-card input[type="password"]:focus {
-  border-color: #555;
-}
-
-.work-login-card button {
-  background: #fff;
-  color: #000;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.work-login-card button:hover {
-  background: #e6e6e6;
-}
-
-.work-login-error {
-  color: #ff6b6b;
-  font-size: 0.85rem;
-}
+/* The login page's styles used to run from here to the end of the file:
+   .work-login, .work-login-card, .work-login-eyebrow, .work-login-error and the
+   input and button rules under them, about 65 lines of it. They styled
+   app/work/login/page.js, which went with the password gate along with
+   middleware.js and lib/work-auth.js. The note further up about the eyebrow
+   having "went with the password page" was already true of the eyebrow and not
+   of the stylesheet describing it. */

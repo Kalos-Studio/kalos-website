@@ -18,7 +18,7 @@ const config = [
   ...compat.extends("next/core-web-vitals"),
   {
     rules: {
-      // The hooks in app/lab drive an imperative render loop, where a stale
+      // The hooks in app/(landing) drive an imperative render loop, where a stale
       // closure reads as a subtly wrong animation rather than a crash — the
       // kind of bug that is very hard to spot by eye. Worth erroring on.
       "react-hooks/exhaustive-deps": "error",
