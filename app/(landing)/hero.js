@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import Lockup from "./lockup";
+import Masthead from "../masthead";
+import ScrollCue from "./scroll-cue";
 import {
   isCoarsePointer,
   needsMotionPermission,
@@ -39,6 +40,15 @@ function hasWebGL() {
 // without it there's no way to reach the gyroscope at all.
 const STAGE_READY_TIMEOUT_MS = 4000;
 
+// How far the reader has to scroll before the chevron goes.
+//
+// Small on purpose. The cue asks one question and the first flick of a trackpad
+// answers it, so anything that keeps it on screen through the scroll is an
+// instruction being repeated to someone already following it. Not zero, because
+// a rubber-band bounce on iOS and a stray pixel of wheel movement both count as
+// scrolling and neither is the reader deciding anything.
+const CUE_HIDE_AT_PX = 24;
+
 // The hero: first section of the landing page rather than the whole of it.
 //
 // The `lab-` class prefix and lab.css stay as they are. Those names describe the
@@ -73,10 +83,13 @@ export default function Hero() {
   // It used to carry two class flags. The mark taking the lockup's colour became
   // a custom property written from the scroll handler, because it is a ramp
   // rather than a switch and a class can only say "started". The masthead
-  // following the mark out became a scroll-driven opacity written from the same
-  // place, for the same reason a timed fade was wrong for it. Both live in the
-  // dock handler in variants/solid.js now. There was a third once, fading the
-  // hero copy out from under the fixed masthead, and it went with the copy.
+  // following the mark out is simply gone — it stays now, see .lab-header in
+  // lab.css. There was a third once, fading the hero copy out from under the
+  // fixed masthead, and it went with the copy.
+
+  // The chevron leaves as soon as the reader starts scrolling.
+  const lab = useRef(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     if (!stageReady || lit) return;
@@ -95,6 +108,42 @@ export default function Hero() {
     const id = setTimeout(() => setStageReady(true), STAGE_READY_TIMEOUT_MS);
     return () => clearTimeout(id);
   }, [stageReady]);
+
+  // Take the cue away once the page has moved.
+  //
+  // The page scrolls inside .landing-root rather than the document, so that is
+  // where the events come from; window is the fallback for any future layout
+  // where the container is the document itself. The offset has to be read off
+  // the same element the events came from, or it is always 0 and the cue never
+  // goes.
+  //
+  // Checked once on mount as well as on scroll. Browser scroll restoration can
+  // land someone halfway down the page before a single event fires, and the cue
+  // would then sit there lit over a hero they are already past.
+  useEffect(() => {
+    const el = lab.current;
+    if (!el) return;
+    const scroller = el.closest(".landing-root") ?? window;
+    const offset = () => (scroller === window ? window.scrollY : scroller.scrollTop);
+
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      // React bails out when the value is unchanged, so a scroll that stays past
+      // the threshold costs one comparison a frame rather than a render.
+      setScrolled(offset() > CUE_HIDE_AT_PX);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(check);
+    };
+
+    check();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      scroller.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   useEffect(() => {
     const supported = hasWebGL();
@@ -185,7 +234,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="lab">
+    <section className="lab" ref={lab}>
       {webgl && (
         <div className="lab-stage">
           <Solid onReady={onStageReady} onLit={onLit} />
@@ -195,17 +244,33 @@ export default function Hero() {
       {/* The lockup sits where a site's logo sits — top left, small, out of the
           way. The 3D mark is the only thing in the middle of the page now, which
           is the point: the composition is the object, and this is the masthead
-          around it. */}
+          around it.
+
+          The menu is the other end of the same row, and it is the only
+          navigation the site has: nothing else on the page links to /work or
+          /about except the cards that go to one case study each. It arrives and
+          leaves with the masthead, which is what putting it in here buys — no
+          second set of gates on `lit`, no second thing to remember when the mark
+          docks and the header goes. */}
       <header className={`lab-header${lit ? " is-lit" : ""}`}>
-        <div className="lab-shell">
-          <Lockup className="lab-lockup" />
-        </div>
+        {/* href={null}: this is the homepage. lockupClassName because the flat
+            mark in here is what the 3D object docks into, and the rule that
+            ramps it to gold is hero-specific. See masthead.js. */}
+        <Masthead href={null} lockupClassName="lab-lockup" />
       </header>
 
       {/* There is no copy here any more. The mock's hero is the lockup, the sand
           and the mark, and nothing else: the headline and subhead that used to
           sit in the lower left came out with the rest of what the mock does not
           contain. The page's h1 is the word, one section down. */}
+
+      {/* The only thing on the hero that says the page continues. Gated on
+          `lit` rather than mounted straight away, for the reason written up
+          against .lab-cue in lab.css, and gone again the moment it has been
+          acted on. */}
+      <ScrollCue
+        className={`lab-cue${lit ? " is-lit" : ""}${scrolled ? " is-gone" : ""}`}
+      />
 
       {hintTilt && stageReady && (
         <button type="button" className="lab-tilt-hint" onClick={onEnableTilt}>

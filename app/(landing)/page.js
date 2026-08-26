@@ -4,22 +4,30 @@ import Hero from "./hero";
 import CallToAction from "./cta";
 import Reveal from "./reveal";
 import Sand from "./sand";
-import MarkSlot from "./mark-slot";
-import VariantSwitch from "./variant-switch";
 import ScrollSettle from "./scroll-settle";
 import { caseStudies } from "../work/data";
-import { featuredWork, finalCta, story } from "./content";
+import { featuredWork, finalCta } from "./content";
 import "./landing.css";
 
 // A server component on purpose. Only the hero needs the client, and everything
 // below it is copy that should exist in the HTML for a crawler and for anyone
 // whose JS never arrives.
 //
-// Four sections, which is what the web mock has: the hero, the word, the work,
-// and the close. It used to have six. A proof strip, an offer section and four
-// principles sat between the hero and the word, and the word itself carried a
-// heading and two paragraphs after the definition. All of that came out on the
-// instruction to remove anything the mock does not contain.
+// Three sections now: the hero, the work, and the close.
+//
+// The mock had four. The word — "Kalos / καλός", the definition and the turning
+// mark — was the first thing under the hero, and it has moved to /about intact
+// rather than being cut: app/about/page.js is the same markup and the same
+// copy, still reading from content.js. Before that it had six. A proof strip, an
+// offer section and four principles sat between the hero and the word, and the
+// word itself carried a heading and two paragraphs after the definition. All of
+// that came out on the instruction to remove anything the mock does not contain.
+//
+// Worth flagging what moving the word costs here, because it is invisible: it
+// carried the page's h1, and nothing has taken that over. The hero has no copy
+// and the two remaining headings are h2s, so this document currently has no h1
+// at all. The obvious fix is the masthead lockup, which was an h1 until the word
+// took the job.
 //
 // The reasoning for those sections is in git and it was not bad reasoning: it
 // was about a cold visitor who does not yet know what we sell, and it put the
@@ -54,38 +62,13 @@ export default function Landing() {
   return (
     <main className="landing-root">
       <Sand />
-      {/* Dev only, and it comes out before launch. See variant-switch.js. */}
-      <VariantSwitch />
       {/* Keeps the page from stopping in the dead zone between the hero and the
           work: the first scroll commits and carries you to the case studies.
           See scroll-settle.js. */}
       <ScrollSettle />
       <Hero />
 
-      {/* The word. In the mock this is the first thing under the hero and the
-          only prose above the work: the Latin wordmark, a slash, the Greek in
-          gold, one sentence, a rule, and the turning mark beside it.
-
-          It carries the page's h1. The hero has no copy in the mock, only the
-          lockup, so there is no headline up there to be the document's heading
-          any more. */}
-      <Section>
-        <Reveal>
-          <div className="ln-cols ln-definition-row">
-            <div>
-              <h1 className="ln-word">
-                {story.latin}
-                <span className="ln-word-greek" lang="grc">
-                  {" / "}
-                  {story.word}
-                </span>
-              </h1>
-              <p className="ln-definition">{story.definition}</p>
-            </div>
-            <MarkSlot />
-          </div>
-        </Reveal>
-      </Section>
+      {/* The word lives at /about now. See the note at the top of this file. */}
 
       {/* The work, as full-width rows rather than a lead card over a grid of
           thumbnails. Copy left, screenshot right, three of them, which is how the
@@ -96,18 +79,28 @@ export default function Landing() {
           claim than a name set in type: a reader recognises Shell before they
           read anything. */}
       <Section>
-        <Reveal>
-          <h2 className="ln-h2">{featuredWork.heading}</h2>
-        </Reveal>
+        {/* No "Work" heading over the rows. Three client logos at the top of
+            three full-width rows already say what this is, and a section label
+            above them was labelling the obvious — the same reasoning that took
+            the kicker off every section. */}
         {projects.map((project, i) => (
           <Reveal key={project.slug} delay={i === 0 ? 80 : 0}>
             <article className="ln-work-row">
               <div className="ln-work-text">
                 {/* A plain <img>: fixed-height logos give the optimizer nothing
                     to do, and next/image would add a layout wrapper to serve the
-                    same bytes. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="ln-work-logo" src={project.logo} alt={project.title} />
+                    same bytes.
+
+                    A project with no logo file sets its name in the brand face
+                    instead of rendering src={undefined}, which is a broken image
+                    icon on a marketing page. Same reasoning as the logo README:
+                    a half-supplied row should look deliberate. */}
+                {project.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="ln-work-logo" src={project.logo} alt={project.title} />
+                ) : (
+                  <p className="ln-work-name">{project.title}</p>
+                )}
                 <p className="ln-body">{project.blurb}</p>
               </div>
               <Link href={`/work/${project.slug}`} className="ln-card-media">
@@ -115,7 +108,7 @@ export default function Landing() {
                   src={project.cover.src}
                   alt={project.cover?.alt ?? project.title}
                   width={1200}
-                  height={750}
+                  height={675}
                   sizes="(min-width: 860px) 620px, 100vw"
                   style={{ objectPosition: project.cover?.cardPosition }}
                 />
@@ -124,8 +117,8 @@ export default function Landing() {
           </Reveal>
         ))}
         <Reveal>
-          <Link href="/work" className="ln-more ln-more--centred">
-            {featuredWork.more}
+          <Link href="/work" className="ln-more ln-more--ends-list">
+            {featuredWork.more.replace("{count}", caseStudies.length)}
           </Link>
         </Reveal>
       </Section>

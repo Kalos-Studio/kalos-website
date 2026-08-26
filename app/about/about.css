@@ -1,0 +1,97 @@
+/* The about page's own composition, and only that.
+ *
+ * Everything the section itself is made of stays in landing.css — .ln-word,
+ * .ln-definition, .ln-sand and the page ground all carry the comments explaining
+ * their numbers, and the instruction when the word moved here was to move it
+ * untouched. What is new is the frame around it: a masthead, and one centred
+ * stack holding the screen. That is what lives here, so landing.css does not
+ * grow rules the landing page never uses.
+ */
+
+/* The page is one composition on one screen, so the root becomes a column and
+   the entry takes whatever height the masthead leaves. Everything else is
+   inherited from .landing-root, which is still on the same element: the ground,
+   the 100dvh scroll container, the grain, and the `isolation` that keeps the
+   sand from escaping behind the page. */
+.about-root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The masthead used to live here: an .ab-masthead in the flow, an .ab-wordmark
+   and an .ab-lockup that were a third copy of a rule /work and the hero also
+   had. It is the shared row in masthead.css now, fixed to the window, so this
+   file is back to holding only what is genuinely this page's: the centred stack.
+
+   Worth knowing what moving it changed. It was in the flow deliberately, so the
+   flex column below could take the height it left; fixed, .ab-stage centres on
+   the whole viewport instead of on what is under the masthead. On a page whose
+   content is twenty-five words that is the better centring, and it is why the
+   entry does not need a top offset to compensate. */
+
+/* ---------- the stage ---------- */
+
+/* Takes the rest of the viewport and centres the entry in it. The page carries
+   about twenty-five words; laid out from the top they occupied the first third
+   of the screen and left two thirds of empty sand under them, which read as a
+   page that had failed to load the rest of itself. Centred, the same twenty-five
+   words read as a title page.
+ *
+ * `flex: 1 0 auto` rather than `1`: it must never shrink below its content on a
+ * short window, because the root is a fixed-height scroll container and a
+ * squashed child would clip rather than scroll. */
+.ab-stage {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(2.5rem, 8vh, 5rem);
+}
+
+/* .ln-shell is `margin: 0 auto` on a max-width, which centres a block. As a flex
+   item it would instead shrink to its content, so the width is restated. */
+.ab-stage .ln-shell {
+  width: 100%;
+}
+
+.ab-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* The turning mark as a crest over the word rather than a column beside it.
+ *
+ * Sized against the viewport's height, not its width: the constraint here is
+ * that the mark, the word and the sentence all have to fit one screen, and on a
+ * short laptop window a vw-sized mark is what pushes the sentence off the
+ * bottom. */
+.ab-mark {
+  width: clamp(240px, 38vh, 420px);
+  max-width: 100%;
+  /* Small, and smaller than it looks like it should be. The mark is centred in a
+     7:6 canvas with clear air built into the 3D framing, so the box's bottom
+     edge already sits some 50px below the object: a margin sized by eye off the
+     box opens a gap the mark and the word cannot read as one object across. */
+  margin-bottom: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+/* Held at 7:6 on every width. landing.css widens the slot to 16:10 below 860px,
+   which is right for a plate filling a text column and wrong for a crest: a wide
+   short box centred over a headline reads as a banner above the page rather than
+   as an object on it. */
+.ab-mark .ln-sand {
+  aspect-ratio: 7 / 6;
+}
+
+/* Measure, so the sentence sets as two or three even centred lines instead of
+   one long ragged one. `balance` is worth having here specifically because the
+   lines are centred: a short last line under two full ones is the one place a
+   ragged break is impossible not to see. */
+.ab-entry .ln-definition {
+  max-width: 42ch;
+  margin-top: clamp(1rem, 2.5vh, 1.5rem);
+  margin-inline: auto;
+  text-wrap: balance;
+}

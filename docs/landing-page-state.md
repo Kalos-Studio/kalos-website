@@ -71,16 +71,20 @@ on the hero, and `soft` is worth a hard look: it is the finish that was original
 approved, without the moiré that turned out to be a sampling bug rather than a
 property of it.
 
-Hover the top-left corner of the hero and click the tab, or use `?v=original`,
-`?v=soft`, `?v=drastic` — remembered, and shareable as a link. Switching reloads, because the two
-differ in which light element exists in the scene and in material values built
-inside a `useMemo`.
+The tab sits at the top centre of every page, invisible until hovered — it was hidden
+in the hero's top-left corner and only rendered on `/`, which made the ground
+axis half-reviewable (the same sand runs behind `/about`) and left a preview
+opened on `/work` with no way to change either. It renders from `app/layout.js`
+now. `?v=original`, `?v=soft`, `?v=drastic` still work — remembered, and
+shareable as a link. Switching reloads, because the two differ in which light
+element exists in the scene and in material values built inside a `useMemo`.
 
 **This is a dev tool and it must not survive launch.** It is deliberately not
 gated on `NODE_ENV`, because the place it most needs to work is a Netlify deploy
 preview, which is a production build. Delete `sunrise-variants.js`,
-`variant-switch.js`, the `.ln-variants` rules, and the `V.` lookups in `solid.js`,
-`stage.js` and `sand.js`, then inline whichever one won.
+`sand-variants.js`, `variant-switch.js`, `variant-switch.css`, the line in
+`app/layout.js` that renders it, and the `V.` lookups in `solid.js`, `stage.js`
+and `sand.js`, then inline whichever one won.
 
 ### The sunrise plays on every load
 

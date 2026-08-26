@@ -232,7 +232,13 @@
 
 .ln-card-media {
   position: relative;
-  aspect-ratio: 16 / 10;
+  /* 16:9, which is what the source images actually are. It was 16/10, and with
+     object-fit: cover that quietly took about 10% off each side of every 16:9
+     screenshot: the EchoCare tracking map lost the edges of the route. MARA's
+     cover is the only 16:10 file of the three and it is an edge-to-edge collage
+     with no focal subject, so it crops top and bottom without losing anything.
+     Match this to the covers rather than the other way round. */
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 0.625rem;
   background: var(--color-eerie-gray);
@@ -281,6 +287,22 @@
   object-position: left center;
 }
 
+/* The stand-in for a client lockup that has not been supplied. Matched to the
+   logo's optical weight rather than to a type token: the logos beside it are
+   set by height, so a name in body size next to a 2.75rem mark reads as a
+   caption rather than as the row's title. Goes when the real file lands. */
+.ln-work-name {
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-snow-white);
+  /* Matches the logo box so the blurb below sits at the same offset either way. */
+  min-height: clamp(2rem, 3.4vw, 2.75rem);
+  display: flex;
+  align-items: center;
+}
+
 /* The media is a link, so it needs to say so on hover without moving: a
    screenshot that jumps under the cursor reads as a glitch at this size. */
 .ln-card-media {
@@ -320,9 +342,20 @@ a.ln-card-media:hover {
 }
 
 /* Centred under the work, where the mock puts it. */
-.ln-more--centred {
+/* Closes the list of work rather than floating between it and the close.
+ *
+ * It was centred, and that was the whole problem. Every row is a two column
+ * grid, copy left and screenshot right, so nothing else in this section sits on
+ * the centre line: the link landed under the gap between the two columns,
+ * attached to neither. And the section below it is a centred headline over a
+ * centred button, so a small gold centred link directly above them read as a
+ * weak first attempt at the page's actual call to action.
+ *
+ * Left, on the same edge as every blurb above it, it is the last item in the
+ * list instead. */
+.ln-more--ends-list {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   margin-top: clamp(2.5rem, 6vw, 4rem);
 }
 
@@ -346,6 +379,11 @@ a.ln-card-media:hover {
   inset: 0;
   z-index: 4;
   pointer-events: none;
+  /* Note this is the page's film grain, over everything including the mark, and
+     not the sand's own surface. The ripple ground paints its grain into the
+     canvas at device resolution instead — see grainLevels in sand-variants.js.
+     Driving both from here was tried and is why that ground's sparkle read as a
+     starfield: the field stayed smooth between the specks. */
   opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -508,98 +546,60 @@ a.ln-card-media:hover {
   }
 }
 
-/* ---------- the variant switch ----------
+/* ---------- scroll cue ----------
  *
- * A dev tool. See variant-switch.js; it comes out before launch along with
- * sunrise-variants.js.
+ * One chevron, saying only that there is more below.
  *
- * Deliberately hard to find and easy to reach: a small target in the corner the
- * masthead already occupies, invisible until hovered or tabbed to. z-index above
- * the grain overlay, which is the topmost thing on the page at 4. */
-.ln-variants {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 5;
-  padding: 0.5rem;
-  font-size: var(--type-micro);
-}
-
-/* A real button, so it can be clicked and tabbed to, and invisible until you go
-   looking. Not `visibility: hidden`, which would take it out of the tab order:
-   the point is that it stays reachable while not being there to look at. */
-.ln-variants-tab {
-  display: block;
-  min-width: 4.5rem;
-  padding: 0.35rem 0.5rem;
-  border: 1px solid transparent;
-  border-radius: 0.4rem;
-  background: none;
-  font: inherit;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-dark-silver);
-  opacity: 0;
-  cursor: pointer;
-  transition: opacity 160ms ease;
-}
-
-.ln-variants:hover .ln-variants-tab,
-.ln-variants:focus-within .ln-variants-tab,
-.ln-variants.is-open .ln-variants-tab {
-  opacity: 0.6;
-  border-color: var(--color-eerie-gray);
-  background: var(--color-obsidian-black);
-}
-
-/* Rendered only when open, so there is no hover rule here: hover-only was tried
-   and the panel vanished the moment the pointer left the tab on its way to it. */
-.ln-variants-menu {
+ * The hero is what earns it: a full viewport with an object floating in the
+ * middle and no copy has no half-cut line of text at the bottom edge, which is
+ * what usually tells a reader to keep going without anyone having to draw
+ * anything. Vulcan Gold because the palette assigns gold to accents and
+ * indicators, and an indicator is exactly what this is.
+ *
+ * The class is deliberately generic rather than hero-specific: the intent is one
+ * of these at the foot of each section, and only the hero has it for now. A
+ * section places it and this owns what it looks like.
+ *
+ * Sized in px rather than off the type scale. It is a piece of artwork about the
+ * width of a word, not type, and clamping it against the viewport would grow it
+ * next to a lockup that does not grow. */
+.ln-cue {
   display: flex;
-  flex-direction: column;
-  margin-top: 0.35rem;
-  gap: 0.25rem;
-  width: 15rem;
-  padding: 0.4rem;
-  border-radius: 0.6rem;
-  border: 1px solid var(--color-eerie-gray);
-  /* Opaque, because it sits over a moving 3D object and a translucent panel
-     over that is unreadable. */
-  background: var(--color-obsidian-black);
-}
-
-
-.ln-variants-option {
-  display: block;
-  width: 100%;
-  padding: 0.5rem 0.6rem;
-  border-radius: 0.4rem;
-  border: 1px solid transparent;
-  background: none;
-  font: inherit;
-  text-align: left;
-  color: var(--color-dark-silver);
-  cursor: pointer;
-}
-
-.ln-variants-option:hover {
-  border-color: var(--color-eerie-gray);
-  color: var(--color-snow-white);
-}
-
-.ln-variants-option.is-current {
-  border-color: color-mix(in srgb, var(--color-vulcan-gold) 55%, transparent);
+  justify-content: center;
   color: var(--color-vulcan-gold);
+  /* The mark is behind it and stays draggable through it. */
+  pointer-events: none;
 }
 
-.ln-variants-name {
-  display: block;
-  font-weight: 500;
+.ln-cue svg {
+  width: 26px;
+  height: auto;
+  /* The drift is what makes it read as an invitation rather than as a bullet.
+     Long and shallow: 4px over three seconds, which the eye catches in
+     peripheral vision without it ever asking to be watched. It rests at 0.6 and
+     peaks at 1 rather than the other way round, so the quiet state is the one it
+     spends most of the cycle in. */
+  animation: ln-cue-drift 3s ease-in-out infinite;
 }
 
-.ln-variants-note {
-  display: block;
-  margin-top: 0.15rem;
-  line-height: 1.4;
-  opacity: 0.7;
+@keyframes ln-cue-drift {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: none;
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Motion the page starts by itself, so it goes entirely. The chevron still
+     says what it means standing still, which is the test for whether an
+     animation was carrying information or decorating. */
+  .ln-cue svg {
+    animation: none;
+    opacity: 0.85;
+  }
 }

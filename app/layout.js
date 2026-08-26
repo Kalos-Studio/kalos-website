@@ -1,4 +1,5 @@
 import { Space_Grotesk } from "next/font/google";
+import VariantSwitch from "./(landing)/variant-switch";
 import "./globals.css";
 
 // The brand face, confirmed off the guidelines deck rather than guessed, and now
@@ -106,7 +107,15 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={spaceGrotesk.variable}>
-      <body className={spaceGrotesk.className}>{children}</body>
+      <body className={spaceGrotesk.className}>
+        {children}
+        {/* Dev only, and it comes out before launch. It is here rather than on
+            the landing page because the sunrise and the ground it switches are
+            reachable from more than one route — /about runs the same sand — and
+            because a deploy preview opened on any page should be able to change
+            them without navigating home first. See (landing)/variant-switch.js. */}
+        <VariantSwitch />
+      </body>
     </html>
   );
 }

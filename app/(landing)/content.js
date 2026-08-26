@@ -50,7 +50,9 @@ export const menu = {
   ],
 };
 
-// The dictionary entry, and now the only prose above the work.
+// The dictionary entry. It renders on /about now rather than on the homepage,
+// where it was the first section under the hero; the copy stays here because
+// this file is where the site's copy lives, not because of which page reads it.
 //
 // This section used to carry a heading and two paragraphs after the definition,
 // and before it there was a proof strip, an offer section and four principles
@@ -72,10 +74,10 @@ export const story = {
     "Guided by the idea that beauty requires craftsmanship, we prototype fast and measure success by what ships.",
 };
 
-// The mock's three, in the mock's order, and not the set that was here before
-// (Priority, Allganize, Shell). Six exist on /work and this page shows half of
-// them; which half is a positioning decision rather than a technical one, and
-// the mock made it.
+// Three of the seven on /work, and which three is a positioning decision rather
+// than a technical one. This was the mock's set (Shell, EchoCare, MARA), which
+// itself replaced Priority, Allganize, Shell. Shell came out for the H-E-B work
+// on the owner's call.
 //
 // `logo` is what goes where a title would. The mock puts a client lockup at the
 // top of each row rather than the project's name, which is a stronger claim: a
@@ -83,18 +85,48 @@ export const story = {
 // in the repo. Anything that is not gets a placeholder and a request, never a
 // Figma export.
 export const featuredWork = {
-  heading: "Work",
-  more: "See more",
+  // No heading. There was a "Work" h2 over these rows and it came out: three
+  // client logos at the top of three full-width rows are already the label, and
+  // a word above them was naming what the reader can see.
+
+  // {count} is filled from caseStudies.length in page.js rather than typed here.
+  // "See more" said neither what nor how much, and a number is the reason to
+  // click: three rows read as the whole of it otherwise. Interpolated because a
+  // hardcoded "six" went stale the day a seventh case study landed.
+  more: "See all {count} projects",
   projects: [
-    { slug: "shell-tapup", logo: "/home/logos/shell-tapup.webp" },
-    { slug: "echocare", logo: "/home/logos/echocare.webp" },
+    // Supplied by the owner, not exported from the Figma or lifted off the deck.
+    // Cropped to the artwork's alpha bounds before it landed here: the file
+    // arrived as a 512 square with the mark occupying 158px of that height, and
+    // .ln-work-logo sizes by height, so uncropped it rendered at a third of the
+    // weight of the two lockups beside it.
+    { slug: "my-heb-app", logo: "/home/logos/my-heb-app.webp" },
+    // The landing row shows the live tracking map rather than the case study's
+    // own cover. featured() in page.js spreads the project over the study, so a
+    // cover here replaces the study's outright and nothing else has to change.
+    // Deliberately landing-only: /work and the case study hero still open on
+    // cover.jpg, and this is the frame that reads at a glance in a wide row.
+    {
+      slug: "echocare",
+      logo: "/home/logos/echocare.webp",
+      cover: {
+        src: "/work/echocare/trip-tracking.jpg",
+        alt: "The EchoCare trip tracking view, with a dispatch timeline beside a live GPS map tracing an ambulance route between two hospitals",
+      },
+    },
     { slug: "mara", logo: "/home/logos/mara.webp" },
   ],
   // Homepage framing, written to sell rather than to document. The case study
   // pages keep their own summaries.
   blurbs: {
-    "shell-tapup":
-      "Native iOS and Android apps for Shell's global refueling service, replacing error-prone manual steps with a guided one.",
+    // Says "design exploration" here because this is the one surface that did
+    // not. The case study and the /work card both open on it, and the homepage
+    // row set an H-E-B logo where Shell's and MARA's go, in the same treatment,
+    // under a line that read as delivered work. The row is the strongest claim
+    // the site makes about a project, so it is the last place the label should
+    // be missing.
+    "my-heb-app":
+      "A design exploration for the largest grocery chain in Texas, where the shopping list becomes a route through the store and the total is already right by the time you reach the front.",
     echocare:
       "The dispatch platform an ambulance service runs on, designed for decisions made with a clock running and no undo.",
     mara:
