@@ -211,14 +211,23 @@
      imagery is the right idiom on a phone anyway -- the picture stops being a
      card sitting in a column and becomes the page.
 
-     The arithmetic works because the column is centred: 50% is half the content
-     box, 50vw is half the viewport, and the difference is exactly one gutter.
-     Applied to body figures and, via .work-bleed, to the hero. */
+     Negative margins of exactly one gutter, not `calc(50% - 50vw)` with a
+     `100vw` width. The vw version is the usual recipe and it is wrong wherever
+     scrollbars take up space -- Windows, or macOS set to show them always:
+     `100vw` includes the scrollbar and the container's `50%` does not, so the
+     element ends up about half a scrollbar wider than the viewport on each side
+     and the page grows a horizontal scrollbar. Overlay scrollbars hide it, which
+     is why it does not reproduce in headless Chrome or on a default Mac.
+
+     This works because below 640px the column's padding is exactly `px-5` and
+     its `max-w-[120rem]` is not binding, so the content box is the viewport
+     less the two gutters and pulling one gutter back off each side lands on the
+     viewport edge. If the gutter changes, this changes with it. */
   .work-bleed,
   .work-prose figure:not(.work-prose-quote) {
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    width: 100vw;
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    width: auto;
     max-width: none;
   }
 
