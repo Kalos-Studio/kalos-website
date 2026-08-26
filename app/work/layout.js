@@ -1,13 +1,24 @@
 import Masthead from "../masthead";
 import BackLink from "./back-link";
 import "./work.css";
-import { workPageTitle } from "./data";
 
-// Applies to every /work route. No `robots` here any more: the section was
-// noindex'd while it sat behind a password, and it is public now.
-export const metadata = {
-  title: workPageTitle("Work"),
-};
+// No `metadata` here, and its absence is the point.
+//
+// It carried `title: "Work — Kalos"` for every route under /work, which is
+// correct for the two that exist and wrong for the one that does not: a bad URL
+// renders the root not-found boundary, inherits this title, and announces itself
+// as the Work page in the tab, in a bookmark, and in every link preview of a
+// broken link somebody shared. The obvious fix is to name a title for the miss
+// in [slug]/page.js's generateMetadata, and it does nothing, because Next
+// resolves metadata before the page renders and then discards the page's share
+// of it when notFound() throws.
+//
+// So both real routes name their own title and this contributes none, which
+// leaves a 404 under /work on the root layout's "Kalos" -- what /randomtext
+// already gets.
+//
+// No `robots` either, and that one is older: the section was noindex'd while it
+// sat behind a password, and it is public now.
 
 export default function WorkLayout({ children }) {
   return (

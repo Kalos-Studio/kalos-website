@@ -1,6 +1,13 @@
 import Link from "next/link";
 import CoverImage from "./CoverImage";
-import { caseStudies, workIndex } from "./data";
+import { caseStudies, workIndex, workPageTitle } from "./data";
+
+// Moved off app/work/layout.js so a 404 under /work does not inherit it. The tab
+// keeps the one word; workIndex.title is the headline on the page, and the two
+// are deliberately different. See the note in layout.js.
+export const metadata = {
+  title: workPageTitle("Work"),
+};
 
 export default function WorkIndexPage() {
   return (

@@ -15,6 +15,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const cs = getCaseStudy(slug);
+  // Not a real slug: hand the title back to the root layout. Naming one here
+  // does nothing, which is worth knowing before trying it. Next resolves
+  // metadata before the page renders and then discards the page's share of it
+  // when notFound() throws, so a title returned from this branch never reaches
+  // the document. What fixes it is the layout not having one to fall back to.
+  // See app/work/layout.js.
   if (!cs) return {};
   // Next replaces metadata keys rather than deep-merging them, so anything this
   // object names is the whole value for that key. `robots` is deliberately absent

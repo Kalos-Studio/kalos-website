@@ -85,6 +85,13 @@
      take its time arriving; closing is getting out of the way, and anything
      that lingers on the way out reads as lag rather than as grace. Same
      asymmetry the scroll cue uses on .is-gone, for the same reason. */
+  /* The gap between the wordmark and whatever is leading beside it. A token
+     rather than a literal because work.css needs the same number: the hairline
+     on .work-back sets its own margin, and the two have to stay equal or the
+     rule stops sitting centred between them. This file has already written up
+     what happens to copies kept in sync by luck, in the note on .site-lockup. */
+  --site-masthead-lead-gap: clamp(0.875rem, 2vw, 1.25rem);
+
   --site-menu-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --site-menu-open-ms: 460ms;
   --site-menu-close-ms: 240ms;
@@ -391,7 +398,7 @@
 .site-masthead-lead {
   display: flex;
   align-items: center;
-  gap: clamp(0.875rem, 2vw, 1.25rem);
+  gap: var(--site-masthead-lead-gap);
   min-width: 0;
 }
 

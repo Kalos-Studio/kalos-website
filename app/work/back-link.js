@@ -57,8 +57,18 @@ export default function BackLink() {
       className="work-back"
       onClick={(event) => {
         // Let the browser handle anything that is not a plain left click, or
-        // the new-tab modifiers stop working.
-        if (!canGoBack || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
+        // the new-tab modifiers stop working. altKey is in the list for the same
+        // reason the other three are, and was missed: option-click on a Mac is
+        // save-link-target, and without it the download silently became a
+        // navigation. cal.js checks the same four.
+        if (
+          !canGoBack ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey ||
+          event.button !== 0
+        ) {
           return;
         }
         event.preventDefault();
