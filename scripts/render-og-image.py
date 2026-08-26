@@ -3,8 +3,8 @@
 
     python3 scripts/render-og-image.py     # needs Pillow, nothing else
 
-Reads docs/assets/og-image.svg (the Kalos lockup in brand white) and writes
-app/opengraph-image.png at 1200x630 with a black ground.
+Reads docs/assets/og-image.svg (the Kalos lockup in Obsidian Black) and
+writes app/opengraph-image.png at 1200x630 on white.
 
 Why this exists rather than a one-off export: the card is the lockup, the lockup
 lives in the repo as vector paths, and a PNG is not a source you can edit. Same
@@ -29,9 +29,15 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "docs/assets/og-image.svg"
 OUT = ROOT / "app/opengraph-image.png"
 
-# The share card's ground. The source SVG carries #212225, the brand's near-black
-# surface, because it was drawn as a slide. The card is black.
-GROUND = (0, 0, 0)
+# The share card's ground. This was black, with the lockup reversed out in
+# Snow White -- the source SVG had been drawn as a slide. It is white now,
+# because everywhere else the brand meets someone is: the landing page is the
+# site's front door and is white, and the favicons put the black mark on light.
+# The share card was the one surface showing the brand inverted.
+#
+# Set here rather than read from the SVG's own <rect>, which the path scraper
+# below skips -- keep the two in step by hand if the source is ever reground.
+GROUND = (255, 255, 255)
 
 # Everything is rendered at this multiple and then resampled down. Pillow's
 # polygon fill is hard-edged -- there is no antialiasing to ask for -- so the
