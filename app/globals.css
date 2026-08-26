@@ -173,29 +173,27 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* No page-level cross-fade at all, and this is the fix for a real glitch
-     rather than a preference.
-
-     The default is old and new roots dissolving into each other, and while the
-     morph was wired to a single pair that fade was what ghosted the other panels
-     over the case study: everything unnamed is part of the root snapshot.
-     Shortening it only made the ghost briefer. Naming every panel moved them out
-     of the root and into groups of their own, which is a different bug with the
-     same symptom -- see the `:only-child` rule below.
-
-     So the old root is dropped on the first frame and the new one is there
-     immediately. Only the cover animates, which is what a shared-element
-     transition is supposed to look like: the page does not fade, one thing
-     moves. The destination's text appearing at once is not a problem, because
-     the eye is following the cover. */
-  ::view-transition-old(root) {
-    animation: none;
-    opacity: 0;
-  }
-
+  /* The page cross-fades under the morph.
+   *
+   * This was off, and turning it off was right at the time. Everything unnamed
+   * is part of the root snapshot, so while only one pair was named, fading the
+   * roots ghosted the other panels over the case study; shortening the fade only
+   * made the ghost briefer.
+   *
+   * What changed is the `:only-child` rules below. Every panel is named now, so
+   * none of them are in the root snapshot at all, and the unpaired ones are
+   * hidden in both directions. The root is the type, the rail and the masthead --
+   * exactly the things that should dissolve rather than cut.
+   *
+   * Half the morph's duration on purpose. The page settles while the cover is
+   * still travelling, so the eye is handed to the cover rather than being asked
+   * to watch two things resolve at once. Letting the UA's own cross-fade do the
+   * work and only setting its timing; overriding the animation is what produced
+   * the hard cut. */
+  ::view-transition-old(root),
   ::view-transition-new(root) {
-    animation: none;
-    opacity: 1;
+    animation-duration: calc(var(--duration-morph) / 2);
+    animation-timing-function: var(--ease-brand);
   }
 
   /* The cover itself. The same curve the site uses elsewhere for movement

@@ -89,6 +89,34 @@ function waitForTarget(name, source, { centreInView = false, ticket } = {}) {
         el.scrollIntoView({ block: "center", behavior: "instant" });
       }
 
+      // Start the panels either side of the target loading, without waiting for
+      // them.
+      //
+      // Coming back to the landing page, scrolling the target into view brings
+      // its neighbours into the window too -- and they are lazy, so the browser
+      // only begins fetching them at that moment and they arrive about a second
+      // later, popping in after the transition has finished. Kicking them off
+      // here gives them the length of the morph to load in.
+      //
+      // Deliberately not awaited: the transition should never be held open for
+      // an image nobody is looking at. If they are not ready in time they fade
+      // in late exactly as they did before, which is the current behaviour and
+      // an acceptable floor.
+      if (el) {
+        const panel = el.closest("li");
+        for (const sibling of [
+          panel?.previousElementSibling,
+          panel?.nextElementSibling,
+        ]) {
+          const neighbour = sibling?.querySelector("img");
+          if (!neighbour || neighbour.complete) continue;
+          // Lazy images do not begin until the browser decides they are near
+          // enough; saying eager is what actually starts the fetch.
+          neighbour.loading = "eager";
+          neighbour.decode?.().catch(() => {});
+        }
+      }
+
       // A snapshot of an <img> that has not decoded yet is a grey box, and the
       // morph lands on that and then pops. The two ends ask for different
       // `sizes`, so they resolve to different files out of the srcset and the
