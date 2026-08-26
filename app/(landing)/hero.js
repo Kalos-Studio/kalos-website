@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef } from "react";
 import { LOCKUP_GEOMETRY, Mark, Wordmark } from "../lockup";
 import BookACall from "./book-a-call";
@@ -64,6 +65,29 @@ const RUNWAY_MAX = 0.45; // of the window, so it never becomes a marathon
 const FADE_COMPLETE_AT = 0.8;
 
 const clamp01 = (n) => Math.min(Math.max(n, 0), 1);
+
+// Clicking the masthead mark returns to the hero.
+//
+// Only the plain left click is intercepted; everything else falls through to the
+// href, so a modified click still opens the site in a new tab and a visitor
+// without JavaScript still gets a working link.
+function backToHero(event) {
+  if (
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
+  ) {
+    return;
+  }
+  event.preventDefault();
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+  // Drop any #case- fragment the rail left in the URL, so a reload comes back to
+  // the top rather than jumping to whichever case study was last looked at.
+  history.replaceState(null, "", "/");
+}
 
 /**
  * Draws the flying symbol for the current frame.
@@ -239,9 +263,9 @@ export default function Hero() {
     <>
       {/* The masthead the hero hands over to. Always in the DOM and always
           fixed; the slot draws nothing, it exists to be measured so the flying
-          symbol knows where it is going. pointer-events-none because there is
-          nothing interactive in here -- the call to action stays in the hero and
-          fades with it.
+          symbol knows where it is going. The bar is transparent to clicks -- the
+          call to action stays in the hero and fades with it -- and the mark
+          re-enables them on itself, because it is the way back to the top.
 
           The white ground is not decoration. This bar was transparent, so the
           case study panels scrolled visibly under the symbol on their way up the
@@ -256,9 +280,24 @@ export default function Hero() {
           anyway, since the only thing behind it is the hero. By the time a panel
           reaches the top of the window the hero has gone and this is solid. */}
       <div
-        className="pointer-events-none fixed inset-x-0 top-0 z-40"
+        className="pointer-events-none fixed inset-x-0 top-0 z-40 pb-6 lg:pb-10"
         style={{
-          backgroundColor: "rgb(255 255 255 / calc(1 - var(--hero-fade, 1)))",
+          // A gradient rather than a flat fill, so the bar has no bottom edge.
+          //
+          // Flat, it ended in a hard line across the page and every panel
+          // scrolling under it was visibly clipped by a rectangle. Fading the
+          // last stretch to nothing means content passes out of view instead of
+          // being cut off, which is the whole job of a bar like this.
+          //
+          // The alpha is the same `1 - var(--hero-fade)` the flat fill used, so
+          // the bar still arrives as the hero leaves rather than sitting over it
+          // at the top of the page. Carried on every stop so the fade tracks it.
+          backgroundImage:
+            "linear-gradient(to bottom," +
+            " rgb(255 255 255 / calc(1 - var(--hero-fade, 1))) 0%," +
+            " rgb(255 255 255 / calc(1 - var(--hero-fade, 1))) 55%," +
+            " rgb(255 255 255 / calc((1 - var(--hero-fade, 1)) * 0.6)) 78%," +
+            " rgb(255 255 255 / 0) 100%)",
         }}
       >
         <div className="mx-auto flex w-full max-w-[120rem] items-center justify-between px-5 py-4 sm:px-8 lg:px-12 lg:py-6 xl:px-24">
@@ -296,7 +335,29 @@ export default function Hero() {
         style={{ width: 0, height: 0 }}
         className="pointer-events-none fixed left-0 top-0 z-50 origin-top-left text-black will-change-transform"
       >
-        <Mark className="h-full w-full" />
+        {/* The mark is the way back to the top, the same way it is the way home
+            from a case study. pointer-events-auto because the layer above it is
+            deliberately transparent to clicks; this is the one thing in it that
+            is not.
+
+            A real link rather than a button: it works with JavaScript off,
+            cmd-click opens the site in a tab, and the handler below only takes
+            over the plain left click. On this page "/" is where we already are,
+            so the handler turns that navigation into a scroll rather than
+            letting the router re-render the page to reach the top of it.
+
+            next/link rather than a bare <a>, because eslint's
+            no-html-link-for-pages is right: this is an internal route, and a raw
+            anchor would give up client-side navigation for everyone whose click
+            the handler does not intercept. */}
+        <Link
+          href="/"
+          onClick={backToHero}
+          aria-label="Kalos, back to top"
+          className="pointer-events-auto block h-full w-full"
+        >
+          <Mark className="h-full w-full" />
+        </Link>
       </div>
 
       {/* The fade lives on the header rather than on each child, so everything

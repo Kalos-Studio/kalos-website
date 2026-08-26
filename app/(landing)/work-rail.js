@@ -84,6 +84,10 @@ function centreOnClick(event, slug) {
 
 export default function WorkRail({ items }) {
   const [active, setActive] = useState(null);
+  // The rail is an index of the work. Once the closer is on screen there is no
+  // work left to index, and a column of project names beside "Let's connect."
+  // is just something else to look at.
+  const [retired, setRetired] = useState(false);
   const navRef = useRef(null);
   const listRef = useRef(null);
   const itemRefs = useRef([]);
@@ -209,6 +213,21 @@ export default function WorkRail({ items }) {
   }, []);
 
   useEffect(() => {
+    const closer = document.getElementById("connect");
+    if (!closer) return;
+
+    // Starts fading before the closer is fully in view, so the rail is already
+    // gone by the time the call to action is centred rather than disappearing
+    // once the reader has arrived.
+    const observer = new IntersectionObserver(
+      ([entry]) => setRetired(entry.isIntersecting),
+      { rootMargin: "0px 0px -35% 0px", threshold: 0 },
+    );
+    observer.observe(closer);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     // Placeholders included: they have a framed slot in the run now, so the rail
     // has to track them or it would go stale while one is on screen.
     const panels = items
@@ -236,6 +255,7 @@ export default function WorkRail({ items }) {
     <nav
       ref={navRef}
       aria-label="Case studies"
+      aria-hidden={retired ? "true" : undefined}
       className={
         // Below lg: a horizontal strip stuck to the top, because a 9.4% column
         // would be 37px wide on a phone.
@@ -248,7 +268,12 @@ export default function WorkRail({ items }) {
         // sticky offset it holds there — vertically centred, because that offset
         // is half the leftover space (see the effect above). The fallback of 2rem
         // only applies for the frame before the measurement lands.
-        "lg:top-[var(--rail-sticky-top,2rem)] lg:col-start-2 lg:row-start-1 lg:items-end lg:bg-transparent lg:py-0"
+        "lg:top-[var(--rail-sticky-top,2rem)] lg:col-start-2 lg:row-start-1 lg:items-end lg:bg-transparent lg:py-0 " +
+        // Hidden from pointers and from assistive tech together: a rail faded to
+        // nothing is still focusable, and tabbing into an invisible list of
+        // links is worse than the clutter it was hiding.
+        "transition-opacity duration-500 " +
+        (retired ? "pointer-events-none opacity-0" : "opacity-100")
       }
     >
       {/* Below lg this label lives in the masthead instead -- see the

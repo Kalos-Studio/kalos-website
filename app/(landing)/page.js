@@ -3,6 +3,7 @@ import ViewTransitionLink from "../view-transition-link";
 import { workRail } from "../work/data";
 import Hero from "./hero";
 import BookACall from "./book-a-call";
+import PagedScroll from "./paged-scroll";
 import WorkRail from "./work-rail";
 import { closer } from "./content";
 
@@ -39,6 +40,9 @@ export default function LandingPage() {
     // centred, capped column that behaves at every width.
     <div className="mx-auto w-full max-w-[120rem] px-5 sm:px-8 lg:px-12 xl:px-24">
       <Hero />
+      {/* One wheel gesture, one view, from the first case study down. Renders
+          nothing -- see paged-scroll.js for what it does and does not take. */}
+      <PagedScroll />
 
       {/* --- Work ---------------------------------------------------------
           Two columns: panels left, pill rail right. The frame puts panels at
@@ -74,7 +78,7 @@ export default function LandingPage() {
               lg only. Below that the rail is a horizontal strip above the panels
               rather than a column beside them, so there is no shared row to
               offset and a 17svh hole would just be a gap. */}
-          <ul className="flex flex-col gap-10 lg:col-start-1 lg:row-start-1 lg:gap-24 lg:pt-[35svh] lg:pb-[30svh]">
+          <ul className="flex flex-col gap-10 lg:col-start-1 lg:row-start-1 lg:gap-24 lg:pt-[35svh]">
             {workRail.map((cs, i) => {
               // The placeholder has no page, no cover and no logo. It renders as
               // an empty framed slot in the same rhythm as the rest, and is not a
@@ -250,7 +254,23 @@ export default function LandingPage() {
           snapping to drag the page the rest of the way down instead of centring
           the case study. The stops are for the work; the closer is just the end
           of the page. */}
-      <footer className="flex flex-col items-center gap-5 pb-24 text-center lg:pb-32">
+      {/* The closer gets the whole window. It is the one thing on the page being
+          asked for, and sharing a screen with the tail of the work made it read
+          as a footer rather than as the point. The rail fades out as this
+          arrives -- see work-rail.js -- so nothing competes with it. */}
+      <footer
+        id="connect"
+        // A stop of its own, so scrolling past the last case study lands here
+        // rather than drifting to the bottom of the document.
+        //
+        // snap-start, not snap-end. This carried snap-end once, when it was a
+        // short block at the foot of a long page: that aligns the element's end
+        // with the end of the scrollport, which is the bottom of the document,
+        // so clicking the last pill got dragged all the way down instead of
+        // centring the case study. The closer is a full viewport now, so
+        // aligning its top with the window's top is both correct and unambiguous.
+        className="flex min-h-svh snap-always snap-start flex-col items-center justify-center gap-6 text-center"
+      >
         <p className="text-display font-medium tracking-tight">{closer}</p>
         <BookACall variant="outline" />
       </footer>

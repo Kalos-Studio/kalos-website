@@ -109,12 +109,19 @@ export default function RootLayout({ children }) {
     // glimpsed during a snap glide. Proximity still stops on each case study
     // while leaving the hero free to be scrolled through.
     //
-    // scroll-smooth is for the pill rail: clicking one jumps to its case study,
-    // and an instant jump reads as a page change rather than a move within the
-    // page. globals.css turns it off under prefers-reduced-motion.
+    // No `scroll-smooth` here, and it must not come back.
+    //
+    // It was for the pill rail, which now scrolls with an explicit
+    // scrollIntoView({ behavior }) instead -- so it bought nothing, and it cost
+    // this: with smooth scrolling on the root, Next cannot reset the scroll
+    // position cleanly across a route change, so a case study opened at the
+    // *landing page's* scroll offset and then jumped to the top. Measured at
+    // 6421px for the last panel, which is why the studies further down the page
+    // glitched and the ones near the top looked fine. Next warns about this in
+    // development.
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} snap-y snap-proximity scroll-smooth`}
+      className={`${spaceGrotesk.variable} snap-y snap-proximity`}
     >
       {/* The base ground, on utilities rather than an unlayered `html, body`
           rule in globals.css -- see the note at the foot of that file. Light by
@@ -127,10 +134,20 @@ export default function RootLayout({ children }) {
       <body className="bg-white text-black antialiased">
         {children}
         {/* The Agentation annotation toolbar: click anything on the page, type
-            a note, and it syncs to the coding agent. Development only -- the
-            NODE_ENV check is what keeps it out of the production bundle, since
-            Next statically replaces the expression and the dead branch is
-            dropped, import and all.
+            a note, and it syncs to the coding agent. Development only.
+
+            The NODE_ENV check keeps it off the production *page* -- Next
+            replaces the expression and drops the dead branch -- but it does not
+            keep the module out of the build. The import at the top of this file
+            is static, so webpack resolves and bundles it either way: measured at
+            428KB in .next/static/chunks after a production build, listed under
+            /layout in the build manifest. No prerendered page references that
+            chunk, so nobody downloads it, but it is built and deployed on every
+            release.
+
+            An earlier version of this comment claimed the import was dropped
+            too. It is not. Removing it needs the module excluded at build time
+            (a webpack alias in next.config.mjs), not a runtime guard.
 
             Ships "use client" itself, so it can sit in this server layout
             without turning the document into a client component. Rendered after

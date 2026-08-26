@@ -197,4 +197,26 @@
   ::view-transition-old(.cover):only-child {
     opacity: 0;
   }
+
+  /* And the same for the other direction, which the rule above missed.
+   *
+   * The note above works it out and then only fixes half of it: leaving the
+   * landing page there are six unpaired *old* covers, and coming back there are
+   * six unpaired *new* ones. Only the old ones were being hidden. The new ones
+   * sat over the destination for the whole 520ms as snapshots of panels the
+   * reader was not looking at, then vanished when the transition ended and the
+   * real elements took over -- which is exactly the reported symptom: a cover
+   * from another case study appearing for a moment and then disappearing.
+   *
+   * Hiding them means the neighbouring panels are simply absent while the morph
+   * runs and present the instant it finishes, in the right places and all at
+   * once. That is a far quieter thing than one of them turning up in the wrong
+   * position mid-flight. The eye is following the cover; nothing else on the
+   * page has to be there for half a second.
+   *
+   * The pair being navigated is untouched by both rules -- `:only-child` is how
+   * CSS asks "is this half of a pair", and a matched pair never matches it. */
+  ::view-transition-new(.cover):only-child {
+    opacity: 0;
+  }
 }
