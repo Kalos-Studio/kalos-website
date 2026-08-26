@@ -26,8 +26,15 @@ const AL =
 
 // The fill is `currentColor` rather than a constant. It was Snow White, which
 // was right while this only ever appeared on the dark hero; it now also renders
-// in the /work masthead, and it turns Vulcan Gold when the hero mark docks into
-// it. One colour set from CSS is simpler than three components passing a prop.
+// in the /work and /about mastheads. One colour set from CSS is simpler than
+// four components passing a prop.
+//
+// The mark and the word are separate groups so a surface can colour one without
+// the other, which the hero needs and nothing else does: the 3D mark flies into
+// the mark's slot and the mark alone takes Vulcan Gold, while "kalos" stays Snow
+// White. That is the difference between the object setting *into* the logo and
+// the logo simply being repainted. Both groups still inherit `currentColor`, so
+// every caller that sets a single colour on the svg is unaffected.
 
 export default function Lockup({ className }) {
   return (
@@ -39,12 +46,16 @@ export default function Lockup({ className }) {
       focusable="false"
     >
       <g fill="currentColor">
-        <path d={TRIANGLE} />
-        <path d={DIAMOND} />
-        <path d={K} />
-        <path d={O} />
-        <path d={S} />
-        <path d={AL} fillRule="evenodd" clipRule="evenodd" />
+        <g className="lockup-mark">
+          <path d={TRIANGLE} />
+          <path d={DIAMOND} />
+        </g>
+        <g className="lockup-word">
+          <path d={K} />
+          <path d={O} />
+          <path d={S} />
+          <path d={AL} fillRule="evenodd" clipRule="evenodd" />
+        </g>
       </g>
     </svg>
   );

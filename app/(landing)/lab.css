@@ -63,6 +63,28 @@
 .lab-stage {
   position: absolute;
   inset: 0;
+  /* Deliberately under the masthead, which is z-index 3.
+   *
+   * Worth writing down, because it was raised above it once and it looks like
+   * the obvious thing to do: the object docks *into* the lockup, so surely it
+   * should be in front of it. It should not. Two things go wrong when it is.
+   *
+   * The flight's straight line passes about 8px under the wordmark's bottom
+   * left, and the object is still wider than its final size when it gets there,
+   * so an object in front clips the corner of the "K" for the last stretch of
+   * the approach — measured at roughly 20x17px, a gold shape cutting into a
+   * white letterform. Nothing about the path can avoid it; the two simply
+   * overlap.
+   *
+   * And what is left standing at the end is better as the flat mark. It is an
+   * SVG rather than an antialiased WebGL edge, and it is the thing that stays on
+   * screen; handing over to it rather than covering it means the last frame is
+   * the crisper of the two.
+   *
+   * So the object goes behind, which is also what "embeds into the logo"
+   * describes. It is visible right up to the point where it reaches the flat
+   * mark's own size, by which time both are the same gold, and it merges into
+   * it. See HANDOVER_FROM in variants/solid.js. */
   /* Same reasoning as .lab above: horizontal drag turns the mark, vertical
      swipe scrolls the page past it. */
   touch-action: pan-y;
@@ -108,9 +130,17 @@
  * target that had been off screen for most of the flight and the arrival — the
  * lockup turning gold, the entire point — happened where nobody could see it.
  *
- * Fixed keeps it in place through the hero, which is also what the annotation
- * asking for it to "disappear once user scrolls past hero" implies: it has to be
- * there to disappear from. .lab-header.is-past takes it away at the end. */
+ * Fixed keeps it in place through the hero, which is what the annotation asking
+ * for it to "disappear once user scrolls past hero" implies: it has to be there
+ * to disappear from.
+ *
+ * Nothing here takes it away, though. It was `.lab-header.is-past`, a class with
+ * a 260ms fade fired at the end of the dock, and it is now a scroll-driven
+ * opacity written from the dock handler in variants/solid.js — from the end of
+ * the dock to the bottom of the hero, so the masthead is leaving across exactly
+ * the stretch of scroll that has nothing else happening on it, and is gone as
+ * the first case study arrives. Worth knowing before adding any transition to
+ * this element: that handler has to suppress the one below to work at all. */
 .lab-header {
   position: fixed;
   top: max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-top));
@@ -138,12 +168,6 @@
   transform: none;
 }
 
-.lab-header.is-past {
-  opacity: 0;
-  transition: opacity 260ms ease;
-  pointer-events: none;
-}
-
 /* The lockup used to be wrapped in an <h1>, from when the hero was the entire
    page and the logo was the only heading on it. The page has a real headline
    now, so that left two h1 elements on one document: bad for a screen reader
@@ -161,19 +185,41 @@
   display: block;
   width: clamp(98px, 9vw, 124px);
   height: auto;
-  /* The lockup is a single <g fill="#F5FEFD"> of six paths, so one colour change
-     carries the whole thing. Transitioned rather than snapped: the mark arrives
-     over about half a screen of scroll and a hard switch at the end of that
-     reads as a bug rather than as a landing. */
-  transition: color 420ms ease;
   color: var(--color-snow-white);
 }
 
-/* Where the mark lands. It has flown into the lockup and become it, so the
-   lockup takes its colour — this is the whole payoff of the dock, and without it
-   the mark simply shrinks into the corner and vanishes. */
-.lab-header.is-docked .lab-lockup {
-  color: var(--color-vulcan-gold);
+/* Where the mark lands.
+ *
+ * The gold is on the mark's own group, not on the whole svg. This used to set
+ * `color` on .lab-lockup, which carried every path in one change and turned
+ * "kalos" gold along with the triangle and the diamond — a logo swapping colour
+ * as you scroll past it. What the flight is describing is narrower than that:
+ * the 3D object comes down into the slot its flat twin occupies, and only that
+ * slot changes. The word stays Snow White throughout, so the mark reads as
+ * having set *into* the lockup rather than the lockup having been repainted.
+ *
+ * `fill` rather than `color` for the same reason — the two groups inherit
+ * currentColor from the svg, so overriding fill on one leaves the other on the
+ * inherited white with no second colour to keep in sync.
+ *
+ * Mixed against a scroll-driven ratio rather than transitioned between two
+ * states. It was `transition: fill 420ms` on a class, and a timed transition is
+ * the wrong instrument for this: the object above this mark is dissolving in
+ * step with the scroll, so the thing showing through has to come up in step with
+ * the scroll too. A 420ms ramp starting on a threshold is only in step at the
+ * one scroll speed it was tuned at.
+ *
+ * --mark-gold is written by the dock handler in variants/solid.js and reaches 1
+ * well before the dissolve does, so the object is still covering this when it
+ * finishes going gold. The 0 fallback is what every other surface gets: the
+ * mark stays Snow White with no JS, and on /work and /about this rule does not
+ * apply at all. */
+.lab-lockup .lockup-mark {
+  fill: color-mix(
+    in oklab,
+    var(--color-snow-white),
+    var(--color-vulcan-gold) calc(var(--mark-gold, 0) * 100%)
+  );
 }
 
 /* The hero copy is gone: the mock's hero is the lockup, the sand and the mark,

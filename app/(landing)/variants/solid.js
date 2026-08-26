@@ -59,6 +59,29 @@ const SUN_OVER = 0.62;
 // Read once. See sunrise-variants.js — this is a dev switch, not a feature.
 const V = activeVariant();
 
+/**
+ * How far into the sunrise the masthead is cued.
+ *
+ * Not at the end of it, which is where this used to be. Measured from document
+ * start: first frame at ~790ms, the sunrise finishing at ~4.8s, the masthead
+ * finishing its own 900ms fade at ~5.5s. That is a long time to look at a page
+ * with no logo and no way to navigate off it, and the menu lives in that row
+ * now, so what was late artwork is late chrome.
+ *
+ * Cueing at a quarter lands it fully in at about 3s, half of what it was, which
+ * is what was asked for. It still arrives "after starting animation" the way the
+ * annotation asks — the sky is up and the mark is out of the dark by then; it
+ * simply no longer waits for the light to finish arriving before it starts.
+ *
+ * This also puts the masthead back on the path that is supposed to light it.
+ * The sunrise runs 5.6s and STAGE_READY_TIMEOUT_MS in hero.js is 4s, so the
+ * timeout — which exists for a lost context or a chunk that never lands — was
+ * beating the sunrise to it on every healthy load, and had been all along. The
+ * masthead was arriving on a failure path. Anything that lengthens the sunrise
+ * past that timeout again will quietly do the same thing.
+ */
+const MASTHEAD_AT = 0.25;
+
 
 // What stage.js sets on the faces, and what the sunrise ramps back up to.
 
@@ -178,10 +201,210 @@ function dockTarget(viewport) {
     y: (0.5 - markCentreY / labRect.height) * viewport.height,
     scale:
       (((rect.width * 150) / 568 / labRect.width) * viewport.width) / MARK_WIDTH,
+    // How far the hero has travelled under the viewport, in the same world
+    // units. Read off .lab's own rect rather than the scroller's scrollTop so it
+    // stays correct whatever ends up doing the scrolling; the flight needs it to
+    // cancel the page's movement out of its start point. See the dock block in
+    // useFrame.
+    scrolled: (Math.max(0, -labRect.top) / labRect.height) * viewport.height,
+    // And how far through the dock that is, from the same rect, on purpose.
+    //
+    // This used to be computed somewhere else entirely — a scroll listener
+    // throttled to its own requestAnimationFrame, writing to a ref the frame
+    // loop read. The two agree at reading speed and come apart at flinging
+    // speed, because they are two callbacks with no ordering between them: the
+    // target would be measured for this frame's scroll position while the
+    // progress along the flight was still last frame's. A frame at fling speed
+    // is around 40px of scroll, a tenth of the flight, which works out at some
+    // 65 screen pixels of error — appearing and correcting itself at whatever
+    // rate the two callbacks happened to interleave. That is what scrolling fast
+    // and watching the mark shake instead of fly was.
+    //
+    // One rect, one instant, both numbers. They cannot disagree now.
+    progress:
+      labRect.height > 0
+        ? Math.min(1, Math.max(0, -labRect.top / (labRect.height * DOCK_OVER)))
+        : 0,
   };
 }
 
-function Lockup({ still, started, onLit, onDocked }) {
+/**
+ * Where in the dock the flight ends, and it ends completely: position, scale,
+ * rotation, colour and the object's own existence all finish on the same frame,
+ * on the lockup's mark, at the lockup's size.
+ *
+ * That single frame is the whole design, and it took three tries. The scale used
+ * to keep going after it reached the lockup's size and take the object down to
+ * nothing, so the arrival happened to something already too small to be the logo
+ * with the flat gold mark sitting beside it at full size — two gold marks, one a
+ * fifth the size of the other. Then the object landed correctly but stayed, and
+ * an object parked behind an identical flat one shivers along the shared edge
+ * with every subpixel of scroll. It leaves as it arrives now. See HANDOVER_FROM.
+ *
+ * The dock's remaining fifth carries nothing, and that is not an oversight worth
+ * removing carelessly: DOCK_OVER sets how much scroll the whole thing occupies
+ * and this sets how much of that the object uses, so folding the two together
+ * would land the mark 109px of scroll later than it does today. Two numbers,
+ * because they answer two questions.
+ */
+const FLIGHT_OF = 0.78;
+
+/**
+ * How much of the flight the mark's own motion has to be out of the way for.
+ *
+ * The float and the idle drift fade out over the first fifth rather than being
+ * cut at the first pixel of scroll: a hard stop is a visible snap, and over this
+ * distance the bow they put in the line is smaller than the mark's own bevel.
+ */
+const DOCK_IDLE_OUT = 0.2;
+
+// Flat well before it lands. The rotation has to finish before the scale does or
+// the last frames are a tilted mark shrinking, which reads as falling away
+// rather than arriving.
+const DOCK_FLAT_BY = 0.7;
+
+/**
+ * The melt, in the order its three parts happen.
+ *
+ * Measured at the moment the flight ends, with each mark shot on its own: the
+ * two silhouettes land within a quarter-pixel of each other, so alignment was
+ * never the problem. What did not match was the surface. The object arrives at
+ * 33px as a blown white shape with a bloom halo round it — peak 255 against the
+ * flat mark's 148 — because at that size the bevel highlight is most of the
+ * artwork. Dissolving that into flat gold is a visible drop in brightness, which
+ * is the opposite of seamless however long it is given.
+ *
+ * So the object flattens on the way in, and only dissolves once it has. Its
+ * environment reflection ramps out while a flat emissive ramps in, which takes a
+ * lit metal object to the lockup's own painted gold — same colour, no highlight,
+ * no chamfer, and no bloom either, because with the specular gone nothing is over
+ * the threshold any more. Measured at the landing: both marks render
+ * rgb(174, 148, 89), the same pixel. What is left to cross is one flat gold mark
+ * over an identical one.
+ */
+/**
+ * Where in the *flight* the handover starts.
+ *
+ * Both marks change over this stretch and they finish together, on the frame the
+ * object lands: the object sheds its highlight and its chamfer for flat gold,
+ * and the flat mark underneath comes up from Snow White to the same gold. By the
+ * landing the two are the same colour as well as the same size and place.
+ *
+ * Before the landing, not after, and this is the part that was wrong twice. With
+ * the flatten on the melt the object touched down still blown white and turned
+ * gold afterwards, so the thing melting into the logo was never gold on the way
+ * in. With the flat mark's gold on the melt too, the object had to cover a
+ * *white* mark exactly on the landing frame or a white fringe showed round it —
+ * a pixel of misalignment anywhere and you see it. Finishing both ramps before
+ * the two meet makes the coverage question stop mattering: gold over gold.
+ *
+ * 0.86 puts it over the last 90-odd pixels of the flight, by which point the
+ * object is a fifth of its full size and closing on the corner. It reads as the
+ * slot lighting up to take it.
+ */
+const HANDOVER_FROM = 0.86;
+
+/**
+ * How far into the handover the object starts dissolving. It is gone by the end
+ * of it, which is the frame it lands on.
+ *
+ * The dissolve used to happen *after* the landing, over the rest of the dock,
+ * which left a fully opaque object parked behind the flat mark for a hundred
+ * pixels of scroll. Even matched exactly that is not free: a WebGL edge and an
+ * SVG edge do not resolve a shared boundary the same way, so the outline
+ * shimmered against itself with every subpixel of scroll — measured at 265
+ * device pixels of difference along the rim once the depth was taken out, and
+ * visible as the mark shivering where it had just landed.
+ *
+ * Finishing on the landing frame removes the question rather than tuning it.
+ * There is no moment where two copies of the mark are both standing there, so
+ * there is nothing for them to disagree about. What is lost is nothing: the flat
+ * mark is already this exact gold, in this exact place, on top.
+ */
+const FADE_FROM = 0.6;
+
+/**
+ * How much of its own depth the object keeps when it lands.
+ *
+ * Almost none, and this is the fix for the mark appearing to shiver once it has
+ * docked. Matched to the flat mark exactly, it still landed about a pixel proud
+ * on each side — measured by diffing the corner with the canvas hidden while
+ * everything else stayed put: 540 device pixels differing, in a rim, at up to
+ * half full contrast. Standing still that rim is invisible; scrolling, it
+ * breathes with every subpixel of scroll offset.
+ *
+ * The rim was not a scale error, and the measurement says so: the object came
+ * out 34.5px wide against the flat mark's 32.6, at the *same* height. A scale
+ * that is wrong is wrong on both axes. What is only wrong on one is a solid seen
+ * from the side — the mark is an extrusion 20 units deep docking in the top left
+ * corner, well off the camera's axis, so its silhouette there includes some of
+ * its own side wall.
+ *
+ * Shrinking it to fit was tried and is worse. The mark is two shapes with a gap
+ * between them, so scaling about its centre walks the triangle's inner edge into
+ * that gap — where the flat mark is transparent and cannot hide anything. It
+ * traded a rim round the outside for a leak through the middle, 8.5px of it.
+ *
+ * Taking the depth away instead removes the side wall rather than compensating
+ * for it, and it is what the object is doing anyway: by this point it has given
+ * up its reflection and its chamfer for flat colour, and a flat shape is what it
+ * is turning into. Not zero, because a zero scale makes the normals degenerate,
+ * and the material still has to survive being scrolled back up through.
+ */
+const DOCK_FLATTEN_Z = 0.02;
+
+// Vulcan Gold, the same value --color-vulcan-gold carries. Set as emissive with
+// the environment ramped to nothing, so the object renders as flat paint rather
+// than as metal reflecting something.
+const MELT_GOLD_HEX = 0xae9357;
+
+/**
+ * The handover ramp, from flight progress. Shared, so the two marks cannot drift
+ * out of step with each other — they have to arrive at the same colour on the
+ * same frame or the crossfade has something to see.
+ */
+function handover(flight) {
+  return Math.min(1, Math.max(0, (flight - HANDOVER_FROM) / (1 - HANDOVER_FROM)));
+}
+
+/**
+ * Takes the mark from lit metal to flat gold, and back.
+ *
+ * Applied every frame rather than on a threshold, so scrolling back up undoes it
+ * exactly. The two materials are the flat caps and the bevel; flattening both is
+ * what makes the chamfer disappear, which it has to, because the flat mark it is
+ * landing on has no chamfer to match.
+ *
+ * The reflection is taken off the *scene*, not off the materials. Setting
+ * material.envMapIntensity here did nothing at all, and the block at the top of
+ * stage.js says why: neither of these materials owns an envMap — the light comes
+ * from scene.environment — so WebGLRenderer overwrites the uniform from
+ * scene.environmentIntensity on every draw. It rendered as flat gold laid over a
+ * fully lit metal mark, which measured 2.26x brighter in linear than the flat
+ * mark it was supposed to be matching. That is the same trap this file has fallen
+ * into once before, and it looks like a tone-mapping problem from the outside.
+ *
+ * Safe to reach for the scene here because the mark is the only object in it.
+ */
+function flatten(scene, group, t) {
+  // The sunrise owns environmentIntensity the rest of the time, and it is still
+  // ramping while the page is arriving. Only write while there is something to
+  // say, and write the settled value once on the way back down.
+  scene.environmentIntensity = 1 - t;
+
+  if (!group) return;
+  group.traverse((o) => {
+    if (!o.isMesh) return;
+    const materials = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of materials) {
+      if (!m) continue;
+      m.emissive.setHex(MELT_GOLD_HEX);
+      m.emissiveIntensity = t;
+    }
+  });
+}
+
+function Lockup({ still, started, onLit }) {
   const geometries = useMarkGeometries();
   const { scale, lift, offsetX } = useMarkFit();
   const group = useRef();
@@ -192,6 +415,21 @@ function Lockup({ still, started, onLit, onDocked }) {
   const sun = useRef();
   const pointer = usePointer();
 
+  // The damped pose, kept off the group.
+  //
+  // It has to be, because the flight scales the rotation toward zero and the
+  // damp reads its own previous value: writing the flattened angle back onto the
+  // group meant the next frame damped from a number the flight had already
+  // shrunk, so the pose depended on how many frames had been spent at what
+  // scroll position. Measured, at half the dock: arriving from the top and
+  // arriving from below it put the mark 29px apart on screen. Held here, the
+  // damp sees only its own history and the flatten is a pure function of scroll.
+  //
+  // Seeded with the group's own starting rotation so the entrance swing is
+  // unchanged — that swing is the page's only cue that the mark responds to
+  // being moved.
+  const pose = useRef({ x: 0.3, y: -0.8 });
+
   // Read once, at mount: how long the sunrise runs is a per-session decision and
   // must not change under the animation. Held in a ref rather than state because
   // the frame loop is the only reader and re-rendering the tree to carry a
@@ -199,9 +437,18 @@ function Lockup({ still, started, onLit, onDocked }) {
   // Scroll progress through the dock, written by a listener and read by the
   // frame loop. A ref rather than state: this changes on every scroll event and
   // re-rendering the tree for a number the GPU is about to consume is waste.
-  const dock = useRef(0);
+  // Whether the flatten currently owns the scene's light. See the guard in
+  // useFrame.
+  //
+  // There were two more refs here, carrying the flight's progress and the melt's
+  // from the scroll handler into the frame loop. Both are gone: the frame loop
+  // measures its own progress now, off the same rect it measures the target
+  // from. What the handler still owns is the part of the dock that is DOM rather
+  // than scene — the flat mark's colour and the object's opacity — and a frame
+  // of skew on a colour is not something anyone can see.
+  const flattening = useRef(false);
 
-  const sunrise = useRef({ elapsed: 0, seconds: 0, done: false, pinned: null });
+  const sunrise = useRef({ elapsed: 0, seconds: 0, done: false, lit: false, pinned: null });
   if (sunrise.current.seconds === 0) {
     sunrise.current.seconds = sunriseSeconds(V.seconds);
     // ?dawn=0.4 pins the sunrise at a point instead of playing it, the same
@@ -220,25 +467,81 @@ function Lockup({ still, started, onLit, onDocked }) {
     const lab = document.querySelector(".lab");
     if (!scroller || !lab) return;
 
+    // The stage rather than the canvas. .lab-canvas carries a 260ms opacity
+    // transition for its reveal, and an inline opacity set from a scroll handler
+    // would be run through it — the melt would lag the scroll by a quarter of a
+    // second and stop being a function of scroll position at all. Its wrapper
+    // has no transition on it.
+    const stage = lab.querySelector(".lab-stage");
+    const header = lab.querySelector(".lab-header");
+    const root = document.documentElement;
+
     let frame = 0;
-    let docked = false;
-    let wasPast = false;
     const read = () => {
       frame = 0;
       const range = lab.offsetHeight * DOCK_OVER;
       const p = range > 0 ? Math.min(1, Math.max(0, scroller.scrollTop / range)) : 0;
-      dock.current = p;
-      // Only tells React when it crosses, not on every frame: the lockup turning
-      // gold is one class change, not an animation.
-      const now = p > 0.82;
-      // And the masthead follows it out, per the annotation. Not at the very end
-      // of the hero: by then the gold lockup has been hanging over the section
-      // below for half a screen.
-      const past = p >= 1;
-      if (now !== docked || past !== wasPast) {
-        docked = now;
-        wasPast = past;
-        onDocked?.({ docked: now, past });
+
+      // The DOM half of the dock: the flat mark's colour, the object's opacity
+      // and the masthead's. All written straight to the DOM rather than through
+      // React, because they change every scroll frame and re-rendering the tree
+      // to carry three numbers is waste.
+
+      // Both halves of the handover run off one number, which is the point of
+      // it: the flat mark coming up gold and the object going away have to agree
+      // to the frame or there is something to see between them.
+      const over = handover(Math.min(1, p / FLIGHT_OF));
+
+      // The flat mark's half. Clamped at 1 by the flight's own clamp, so it
+      // stays gold for the rest of the page.
+      root.style.setProperty("--mark-gold", over.toFixed(3));
+
+      // And the object's, on the tail of the same ramp: by the time this reaches
+      // zero the object is exactly where the flat mark is, in exactly its
+      // colour, with the flat mark on top. Nothing crosses, because there is
+      // never a frame with both of them standing there.
+      const shown =
+        1 - Math.min(1, Math.max(0, (over - FADE_FROM) / (1 - FADE_FROM)));
+      if (stage) stage.style.opacity = shown < 1 ? String(shown) : "";
+
+      // And the masthead goes, across the dead zone and no sooner.
+      //
+      // From the end of the dock to the bottom of the hero, which is the top of
+      // the work — so it is on its way out for exactly the stretch of scroll
+      // that has nothing else on it, and it is gone by the time the first case
+      // study arrives. Under the commit snap that whole stretch is the tail of
+      // one glide, which is what "as the snap scroll happens" means.
+      //
+      // Driven by scroll rather than by a class, like everything else in the
+      // dock. It was a class with a 260ms transition once, and a timed fade on a
+      // scroll-driven page is only in step at the one speed it was tuned at.
+      //
+      // The inline `transition: none` is not optional. .lab-header carries a
+      // 900ms opacity transition for its own entrance, and without suppressing
+      // it every value written here would be run through it — the masthead would
+      // lag the scroll by the better part of a second and stop being a function
+      // of position at all. Same trap as .lab-canvas above, which is why the
+      // stage is what carries the object's fade rather than the canvas.
+      //
+      // `visibility` rather than trusting opacity 0 to be unclickable: the
+      // masthead is pointer-events: none, but the menu inside it opts back in,
+      // so an invisible card would go on swallowing clicks in the corner for the
+      // rest of the page.
+      if (header) {
+        const bottom = lab.offsetHeight;
+        const out =
+          bottom > range
+            ? Math.min(1, Math.max(0, (scroller.scrollTop - range) / (bottom - range)))
+            : 0;
+        if (out > 0) {
+          header.style.transition = "none";
+          header.style.opacity = String(1 - out);
+          header.style.visibility = out >= 1 ? "hidden" : "";
+        } else {
+          header.style.transition = "";
+          header.style.opacity = "";
+          header.style.visibility = "";
+        }
       }
     };
     const onScroll = () => {
@@ -254,8 +557,17 @@ function Lockup({ still, started, onLit, onDocked }) {
       if (frame) cancelAnimationFrame(frame);
       scroller.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      // All of these are written outside React, so nothing else will put them
+      // back.
+      if (stage) stage.style.opacity = "";
+      if (header) {
+        header.style.transition = "";
+        header.style.opacity = "";
+        header.style.visibility = "";
+      }
+      root.style.removeProperty("--mark-gold");
     };
-  }, [onDocked]);
+  }, []);
 
   useFrame((state, delta) => {
     const g = group.current;
@@ -289,10 +601,16 @@ function Lockup({ still, started, onLit, onDocked }) {
       dawn.elapsed += delta;
       const t = Math.min(1, dawn.elapsed / dawn.seconds);
       applySunrise(state.scene, sun.current, t);
+      // The masthead is cued partway through rather than at the end — see
+      // MASTHEAD_AT. Separate from `done`, because the sun still has to be
+      // switched off when the light has actually finished.
+      if (!dawn.lit && t >= MASTHEAD_AT) {
+        dawn.lit = true;
+        onLit?.();
+      }
       if (t === 1) {
         dawn.done = true;
         if (sun.current) sun.current.visible = false;
-        onLit?.();
       }
     }
 
@@ -337,19 +655,61 @@ function Lockup({ still, started, onLit, onDocked }) {
     // than to an autoplaying banner, and they opted into it by tapping a button
     // that says so. So a live input always drives, and `still` now only
     // suppresses the idle drift and the float underneath it.
-    const idleY = still ? 0 : Math.sin(t * 0.34) * 0.26;
-    const idleX = still ? 0 : Math.sin(t * 0.23) * 0.13;
+    // Where the mark is going, and how far along it is, from one read of one
+    // rect — see `progress` in dockTarget for why that matters more than it
+    // looks like it should.
+    const to = dockTarget(state.viewport);
+    const docked = to ? Math.min(1, to.progress / FLIGHT_OF) : 0;
 
+    // The flight is a straight line and nothing the page does on its own may put
+    // a curve in it, so the mark's autonomous motion is scaled out as it starts.
+    const idle = Math.max(0, 1 - docked / DOCK_IDLE_OUT);
+
+    const idleY = still ? 0 : Math.sin(t * 0.34) * 0.26 * idle;
+    const idleX = still ? 0 : Math.sin(t * 0.23) * 0.13 * idle;
+
+    // Damped into `pose` rather than onto the group — see the note on the ref.
+    //
+    // The old line was `g.rotation.x *= 1 - …`, which compounded frame on frame:
+    // the same scroll position settled at a different angle at 120fps than at
+    // 60, and a slow scroll landed flatter than a fast one over the identical
+    // range. That is exactly the dependence on how you scrolled that the flight
+    // must not have.
+    //
     // The initial rotation is off-target, so this same damp doubles as the
     // entrance: the mark swings into place instead of popping in.
-    g.rotation.y = damp(g.rotation.y, source ? targetY : idleY, lambda, delta);
-    g.rotation.x = damp(g.rotation.x, source ? targetX : idleX, lambda, delta);
-    // The float is autonomous, so `still` alone decides it. An earlier version of
-    // this line also stopped it whenever an input was driving, which quietly made
-    // the mark deader the moment you picked the phone up.
-    g.position.y = lift + (still ? 0 : Math.sin(t * 0.55) * 0.05);
+    const rotY = damp(pose.current.y, source ? targetY : idleY, lambda, delta);
+    const rotX = damp(pose.current.x, source ? targetX : idleX, lambda, delta);
+    pose.current.y = rotY;
+    pose.current.x = rotX;
+    // The float is autonomous, so `still` alone decides whether it runs at all.
+    // An earlier version of this line also stopped it whenever an input was
+    // driving, which quietly made the mark deader the moment you picked the
+    // phone up.
+    const floatY = lift + (still ? 0 : Math.sin(t * 0.55) * 0.05) * idle;
 
-    // The dock, applied last so it overrides everything above it.
+    // Assigned unconditionally, including the scale, so scrolling back to the
+    // top restores the mark rather than leaving it wherever the last docked
+    // frame put it.
+    g.rotation.y = rotY;
+    g.rotation.x = rotX;
+    g.position.x = offsetX;
+    g.position.y = floatY;
+    inner.current?.scale.set(scale, -scale, scale);
+
+    // Guarded, so the sunrise keeps ownership of the scene's light until there
+    // is actually a melt to apply — without this, a page that has only just
+    // started loading has its environment pinned to the settled value from the
+    // first frame and the whole entrance is skipped.
+    // The object's half of the handover, off the same ramp the flat mark uses.
+    // `flat` further down is the rotation flatten, a different thing.
+    const melted = handover(docked);
+    if (melted > 0 || flattening.current) {
+      flatten(state.scene, inner.current, melted);
+      flattening.current = melted > 0;
+    }
+
+    // The flight, applied last so it overrides everything above it.
     //
     // The designer left this as an OR: the mark either flies into the lockup at
     // the top left and turns it gold, or it exits down and to the right. Docking
@@ -359,30 +719,62 @@ function Lockup({ still, started, onLit, onDocked }) {
     // that was standing in for it. It also settles the contradiction between the
     // two masthead annotations: the lockup does not disappear past the hero, it
     // is what the mark turns into on the way.
-    const docked = dock.current;
-    if (docked <= 0) return;
-    const to = dockTarget(state.viewport);
-    if (!to) return;
+    if (docked <= 0 || !to) return;
 
-    // Ease in, so the mark holds its place while the reader is still in the hero
-    // and then commits. A linear flight starts moving the instant anyone touches
-    // the wheel, which reads as the page being twitchy.
-    const k = docked * docked;
+    // Straight on screen, and a pure function of how far the page is scrolled.
+    //
+    // Both ends live in the canvas' frame, which travels with the hero, while
+    // the lockup it is aiming at is fixed to the viewport. Interpolating between
+    // them as they stand describes a curve on the screen, which is where anyone
+    // is actually watching it: the mark rides up with the page early on, when
+    // the interpolation has barely started, and then hooks into the corner at
+    // the end. `to.scrolled` cancels the page's own movement out of the start
+    // point, which holds it still in the viewport — and a lerp between two
+    // points that are both stationary on screen is a straight line, at any
+    // scroll speed and in both directions.
+    //
+    // Linear rather than eased. There was a `docked * docked` here, on the
+    // argument that a linear flight starts moving the instant anyone touches the
+    // wheel and reads as twitchy. That was written when the start point scrolled
+    // away with the page, so the opening of the movement came free; with the
+    // mark held still on screen the same curve reads as it being stuck to the
+    // glass for half a screen and then bolting. To put an ease back, apply it to
+    // `k` here and nowhere else — every term below reads it.
+    //
+    // Note the sign. Scrolling down carries the canvas *up*, so cancelling that
+    // means walking the start point down the world, which is -y. Getting this
+    // backwards doubles the page's movement into the flight instead of removing
+    // it, and the shape it produces is a plausible-looking curve rather than
+    // anything that reads as broken: measured at 1440x900, the mark passed the
+    // masthead's height at 40% of the dock and then kept going off the top.
+    const k = docked;
+    const fromY = floatY - to.scrolled;
     g.position.x = offsetX + (to.x - offsetX) * k;
-    g.position.y = g.position.y + (to.y - g.position.y) * k;
+    g.position.y = fromY + (to.y - fromY) * k;
+
     // Rotating flat is what makes it stop being an object and start being a
-    // logo, and it has to finish before the scale does or the last frames are a
-    // tilted mark shrinking, which reads as falling away rather than landing.
-    g.rotation.x *= 1 - Math.min(1, k * 1.4);
-    g.rotation.y *= 1 - Math.min(1, k * 1.4);
-    // The handoff. The last stretch shrinks the mark out of existence, because
-    // the two are the same artwork and landing one exactly on top of the other
-    // reads as a doubled logo rather than as an arrival. By the time this
-    // finishes the lockup has already taken the gold, so what is left in the
-    // corner is the thing the mark turned into.
-    const handoff = docked > 0.88 ? 1 - (docked - 0.88) / 0.12 : 1;
-    const s = (scale + (to.scale - scale) * k) * handoff;
-    inner.current?.scale.set(s, -s, s);
+    // logo. An absolute factor, not a per-frame decay — see the note on rotX.
+    const flat = Math.min(1, k / DOCK_FLAT_BY);
+    g.rotation.x = rotX * (1 - flat);
+    g.rotation.y = rotY * (1 - flat);
+
+    // The arrival, and nothing past it. `k` is clamped at 1, so if anything is
+    // still on screen past this point it holds on the lockup rather than sailing
+    // through it — still tracking the masthead, which is fixed while the canvas
+    // under it keeps scrolling. By design nothing is: the dissolve finishes on
+    // this frame.
+    //
+    // There used to be a shrink-out on the end of this, on the argument that two
+    // copies of the same artwork landing on each other read as a doubled logo.
+    // The argument was right and the remedy was wrong: it never let the two be
+    // the same size, so the object went past the logo and vanished as a speck
+    // beside it. They are supposed to coincide exactly — that is what makes the
+    // handover invisible — and what separates them is the dissolve, not a size.
+    const s = scale + (to.scale - scale) * k;
+    // The depth goes on the handover ramp, with everything else that turns this
+    // object into the flat mark.
+    const z = s * (1 - (1 - DOCK_FLATTEN_Z) * melted);
+    inner.current?.scale.set(s, -s, z);
   });
 
   return (
@@ -444,7 +836,7 @@ function RevealOnFirstFrame({ onReveal }) {
   return null;
 }
 
-export default function Solid({ onReady, onLit, onDocked }) {
+export default function Solid({ onReady, onLit }) {
   // Read once at mount rather than per frame: neither answer changes while the
   // hero is on screen, and both feed props that shouldn't thrash.
   const [coarse] = useState(isCoarsePointer);
@@ -473,7 +865,7 @@ export default function Solid({ onReady, onLit, onDocked }) {
       }}
     >
       <GoldEnvironment />
-      <Lockup still={still} started={revealed} onLit={onLit} onDocked={onDocked} />
+      <Lockup still={still} started={revealed} onLit={onLit} />
       <RevealOnFirstFrame onReveal={reveal} />
       {!coarse && <Post />}
     </Canvas>

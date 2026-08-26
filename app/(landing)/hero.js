@@ -68,14 +68,15 @@ export default function Hero() {
   const [lit, setLit] = useState(false);
   const onLit = useCallback(() => setLit(true), []);
 
-  // The mark's flight into the masthead ends with the lockup taking its colour.
-  // One class, set when the dock crosses, not an animation driven from the frame
-  // loop — the gradient and the transition are CSS's job.
-  // Two states of the mark leaving: the lockup taking the mark's colour, and the
-  // masthead following it out. There used to be a third, fading the hero copy
-  // out from under the fixed masthead, and it went with the copy.
-  const [exit, setExit] = useState({ docked: false, past: false });
-  const onDocked = useCallback((value) => setExit(value), []);
+  // React hears nothing about the dock any more.
+  //
+  // It used to carry two class flags. The mark taking the lockup's colour became
+  // a custom property written from the scroll handler, because it is a ramp
+  // rather than a switch and a class can only say "started". The masthead
+  // following the mark out became a scroll-driven opacity written from the same
+  // place, for the same reason a timed fade was wrong for it. Both live in the
+  // dock handler in variants/solid.js now. There was a third once, fading the
+  // hero copy out from under the fixed masthead, and it went with the copy.
 
   useEffect(() => {
     if (!stageReady || lit) return;
@@ -187,7 +188,7 @@ export default function Hero() {
     <section className="lab">
       {webgl && (
         <div className="lab-stage">
-          <Solid onReady={onStageReady} onLit={onLit} onDocked={onDocked} />
+          <Solid onReady={onStageReady} onLit={onLit} />
         </div>
       )}
 
@@ -195,7 +196,7 @@ export default function Hero() {
           way. The 3D mark is the only thing in the middle of the page now, which
           is the point: the composition is the object, and this is the masthead
           around it. */}
-      <header className={`lab-header${lit ? " is-lit" : ""}${exit.docked ? " is-docked" : ""}${exit.past ? " is-past" : ""}`}>
+      <header className={`lab-header${lit ? " is-lit" : ""}`}>
         <div className="lab-shell">
           <Lockup className="lab-lockup" />
         </div>

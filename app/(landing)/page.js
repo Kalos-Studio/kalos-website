@@ -6,6 +6,7 @@ import Reveal from "./reveal";
 import Sand from "./sand";
 import MarkSlot from "./mark-slot";
 import VariantSwitch from "./variant-switch";
+import ScrollSettle from "./scroll-settle";
 import { caseStudies } from "../work/data";
 import { featuredWork, finalCta, story } from "./content";
 import "./landing.css";
@@ -55,6 +56,10 @@ export default function Landing() {
       <Sand />
       {/* Dev only, and it comes out before launch. See variant-switch.js. */}
       <VariantSwitch />
+      {/* Keeps the page from stopping in the dead zone between the hero and the
+          work: the first scroll commits and carries you to the case studies.
+          See scroll-settle.js. */}
+      <ScrollSettle />
       <Hero />
 
       {/* The word. In the mock this is the first thing under the hero and the
