@@ -118,9 +118,17 @@ export default async function CaseStudyPage({ params }) {
 
             It goes to the work section, not the site root, because the symbol
             beside it already goes home and two links to the same place is one
-            too many. */}
+            too many.
+
+            To *this* study's panel, not the top of the section. `/#work` put
+            you back at the first case study with the one you had just been
+            reading somewhere below the fold, so the way out of a study was a
+            different place from the way in -- while clicking the hero flew the
+            cover back to its own panel. The two exits now agree. The centring
+            is HashTarget's, in app/(landing); an anchor alone would top-align
+            it. */}
         <Link
-          href="/#work"
+          href={`/#case-${cs.slug}`}
           className="text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
         >
           Back to Work

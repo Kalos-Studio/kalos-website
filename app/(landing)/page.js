@@ -4,6 +4,7 @@ import { workRail } from "../work/data";
 import Hero from "./hero";
 import BookACall from "./book-a-call";
 import PagedScroll from "./paged-scroll";
+import HashTarget from "./hash-target";
 import WorkRail from "./work-rail";
 import { closer } from "./content";
 
@@ -40,9 +41,12 @@ export default function LandingPage() {
     // centred, capped column that behaves at every width.
     <div className="mx-auto w-full max-w-[120rem] px-5 sm:px-8 lg:px-12 xl:px-24">
       <Hero />
-      {/* One wheel gesture, one view, from the first case study down. Renders
-          nothing -- see paged-scroll.js for what it does and does not take. */}
+      {/* One gesture, one view -- wheel and arrow keys. Renders nothing; see
+          paged-scroll.js for what it does and does not take. */}
       <PagedScroll />
+      {/* Opens on a panel when arrived at as /#case-<slug>, which is where
+          "Back to Work" on that case study points. Also renders nothing. */}
+      <HashTarget />
 
       {/* --- Work ---------------------------------------------------------
           Two columns: panels left, pill rail right. The frame puts panels at
