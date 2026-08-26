@@ -133,11 +133,12 @@
   /* No page-level cross-fade at all, and this is the fix for a real glitch
      rather than a preference.
 
-     The default is old and new roots dissolving into each other. The old root
-     is a snapshot of the *whole* page minus the morphing cover -- so leaving the
-     landing page, that snapshot still holds the panels above and below the one
-     that was clicked, and they sat ghosted over the case study for the length of
-     the fade. Shortening it only made the ghost briefer.
+     The default is old and new roots dissolving into each other, and while the
+     morph was wired to a single pair that fade was what ghosted the other panels
+     over the case study: everything unnamed is part of the root snapshot.
+     Shortening it only made the ghost briefer. Naming every panel moved them out
+     of the root and into groups of their own, which is a different bug with the
+     same symptom -- see the `:only-child` rule below.
 
      So the old root is dropped on the first frame and the new one is there
      immediately. Only the cover animates, which is what a shared-element
@@ -167,12 +168,33 @@
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Both ends are the same file at the same crop, so there is nothing to
+  /* A matched pair is the same file at the same crop, so there is nothing to
      cross-fade between -- holding both at full opacity keeps the image solid
      for the whole flight instead of dipping through a double exposure. */
   ::view-transition-old(.cover),
   ::view-transition-new(.cover) {
     animation: none;
     mix-blend-mode: normal;
+  }
+
+  /* The rule above is only right for a pair. Most covers are not paired: the
+     landing page names all seven panels, a case study names one, so leaving the
+     landing there are six old snapshots with no counterpart and coming back
+     there are six new ones. A named element is pulled out of the root snapshot
+     into its own group, and an unpaired group's only animation is the UA
+     fade -- which `animation: none` above deletes. That left six panels sitting
+     opaque at their old viewport positions on top of the destination for the
+     whole 520ms.
+
+     This was visible and got missed twice: the panel below the one clicked
+     shows through at the foot of the window, and it looks exactly like an image
+     lazily loading in.
+
+     `:only-child` is how CSS asks "is this half of a pair" -- an unpaired old or
+     new is the sole child of its image-pair pseudo-element. Unpaired covers get
+     the same treatment as the root: gone, or present, on the first frame, so the
+     matched pair is the only thing that animates. */
+  ::view-transition-old(.cover):only-child {
+    opacity: 0;
   }
 }

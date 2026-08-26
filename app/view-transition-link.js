@@ -33,6 +33,15 @@ import { useRouter } from "next/navigation";
 // this the callback resolves anyway and the browser cross-fades whatever it has.
 const TARGET_TIMEOUT_MS = 1500;
 
+// Which navigation is current. A wait can outlive the click that started it:
+// its MutationObserver is on document.body and keeps firing after a second
+// click has moved on, and `centreInView` means a stale one would scroll the
+// newly arrived page to an unrelated position. Every click takes a ticket and
+// a wait that no longer holds the current one resolves without touching
+// anything. Module scope rather than a ref because the component unmounts
+// mid-navigation, taking its refs with it.
+let currentNavigation = 0;
+
 // Nothing in here may wait on a frame. While the update callback is pending the
 // browser has rendering suppressed, so requestAnimationFrame never fires and the
 // transition deadlocks until Chrome kills it with "Transition was aborted
@@ -47,8 +56,9 @@ const TARGET_TIMEOUT_MS = 1500;
 // the morph runs in both directions now -- so without excluding it the very
 // first querySelector matches the element we are leaving and the callback
 // resolves before React has rendered anything.
-function waitForTarget(name, source, { centreInView = false } = {}) {
+function waitForTarget(name, source, { centreInView = false, ticket } = {}) {
   return new Promise((resolve) => {
+    const superseded = () => ticket !== currentNavigation;
     const selector = `[data-vt-target="${name}"]`;
     const find = () =>
       [...document.querySelectorAll(selector)].find((el) => el !== source);
@@ -68,6 +78,8 @@ function waitForTarget(name, source, { centreInView = false } = {}) {
     const timer = setTimeout(finish, TARGET_TIMEOUT_MS);
 
     const settle = (el) => {
+      if (superseded()) return finish();
+
       // Going back to the landing page, the panel this hero came from is
       // usually far down a long page. Without this the morph flies the cover to
       // wherever that panel happens to sit, which is often off screen, and the
@@ -94,6 +106,7 @@ function waitForTarget(name, source, { centreInView = false } = {}) {
     if (existing) return settle(existing);
 
     observer = new MutationObserver(() => {
+      if (superseded()) return finish();
       const el = find();
       if (el) settle(el);
     });
@@ -125,16 +138,35 @@ export default function ViewTransitionLink({
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     // The element being left behind, so the waiter can tell it apart from its
-    // counterpart on the destination.
+    // counterpart on the destination. Both ends of a pair carry the same
+    // data-vt-target, so without something to exclude, the first match would be
+    // this page's own box and the callback would resolve before React had
+    // rendered the next one.
+    //
+    // If it is missing -- a caller that put the named box outside the link, or
+    // renamed one end only -- there is nothing to morph and nothing to exclude,
+    // so drop through to the plain <Link> rather than run a transition that
+    // cannot work.
     const source = event.currentTarget.querySelector(
       `[data-vt-target="${vtName}"]`,
     );
+    if (!source) return;
+
+    const ticket = ++currentNavigation;
 
     event.preventDefault();
-    document.startViewTransition(() => {
+    const transition = document.startViewTransition(() => {
       router.push(href);
-      return waitForTarget(vtName, source, { centreInView });
+      return waitForTarget(vtName, source, { centreInView, ticket });
     });
+
+    // These reject rather than resolve when a transition is skipped, which
+    // happens whenever a second click starts one while this is still waiting.
+    // Unhandled, that surfaces as an uncaught AbortError in the console for
+    // something that is working as intended.
+    transition.ready?.catch(() => {});
+    transition.finished?.catch(() => {});
+    transition.updateCallbackDone?.catch(() => {});
   };
 
   return (
@@ -143,7 +175,10 @@ export default function ViewTransitionLink({
     // the caption along with the image, which stretches type during the flight.
     // The caller puts the name on the cover box alone and passes it here only so
     // the transition knows what to wait for.
-    <Link href={href} className={className} onClick={onClick} {...rest}>
+    // `rest` is spread first on purpose: an onClick or href arriving through
+    // it must not silently replace the transition handler or send the link
+    // somewhere other than the router.push above.
+    <Link {...rest} href={href} className={className} onClick={onClick}>
       {children}
     </Link>
   );
