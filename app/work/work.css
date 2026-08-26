@@ -193,3 +193,79 @@
   background: #fff;
   color: #040406;
 }
+
+/* --- Phone ---------------------------------------------------------------
+ *
+ * Audited at 390x844. Three things were wrong, and the first is the one that
+ * matters: a case study exists to show the work, and the work here is dense
+ * product screenshots. Inside the page's 20px gutters those render 350px wide
+ * on a phone, which is not enough to read a dispatch board or a well table --
+ * the images were present and useless.
+ *
+ * 639px rather than a Tailwind breakpoint name because this file is plain CSS;
+ * it is `sm` (640px) minus one, so it hands over exactly where `sm:` takes
+ * over in the component.
+ */
+@media (max-width: 639px) {
+  /* Full bleed. It only buys 40px, but it is 11% more image and edge-to-edge
+     imagery is the right idiom on a phone anyway -- the picture stops being a
+     card sitting in a column and becomes the page.
+
+     The arithmetic works because the column is centred: 50% is half the content
+     box, 50vw is half the viewport, and the difference is exactly one gutter.
+     Applied to body figures and, via .work-bleed, to the hero. */
+  .work-bleed,
+  .work-prose figure:not(.work-prose-quote) {
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    width: 100vw;
+    max-width: none;
+  }
+
+  /* A hairline sitting exactly on the edge of the screen reads as a rendering
+     artifact rather than a frame, so the sides come off and the top and bottom
+     rules stay to separate the image from the prose. */
+  .work-bleed,
+  .work-prose figure:not(.work-prose-quote) img {
+    border-left: 0;
+    border-right: 0;
+  }
+
+  /* The caption is text, so it goes back into the column the prose sits in --
+     one gutter, matching the page's `px-5`. */
+  .work-prose figcaption {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  /* Second problem: no step between the summary and the body. text-lead floors
+     at 18px on a phone and the prose was 17px, so the lead paragraph and the
+     thousand words under it were the same size. 16px is the mobile default
+     anyway, and the tighter leading fits more of a sentence per line in a
+     350px measure. */
+  .work-prose {
+    font-size: 1rem;
+    line-height: 1.6;
+    gap: 1.25rem;
+  }
+
+  /* Which leaves h2 at text-lead, only 2px above the body. Nudged up so a
+     section break is visible without scrolling to find it. */
+  .work-prose h2 {
+    font-size: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  /* Third: the lightbox was padded 3rem 1.5rem, so tapping an image to expand
+     it rendered the image *smaller* than the one on the page -- and now that
+     figures bleed, much smaller. The padding is for a mouse pointer that needs
+     somewhere to click to dismiss; on a phone the whole screen does that. */
+  .work-lightbox {
+    padding: 0.75rem;
+  }
+
+  .work-lightbox-close {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}

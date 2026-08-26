@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { LOCKUP_GEOMETRY, Mark, Wordmark } from "../lockup";
 import BookACall from "./book-a-call";
-import { definition, positioning } from "./content";
+import { definition, positioning, workLabel } from "./content";
 
 /**
  * The hero, and its handover to the masthead.
@@ -44,18 +44,20 @@ import { definition, positioning } from "./content";
 // through it.
 const HEADROOM = 72;
 
-// The hold has to be over before the first case study can snap into place, or
-// the page comes to rest with the hero half faded on top of the work -- measured
-// at 0.26 opacity before this was derived rather than picked.
+// The hold is bounded by the first case study, not by taste.
 //
-// So the runway is not a fixed length. It is a fraction of the distance between
-// the block catching and the first panel reaching its snap position, which keeps
-// the two from colliding at any viewport rather than at the one it was tuned on.
-// The ceiling stops it becoming a marathon on a short page; the floor stops it
-// vanishing on a tall one.
-const RUNWAY_OF_AVAILABLE = 0.85;
-const RUNWAY_MAX = 0.45; // of the window
-const RUNWAY_MIN = 0.15; // of the window
+// While the block is held at the top, the work is scrolling up towards it. The
+// block has to be gone before the first panel reaches it, or the definition sits
+// over a photograph -- which at any opacity above zero reads as a mistake. So the
+// runway is derived: it ends when the panel's top would arrive at the block's
+// bottom, less a clearance.
+//
+// Tuning this by eye produced the version before it, which measured 11px of
+// clearance at 0.14 opacity. That did not technically overlap, and would have on
+// the first viewport that wrapped the definition onto another line.
+const CLEARANCE = 96; // px kept between the block's bottom and the panel's top
+const RUNWAY_MIN = 0.1; // of the window, so the hold never disappears entirely
+const RUNWAY_MAX = 0.45; // of the window, so it never becomes a marathon
 
 // The fade finishes before the hold does, so the block is gone before it starts
 // moving again. Releasing something mid-fade reads as a glitch.
@@ -78,19 +80,32 @@ const clamp01 = (n) => Math.min(Math.max(n, 0), 1);
  * anchor, so it rides up inside the block and then sits still with it, with no
  * special case for either.
  */
-function drawFlight(el, anchor, slot, progress) {
-  if (!el || !anchor || !slot) return;
+function drawFlight(el, anchor, slot, progress, baseWidth) {
+  if (!el || !anchor || !slot || !baseWidth) return;
 
   const a = anchor.getBoundingClientRect();
   const s = slot.getBoundingClientRect();
   if (!a.width || !s.width) return;
 
-  const x = a.left + (s.left - a.left) * progress;
-  const y = a.top + (s.top - a.top) * progress;
-  const scale = (a.width + (s.width - a.width) * progress) / a.width;
+  const width = a.width + (s.width - a.width) * progress;
 
-  el.style.width = `${a.width}px`;
-  el.style.height = `${a.height}px`;
+  // Only the transform is written, never width or height.
+  //
+  // Setting those every frame made the mark shimmer: each write forces a layout
+  // of this element on every scroll frame, and the SVG is re-rasterised at a
+  // fractionally different size each time. Sizing it once and scaling it with a
+  // transform keeps it a single composited layer that is never re-laid-out, so
+  // it holds still.
+  //
+  // Translation is rounded to whole pixels for the same reason: at fractional
+  // offsets the mark lands between the device grid and its edges crawl as the
+  // subpixel coverage changes. Scale is quantised for the same reason -- a
+  // rounding wobble in the fourth decimal is invisible as a number and visible
+  // as a twitch.
+  const x = Math.round(a.left + (s.left - a.left) * progress);
+  const y = Math.round(a.top + (s.top - a.top) * progress);
+  const scale = Math.round((width / baseWidth) * 1000) / 1000;
+
   el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
 }
 
@@ -106,6 +121,9 @@ export default function Hero() {
   const markAnchorRef = useRef(null);
   const markSlotRef = useRef(null);
   const markRef = useRef(null);
+  // The mark's rendered size, set once. See drawFlight for why it is not written
+  // per frame.
+  const markBaseRef = useRef(0);
 
   const frame = useCallback(() => {
     const sentinel = sentinelRef.current;
@@ -119,22 +137,21 @@ export default function Hero() {
     const naturalTop = sentinel.getBoundingClientRect().top;
 
     const vh = window.innerHeight;
+    const catchY = naturalTop + window.scrollY - HEADROOM;
 
-    // How much room there is between the catch and the first panel's snap
-    // position. Both are document coordinates, so this is independent of where
-    // the page currently is.
+    // Where the first panel's top would meet the held block's bottom. All in
+    // document coordinates, so it does not matter where the page currently is --
+    // and the block's height is unaffected by the translate written below, so
+    // reading it back here is safe.
     const panel = firstPanelRef.current;
     let available = vh * RUNWAY_MAX;
     if (panel) {
-      const pr = panel.getBoundingClientRect();
-      const panelSnapY = pr.top + window.scrollY + pr.height / 2 - vh / 2;
-      available = panelSnapY - (naturalTop + window.scrollY - HEADROOM);
+      const blockHeight = block.getBoundingClientRect().height;
+      const panelTopY = panel.getBoundingClientRect().top + window.scrollY;
+      available = panelTopY - HEADROOM - blockHeight - CLEARANCE - catchY;
     }
 
-    const runway = Math.max(
-      Math.min(available * RUNWAY_OF_AVAILABLE, vh * RUNWAY_MAX),
-      vh * RUNWAY_MIN,
-    );
+    const runway = Math.max(Math.min(available, vh * RUNWAY_MAX), vh * RUNWAY_MIN);
     // How far past the catch point the page has scrolled, as a fraction of the
     // runway. Zero before the block arrives, one once the handover is done and
     // it is released to scroll away with everything else.
@@ -144,10 +161,22 @@ export default function Hero() {
 
     if (fadeRef.current) {
       const fade = clamp01(held / FADE_COMPLETE_AT);
-      fadeRef.current.style.setProperty("--hero-fade", String(1 - fade));
+      const value = String(1 - fade);
+      fadeRef.current.style.setProperty("--hero-fade", value);
+      // Also on the root, so anything outside the fading block can move with
+      // it. The masthead's "Our Work" label uses the inverse: it has to stay
+      // out of the way while the hero's own top-right block is still there,
+      // and arrive exactly as that leaves.
+      document.documentElement.style.setProperty("--hero-fade", value);
     }
 
-    drawFlight(markRef.current, markAnchorRef.current, markSlotRef.current, held);
+    drawFlight(
+      markRef.current,
+      markAnchorRef.current,
+      markSlotRef.current,
+      held,
+      markBaseRef.current,
+    );
   }, []);
 
   useEffect(() => {
@@ -166,19 +195,38 @@ export default function Hero() {
 
     firstPanelRef.current = document.querySelector('[id^="case-"]');
 
+    // Size the mark once from its anchor. Re-measured on resize and after the
+    // font lands, both of which change the lockup's height.
+    const sizeMark = () => {
+      const anchor = markAnchorRef.current;
+      const mark = markRef.current;
+      if (!anchor || !mark) return;
+      const { width, height } = anchor.getBoundingClientRect();
+      if (!width) return;
+      markBaseRef.current = width;
+      mark.style.width = `${width}px`;
+      mark.style.height = `${height}px`;
+    };
+    sizeMark();
+
     // Once on mount, so a reload partway down the page draws the correct state
     // instead of starting at the top and jumping.
     frame();
 
+    const onResize = () => {
+      sizeMark();
+      onScroll();
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
     // Space Grotesk arriving changes the block's height, which moves the catch
     // point.
-    document.fonts?.ready?.then(frame).catch(() => {});
+    document.fonts?.ready?.then(onResize).catch(() => {});
 
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
     };
   }, [frame]);
 
@@ -193,14 +241,49 @@ export default function Hero() {
           fixed; the slot draws nothing, it exists to be measured so the flying
           symbol knows where it is going. pointer-events-none because there is
           nothing interactive in here -- the call to action stays in the hero and
-          fades with it. */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-40 mx-auto flex w-full max-w-[120rem] items-center px-5 py-4 sm:px-8 lg:px-12 lg:py-6 xl:px-24">
-        <div
-          ref={markSlotRef}
-          aria-hidden="true"
-          className="h-7 lg:h-9"
-          style={{ aspectRatio: markAspect }}
-        />
+          fades with it.
+
+          The white ground is not decoration. This bar was transparent, so the
+          case study panels scrolled visibly under the symbol on their way up the
+          page. It is painted on an outer full-bleed element rather than on the
+          padded column, because the column is capped at 120rem and past that
+          width the bar would have had clear gutters either side.
+
+          It fades in rather than being white from the start, on the inverse of
+          the hero's own fade -- the same value the label below uses. A bar that
+          is opaque at scroll 0 covers the top of the hero's positioning line,
+          which sits under it by design; there is nothing to hide up there
+          anyway, since the only thing behind it is the hero. By the time a panel
+          reaches the top of the window the hero has gone and this is solid. */}
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 z-40"
+        style={{
+          backgroundColor: "rgb(255 255 255 / calc(1 - var(--hero-fade, 1)))",
+        }}
+      >
+        <div className="mx-auto flex w-full max-w-[120rem] items-center justify-between px-5 py-4 sm:px-8 lg:px-12 lg:py-6 xl:px-24">
+          <div
+            ref={markSlotRef}
+            aria-hidden="true"
+            className="h-7 lg:h-9"
+            style={{ aspectRatio: markAspect }}
+          />
+
+          {/* Below lg the rail is a horizontal strip and its label cost a whole
+              line above the pills, on a viewport that has none to spare. Up here
+              it sits in space the symbol was not using. From lg the rail is a
+              column with room for its own label, so this hides.
+
+              The opacity is the inverse of the hero's fade: at the top of the
+              page the hero's own positioning line and call to action are in this
+              corner, and this would sit on top of them. It arrives as they go. */}
+          <p
+            className="text-lead tracking-tight lg:hidden"
+            style={{ opacity: "calc(1 - var(--hero-fade, 1))" }}
+          >
+            {workLabel}
+          </p>
+        </div>
       </div>
 
       {/* The flying symbol, positioned entirely by transform (see drawFlight).

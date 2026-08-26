@@ -50,6 +50,38 @@ function dockScale(distance) {
   return 1 + DOCK_BOOST * falloff;
 }
 
+// Clicking a pill centres its panel explicitly rather than leaving it to the
+// anchor and the snap.
+//
+// An href jump lands the element at the *top* of the viewport, and proximity
+// snapping only pulls it to the centre if the centre is near enough to where it
+// landed. On a tall window that gap is over 500px, well past the threshold, so
+// nothing snapped and every panel came to rest high on the screen. It looked
+// correct at laptop heights purely because the distance was small enough there.
+//
+// scrollIntoView with block: "center" is unambiguous and viewport-independent.
+// The href stays on the element, so this still works with JavaScript off and
+// modified clicks still open a tab.
+function centreOnClick(event, slug) {
+  if (
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
+  ) {
+    return;
+  }
+  const panel = document.getElementById(`case-${slug}`);
+  if (!panel) return;
+
+  event.preventDefault();
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  panel.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+  // Keep the URL honest, without the jump that setting location.hash would cause.
+  history.replaceState(null, "", `#case-${slug}`);
+}
+
 export default function WorkRail({ items }) {
   const [active, setActive] = useState(null);
   const navRef = useRef(null);
@@ -210,7 +242,7 @@ export default function WorkRail({ items }) {
         // top-14, not top-0: the hero's masthead is fixed across the top of the
         // window and the flying mark lands in it, so a rail stuck at 0 would have
         // the mark drawn straight over its label on a phone.
-        "sticky top-14 z-10 flex flex-col gap-4 self-start bg-white py-3 " +
+        "sticky top-15 z-10 flex flex-col gap-4 self-start bg-white py-3 " +
         // From lg: the column the wireframe draws. It rests exactly where the
         // grid puts it, rides up with the page, and once it would pass the
         // sticky offset it holds there — vertically centred, because that offset
@@ -219,7 +251,9 @@ export default function WorkRail({ items }) {
         "lg:top-[var(--rail-sticky-top,2rem)] lg:col-start-2 lg:row-start-1 lg:items-end lg:bg-transparent lg:py-0"
       }
     >
-      <p className="text-lead tracking-tight">{workLabel}</p>
+      {/* Below lg this label lives in the masthead instead -- see the
+          comment on it in hero.js. */}
+      <p className="hidden text-lead tracking-tight lg:block">{workLabel}</p>
 
       <ul
         ref={listRef}
@@ -241,6 +275,7 @@ export default function WorkRail({ items }) {
                 provisional made the rail look broken rather than honest. */}
             <a
               href={`#case-${item.slug}`}
+              onClick={(event) => centreOnClick(event, item.slug)}
               aria-current={active === item.slug ? "true" : undefined}
               className={
                 "flex h-9 items-center justify-center whitespace-nowrap rounded-full border border-black px-4 text-control tracking-tight " +

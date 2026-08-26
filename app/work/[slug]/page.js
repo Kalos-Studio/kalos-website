@@ -181,7 +181,9 @@ export default async function CaseStudyPage({ params }) {
         <CoverImage
           cover={cover}
           className={
-            "relative mt-10 aspect-[1195/681] lg:mt-14 " +
+            // work-bleed takes the hero edge to edge below 640px -- see the
+          // phone block at the foot of work.css.
+          "work-bleed relative mt-10 aspect-[1195/681] lg:mt-14 " +
             (cover.floating
               ? ""
               : "overflow-hidden border border-black bg-neutral-100")

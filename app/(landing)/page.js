@@ -59,15 +59,22 @@ export default function LandingPage() {
               first thing a visitor sees should be the index, not a project.
 
               The arithmetic: the hero is 88svh, so the work section begins 0.12
-              of a viewport above the fold. 17svh puts the first panel at about
-              1.05 viewports down, just clear of it. The wireframe does the same
-              thing — rail at y=1012 against a fold at y=1113, first panel not
-              until y=1292.
+              of a viewport above the fold, and the panels start below it. The
+              wireframe does the same — rail at y=1012 against a fold at y=1113,
+              first panel not until y=1292.
+
+              35svh rather than the 17svh this started at, because the hero's
+              handover needs somewhere to happen. The block catches at the top
+              and is held there while it fades, and this panel is scrolling up
+              towards it the whole time; at 17svh the two came within 11px of
+              each other while the block was still visible. This is the distance
+              that buys the hold its room, and the space is not empty — the
+              fading hero is sitting in it.
 
               lg only. Below that the rail is a horizontal strip above the panels
               rather than a column beside them, so there is no shared row to
               offset and a 17svh hole would just be a gap. */}
-          <ul className="flex flex-col gap-10 lg:col-start-1 lg:row-start-1 lg:gap-24 lg:pt-[17svh]">
+          <ul className="flex flex-col gap-10 lg:col-start-1 lg:row-start-1 lg:gap-24 lg:pt-[35svh] lg:pb-[30svh]">
             {workRail.map((cs, i) => {
               // The placeholder has no page, no cover and no logo. It renders as
               // an empty framed slot in the same rhythm as the rest, and is not a
