@@ -66,6 +66,16 @@ function disciplines(role) {
 // clamps a replaced element's width while the explicit height stands, which
 // distorts it. With contain, the mark fits inside the box and keeps its shape.
 //
+// Those ratios are the files' own, and that is a precondition rather than a
+// coincidence. CSS sizes the file, not the artwork inside it, so a mark with
+// transparent padding baked into its frame paints smaller than its neighbours
+// at the same height and no rule here can see it happening -- three of these
+// carried it (allganize was 22% empty by height and painted at 0.68x the
+// median's area). The files are cropped to their marks now, which is what makes
+// a ratio measured off the file a true statement about what lands on the page.
+// Cropping them took the spread across the row from 2.59x to 1.26x. See
+// public/home/logos/README.md for the check a new file has to pass.
+//
 // Rendered monochrome: a row of competing brand colours reads as a logo salad,
 // and one weight makes it read as evidence. brightness(0) blackens every opaque
 // pixel, which is why everything in public/home/logos has to sit on a genuinely
