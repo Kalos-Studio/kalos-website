@@ -4,7 +4,7 @@ import { caseStudies, workRail } from "../work/data";
 
 // Internal reference, not a page anyone should find by searching.
 export const metadata = {
-  title: "Design system — Kalos",
+  title: "Design system | Kalos",
   description: "Every token, component and rule this site is built from.",
   robots: { index: false, follow: false },
 };
@@ -170,10 +170,10 @@ export default function DesignSystemPage() {
           meaning="text-sm and text-xs carry captions, tags and fine print. Still preferred for ordinary work."
         >
           <p className="text-sm tracking-tight">
-            text-sm — captions, discipline tags, fine print
+            text-sm: captions, discipline tags, fine print
           </p>
           <p className="mt-1 text-xs tracking-tight text-muted">
-            text-xs — the smallest thing that ships
+            text-xs: the smallest thing that ships
           </p>
         </Row>
         <Row
@@ -189,7 +189,7 @@ export default function DesignSystemPage() {
       <Section
         id="colour"
         title="Colour"
-        intro="Five brand colours are declared in @theme and none of them are used — the site is deliberately being built in black and white first. That gap is issue 1. Below them is the working palette the light ground actually runs on."
+        intro="Five brand colours are declared in @theme and none of them are used. The site is deliberately being built in black and white first. That gap is issue 1. Below them is the working palette the light ground actually runs on."
       >
         <h3 className="text-lead font-medium tracking-tight">Brand palette</h3>
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -251,7 +251,7 @@ export default function DesignSystemPage() {
       >
         <Row
           name="--radius-control"
-          meaning="9999px, and the only radius on anything pill-shaped. Named for controls rather than for buttons, because it covers pills too — a token that sounds like it applies to one thing is how a third radius gets invented."
+          meaning="9999px, and the only radius on anything pill-shaped. Named for controls rather than for buttons, because it covers pills too. A token that sounds like it applies to one thing is how a third radius gets invented."
         >
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex h-11 w-44 items-center justify-center rounded-control border border-black text-control tracking-tight">
@@ -276,7 +276,7 @@ export default function DesignSystemPage() {
         </Row>
         <Row
           name="--shadow-screen"
-          meaning="The one shadow, for one job: lifting a borderless screenshot off a white page. Two layers — a wide soft falloff and a tight contact edge — because a single blur reads as a smudge."
+          meaning="The one shadow, for one job: lifting a borderless screenshot off a white page. Two layers, a wide soft falloff and a tight contact edge, because a single blur reads as a smudge."
         >
           <div className="flex flex-wrap items-end gap-6">
             <div className="h-24 w-40 bg-surface" />
@@ -296,7 +296,7 @@ export default function DesignSystemPage() {
         >
           <div className="aspect-[1195/681] w-full max-w-md bg-surface" />
           <p className="mt-2 text-sm tracking-tight text-muted">
-            aspect-[1195/681] — the case study frame, from the wireframe
+            aspect-[1195/681]: the case study frame, from the wireframe
           </p>
         </Row>
         <Row name="Hairlines" meaning="border-black on imagery; border-black/10 to /30 for structure.">
@@ -332,7 +332,7 @@ export default function DesignSystemPage() {
         />
         <Row
           name="prefers-reduced-motion"
-          meaning="Honoured by the morph, the rail's dock magnification, every programmatic scroll, and the hero handover. Snap points stay — they are positions, not motion."
+          meaning="Honoured by the morph, the rail's dock magnification, every programmatic scroll, and the hero handover. Snap points stay, because they are positions, not motion."
         />
       </Section>
 
@@ -340,7 +340,7 @@ export default function DesignSystemPage() {
       <Section
         id="components"
         title="Components"
-        intro="Imported here, not copied — what you see is the shipping component."
+        intro="Imported here, not copied: what you see is the shipping component."
       >
         <Row
           name="BookACall"
@@ -354,7 +354,7 @@ export default function DesignSystemPage() {
 
         <Row
           name="Work rail pill"
-          meaning="Copies, not the live rail — it needs case study panels to track. Active is the loudest state, because it answers 'where am I'."
+          meaning="Copies, not the live rail, which needs case study panels to track. Active is the loudest state, because it answers 'where am I'."
         >
           <div className="flex flex-wrap gap-3">
             <span className="inline-flex h-11 w-44 items-center justify-center rounded-control border border-black text-control tracking-tight">
@@ -404,7 +404,7 @@ export default function DesignSystemPage() {
           </div>
           <p className="mt-3 max-w-[60ch] text-sm tracking-tight text-muted">
             The halves exist so the hero can fly the mark into the masthead while
-            the letterforms fade. Never re-export these from Figma — the paths
+            the letterforms fade. Never re-export these from Figma: the paths
             here are the only copy in the repo.
           </p>
         </Row>
@@ -434,7 +434,7 @@ export default function DesignSystemPage() {
         />
         <Row
           name="Back to Work"
-          meaning="Returns to the panel of the study it was clicked from, centred, rather than to the top of the work section — matching the hero, which flies its cover back to the same place. The href is a panel anchor; HashTarget does the centring, since an anchor alone top-aligns."
+          meaning="Returns to the panel of the study it was clicked from, centred, rather than to the top of the work section, matching the hero, which flies its cover back to the same place. The href is a panel anchor; HashTarget does the centring, since an anchor alone top-aligns."
         />
         <Row
           name="bun run check:landing"
@@ -457,9 +457,9 @@ export default function DesignSystemPage() {
             n={1}
             severity="high"
             title="The brand palette is declared and entirely unused"
-            evidence={`All five colours — ${BRAND.map(([n]) => n).join(", ")} — appear zero times outside globals.css. The site renders black, white, and the two working tokens above.`}
+            evidence={`All five colours appear zero times outside globals.css: ${BRAND.map(([n]) => n).join(", ")}. The site renders black, white, and the two working tokens above.`}
             why="A design system whose colours nothing uses is a plan, not a system. Every day it stays this way, more black-and-white decisions get made that the palette will have to be retrofitted into."
-            fix="Apply it in one pass: obsidian-black and snow-white replace black and white, vulcan-gold takes the active pill and the primary button. dark-silver is the open question — it is a dark-ground colour, so either the site goes dark, or that hex is revised for a light ground, or it stays reserved for dark surfaces like the lightbox and --color-muted remains the light-ground answer."
+            fix="Apply it in one pass: obsidian-black and snow-white replace black and white, vulcan-gold takes the active pill and the primary button. dark-silver is the open question, because it is a dark-ground colour. Either the site goes dark, or that hex is revised for a light ground, or it stays reserved for dark surfaces like the lightbox and --color-muted remains the light-ground answer."
           />
         </ol>
 
@@ -544,7 +544,7 @@ export default function DesignSystemPage() {
             <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
               --radius-screen and --shadow-screen. Product screenshots lost their
               borders because the app&rsquo;s own chrome is the frame, which left
-              them sitting flat on white with square corners — reading as a crop
+              them sitting flat on white with square corners, reading as a crop
               of a screen rather than a screen. Both are tokens rather than values
               in work.css, so the next surface that needs a device does not invent
               its own.
@@ -562,7 +562,7 @@ export default function DesignSystemPage() {
               the branch using it survives, so a runtime check cannot undo a
               build-time decision. next.config.mjs now aliases the package to a
               stub for production builds only. Chunks went from 1.3M to 864K, and
-              the real toolbar still loads in development — both measured.
+              the real toolbar still loads in development. Both measured.
             </p>
             <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
               Worth keeping: the comment beside that import used to claim Next

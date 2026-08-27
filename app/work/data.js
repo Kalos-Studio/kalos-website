@@ -102,12 +102,12 @@
 //   ],
 // }
 
-// Shared metadata bit — every /work page follows the same "<title> — Kalos"
+// Shared metadata bit — every /work page follows the same "<title> | Kalos"
 // convention, so this stays in one place instead of being re-typed at each
 // page's export const metadata / generateMetadata.
 //
 export function workPageTitle(title) {
-  return `${title} — Kalos`;
+  return `${title} | Kalos`;
 }
 
 // A `workIndex` export -- the /work listing page's headline and standfirst --
