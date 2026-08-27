@@ -2,11 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CoverImage from "../CoverImage";
 import CaseStudyBody from "../CaseStudyBody";
+import PasswordGate from "../PasswordGate";
 import { Mark } from "../../lockup";
 import ViewTransitionLink from "../../view-transition-link";
 import { caseStudies, workPageTitle } from "../data";
 import BookACall from "../../(landing)/book-a-call";
 import { closer } from "../../(landing)/content";
+import { isUnlocked } from "@/lib/work-lock";
 
 // A case study, built from the landing page's vocabulary rather than its own.
 //
@@ -96,6 +98,14 @@ export default async function CaseStudyPage({ params }) {
   // it was prototyped on.
   const cover = { ...cs.cover, ...cs.landingCover };
   const vtName = `cover-${cs.slug}`;
+
+  // The gate, and it stops at the prose. Everything a visitor was shown on the
+  // landing page -- the cover, the title, the summary line -- is still here,
+  // because hiding those would mean the panel they clicked led to a wall and
+  // the morph flew a picture into a page that would not admit what it was.
+  // What is behind the password is the writing, which is the part that is not
+  // finished. See lib/work-lock.js.
+  const unlocked = await isUnlocked(cs);
 
   return (
     <div className={COLUMN}>
@@ -215,7 +225,11 @@ export default async function CaseStudyPage({ params }) {
           has between a panel and the summary line under it: the imagery is the
           wide element and the text is the narrow one. */}
       <div className="mt-12 lg:mt-16">
-        <CaseStudyBody blocks={cs.body} />
+        {unlocked ? (
+          <CaseStudyBody blocks={cs.body} />
+        ) : (
+          <PasswordGate slug={cs.slug} />
+        )}
       </div>
 
       {/* --- Closer --------------------------------------------------------

@@ -43,6 +43,15 @@
 //                              // half read nothing. The client's name is in
 //                              // the title and the first paragraph of every
 //                              // study already.
+//   open: true,                // optional — skip the password gate for this one
+//                              // study. Everything is gated by default while
+//                              // the copy is being cleaned up; set this on a
+//                              // study once its write-up is finished.
+//   password: "...",           // optional — a password for this study alone,
+//                              // for the one that goes to a client who should
+//                              // not have the rest. Everything else takes
+//                              // WORK_PASSWORD, so the shared password opens
+//                              // them all at once. See lib/work-lock.js.
 //   cover: {                   // optional — omit to show a placeholder
 //     src: "/work/kebab-case-id/cover.jpg", // put images in /public/work/<slug>/
 //     alt: "Description of the cover image for screen readers",
