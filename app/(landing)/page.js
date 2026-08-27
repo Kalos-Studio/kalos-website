@@ -33,6 +33,76 @@ function disciplines(role) {
   return role ? role.split(",").map((part) => part.trim()).filter(Boolean) : [];
 }
 
+// The client's mark, standing in for its name.
+//
+// One component because there are two render paths -- a case study and the
+// placeholder slot -- and the size rule below has to be true of both. It was
+// duplicated, and back then the placeholder was ConEdison, which is the widest
+// mark of the lot: a fix applied to the case study branch alone would have left
+// the worst offender exactly as it was. Nothing holds the placeholder slot now,
+// so keeping the two paths in one component is what stops that recurring the
+// next time something does.
+//
+// Sizing, and why it is not just a height. Every mark used to be set to one
+// height with the width left to follow, which normalises the wrong dimension: a
+// row of logos is read by how much ink each one puts on the page, not by how
+// tall it is. Measured on the landing page, that gave ConEdison 1.76x and
+// EchoCare 1.66x the optical area of the median mark, and both ran about 240px
+// wide against a 96-153px pack.
+//
+// The aspect ratios in public/home/logos say why, and where the line goes:
+//
+//   allganize 2.53, priority-ambulance 2.67, shell 2.85, vital 2.93,
+//   my-heb-app 3.06, mara 3.19  |  echocare 4.87, conedison 5.16
+//
+// Six marks between 2.5 and 3.2, then a gap, then two wordmarks nearly twice as
+// wide as they are like the rest. So the rule is a box rather than a height: a
+// mark may be up to 3.9 times as wide as it is tall, and one that is wider is
+// scaled to fit instead of being allowed to run. 3.9 sits in the gap, so the
+// six are untouched and the two outliers land within a few percent of the
+// median's area.
+//
+// `object-contain` is what makes it a box and not a squash: max-width alone
+// clamps a replaced element's width while the explicit height stands, which
+// distorts it. With contain, the mark fits inside the box and keeps its shape.
+//
+// Rendered monochrome: a row of competing brand colours reads as a logo salad,
+// and one weight makes it read as evidence. brightness(0) blackens every opaque
+// pixel, which is why everything in public/home/logos has to sit on a genuinely
+// transparent background -- a logo supplied on white would become a black
+// rectangle.
+//
+// A plain <img> rather than next/image: these are small, already sized, and one
+// is an SVG with no intrinsic raster dimensions to give the optimizer.
+function ClientMark({ cs, muted = false }) {
+  // Still an <h2>, so the page keeps its heading structure -- the mark is the
+  // heading's content and its alt text is the name.
+  return (
+    <h2 className="shrink-0">
+      {cs.logo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={cs.logo}
+          alt={cs.title}
+          className={
+            // 7.8rem = 3.9 x h-8, 11.7rem = 3.9 x h-12. Both are the same box.
+            "h-8 w-auto max-w-[7.8rem] object-contain object-left " +
+            "[filter:brightness(0)] lg:h-12 lg:max-w-[11.7rem]"
+          }
+        />
+      ) : (
+        <span
+          className={
+            "text-lead font-medium tracking-tight" + (muted ? " text-muted" : "")
+          }
+        >
+          {cs.title}
+        </span>
+      )}
+    </h2>
+  );
+}
+
 export default function LandingPage() {
   return (
     // The content column. x=96..1805 of 1920 -- a 5% left margin and a 6% right
@@ -101,20 +171,7 @@ export default function LandingPage() {
                       </p>
                     </div>
                     <div className="mt-4 flex flex-wrap items-center gap-x-8 gap-y-2 lg:mt-5 lg:gap-x-10">
-                      <h2 className="shrink-0">
-                        {cs.logo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={cs.logo}
-                            alt={cs.title}
-                            className="h-8 w-auto [filter:brightness(0)] lg:h-12"
-                          />
-                        ) : (
-                          <span className="text-lead font-medium tracking-tight text-muted">
-                            {cs.title}
-                          </span>
-                        )}
-                      </h2>
+                      <ClientMark cs={cs} muted />
                       <ul className="flex flex-wrap gap-x-2 gap-y-1.5">
                         {disciplines(cs.role).map((tag) => (
                           <li
@@ -202,35 +259,7 @@ export default function LandingPage() {
                       }}
                     />
                     <div className="mt-4 flex flex-wrap items-center gap-x-8 gap-y-2 lg:mt-5 lg:gap-x-10">
-                      {/* The client's own mark stands in for its name. Still an
-                          <h2>, so the page keeps its heading structure -- the
-                          logo is the heading's content and its alt text is the
-                          name.
-
-                          Rendered monochrome: a row of competing brand colours
-                          reads as a logo salad, and one weight makes it read as
-                          evidence. brightness(0) blackens every opaque pixel,
-                          which is why everything in public/home/logos has to sit
-                          on a genuinely transparent background -- a logo
-                          supplied on white would become a black rectangle.
-
-                          A plain <img> rather than next/image: these are small,
-                          already sized, and one is an SVG with no intrinsic
-                          raster dimensions to give the optimizer. */}
-                      <h2 className="shrink-0">
-                        {cs.logo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={cs.logo}
-                            alt={cs.title}
-                            className="h-8 w-auto [filter:brightness(0)] lg:h-12"
-                          />
-                        ) : (
-                          <span className="text-lead font-medium tracking-tight">
-                            {cs.title}
-                          </span>
-                        )}
-                      </h2>
+                      <ClientMark cs={cs} />
 
                       {/* The disciplines, straight off the case study's own
                           `role`, so the landing page and the study can never

@@ -74,6 +74,7 @@
  */
 
 import { chromium } from "playwright";
+import { KEY_COOKIE, WORK_PASSWORD, keyFor } from "../lib/work-key.js";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 
@@ -111,7 +112,25 @@ const THROW = [1200, 6000];
 const HOLD = [200, 800];
 
 const browser = await chromium.launch({ channel: "chrome" });
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+
+// The checks arrive holding a key to the case studies.
+//
+// Every study's body is behind a password (lib/work-key.js), and the ask is a
+// modal over the whole page. That is right for a visitor and wrong for this
+// file: RETURN below clicks the masthead's "Back to Work", the scrim sits over
+// it, and Playwright waits thirty seconds for a link it can never reach. The
+// failure reads as a scroll regression and is nothing of the kind.
+//
+// Handing over the cookie rather than typing into the form on purpose. What is
+// being measured here is where a case study page comes to rest, not how the
+// gate behaves, and a check that has to unlock its way in breaks the moment the
+// gate's markup changes.
+await context.addCookies([
+  { name: KEY_COOKIE, value: keyFor(WORK_PASSWORD), url: BASE },
+]);
+
+const page = await context.newPage();
 const cdp = await page.context().newCDPSession(page);
 
 let failed = false;
