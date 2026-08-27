@@ -251,6 +251,42 @@ export default function WorkRail({ items }) {
     return () => observer.disconnect();
   }, [items]);
 
+  // Below lg the rail is a horizontal strip and the pills do not fit: on a 390px
+  // phone the list is 742px of content in 350px of window, so the pill for the
+  // panel you are looking at is usually off the end of it and the rail answers
+  // "where am I" with an empty row. Scrolling the strip to the active pill is the
+  // phone's version of the highlight the lg column can show without moving.
+  //
+  // The *list* is scrolled, not the pill brought into view. scrollIntoView would
+  // also scroll the page to the pill, and the page is snapped -- so it would
+  // fight the gesture that changed `active` in the first place, on every panel.
+  //
+  // Measured off rects rather than offsetLeft, which is relative to whichever
+  // ancestor happens to be positioned rather than to the scroller. Adding the
+  // current scrollLeft back makes the target absolute, so this is still correct
+  // when it lands mid-way through an earlier smooth scroll.
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || !active) return;
+
+    const pill = itemRefs.current[items.findIndex((item) => item.slug === active)];
+    if (!pill) return;
+
+    // From lg the rail is a column with overflow-visible: there is no horizontal
+    // scroll to move, and the dock transform would skew the rects anyway.
+    if (list.scrollWidth <= list.clientWidth) return;
+
+    const listBox = list.getBoundingClientRect();
+    const pillBox = pill.getBoundingClientRect();
+    const centred =
+      list.scrollLeft + (pillBox.left - listBox.left) + pillBox.width / 2 - listBox.width / 2;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // scrollTo clamps to the ends itself, so the first and last pills simply
+    // stop against the edge rather than needing a special case.
+    list.scrollTo({ left: centred, behavior: reduced ? "auto" : "smooth" });
+  }, [active, items]);
+
   return (
     <nav
       ref={navRef}
@@ -264,9 +300,14 @@ export default function WorkRail({ items }) {
       className={
         // Below lg: a horizontal strip stuck to the top, because a 9.4% column
         // would be 37px wide on a phone.
-        // top-14, not top-0: the hero's masthead is fixed across the top of the
+        // top-15, not top-0: the hero's masthead is fixed across the top of the
         // window and the flying mark lands in it, so a rail stuck at 0 would have
         // the mark drawn straight over its label on a phone.
+        //
+        // 60px is not a clearance, it is the masthead's exact height below lg,
+        // and the two have to keep meeting. This bar's white ground is what gives
+        // the masthead's flat fill somewhere to stop: leave a gap and the panels
+        // scroll through it. See the gradient comment in hero.js.
         "sticky top-15 z-10 flex flex-col gap-4 self-start bg-white py-3 " +
         // From lg: the column the wireframe draws. It rests exactly where the
         // grid puts it, rides up with the page, and once it would pass the

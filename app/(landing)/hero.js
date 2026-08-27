@@ -288,7 +288,15 @@ export default function Hero() {
           anyway, since the only thing behind it is the hero. By the time a panel
           reaches the top of the window the hero has gone and this is solid. */}
       <div
-        className="pointer-events-none fixed inset-x-0 top-0 z-40 pb-6 lg:pb-10"
+        className={
+          "pointer-events-none fixed inset-x-0 top-0 z-40 " +
+          // From lg the bar is taller than its content and both stops sit inside
+          // it, so the last stretch fades out. Below lg there is no overhang and
+          // both stops are at the bottom edge, which leaves the fill flat -- see
+          // the comment on the gradient.
+          "pb-0 [--masthead-solid:100%] [--masthead-soft:100%] " +
+          "lg:pb-10 lg:[--masthead-solid:55%] lg:[--masthead-soft:78%]"
+        }
         style={{
           // A gradient rather than a flat fill, so the bar has no bottom edge.
           //
@@ -297,14 +305,24 @@ export default function Hero() {
           // last stretch to nothing means content passes out of view instead of
           // being cut off, which is the whole job of a bar like this.
           //
+          // Below lg it is flat anyway, and that is not a compromise. The fade
+          // only works where the thing below the bar is the page; on a phone the
+          // thing below it is the pill rail, whose own white ground starts at
+          // 60px -- exactly where this bar ends once the overhang is dropped.
+          // The two are one white surface and the rail supplies the bottom edge.
+          // Fading here just made the 14px between the stops translucent, and
+          // panels scrolled visibly through the gap between the label and the
+          // pills. That is the bug this shape fixes; if either number moves, they
+          // both have to.
+          //
           // The alpha is the same `1 - var(--hero-fade)` the flat fill used, so
           // the bar still arrives as the hero leaves rather than sitting over it
           // at the top of the page. Carried on every stop so the fade tracks it.
           backgroundImage:
             "linear-gradient(to bottom," +
             " rgb(255 255 255 / calc(1 - var(--hero-fade, 1))) 0%," +
-            " rgb(255 255 255 / calc(1 - var(--hero-fade, 1))) 55%," +
-            " rgb(255 255 255 / calc((1 - var(--hero-fade, 1)) * 0.6)) 78%," +
+            " rgb(255 255 255 / calc(1 - var(--hero-fade, 1))) var(--masthead-solid)," +
+            " rgb(255 255 255 / calc((1 - var(--hero-fade, 1)) * 0.6)) var(--masthead-soft)," +
             " rgb(255 255 255 / 0) 100%)",
         }}
       >
