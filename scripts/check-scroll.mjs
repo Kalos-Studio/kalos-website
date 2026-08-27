@@ -18,12 +18,16 @@
  *               without holding the lock through that tail one flick paged three
  *               panels.
  *
- *   TAIL        A firm flick's momentum runs for well over a second. The lock
- *               used to be released on a fixed ceiling, which expired in the
- *               middle of that tail while its deltas were still large, and the
- *               remainder paged a second time -- every hard flick moved two
- *               panels. FLICK below is deliberately short; TAIL_FLICK is the
- *               one that outlives a ceiling.
+ *   TAIL        A firm flick's momentum runs for well over a second, and the
+ *               two ways of ending it early both shipped a bug. A fixed ceiling
+ *               expired mid-tail while the deltas were still large and paged a
+ *               second time: every hard flick moved two panels. Reading the
+ *               tail's shape instead -- momentum only decays, so a delta bigger
+ *               than the last must be a new push -- was worse, because on macOS
+ *               the momentum stream STARTS above the peak of the gesture that
+ *               threw it: a normal flick went three case studies down. FLICK is
+ *               deliberately short and outlives neither; TAIL_FLICK outlives a
+ *               ceiling and JUMP_FLICK has the onset that broke the shape rule.
  *
  *   CRAWL       A gentle two-finger drag emits deltas of one to three pixels.
  *               Thresholding each event on its own discarded all of them as
@@ -35,7 +39,9 @@
  *   AGAIN       A second flick shortly after the first must page again. The lock
  *               outlives a short gesture, so a flick arriving while it is still
  *               held was swallowed whole -- "I scroll once and then it gets
- *               stuck".
+ *               stuck". Only a pause ends a gesture, so the gaps tested here
+ *               start at one: a flick thrown with no pause at all is absorbed
+ *               on purpose, being indistinguishable from a momentum onset.
  *
  *   INTERLEAVE  The wheel and the keyboard share a lock, so the interesting case
  *               is one straight after the other. An early version had the
@@ -86,6 +92,15 @@ const TAIL_FLICK = [2, 3, 6, 14, 28, 44, 52, 44];
 for (let v = 30, i = 0; i < 70; i++) {
   TAIL_FLICK.push(Math.max(1, Math.round(v)));
   v *= 0.955;
+}
+
+// A flick whose momentum begins *above* the peak of the gesture, which is what
+// macOS actually emits and what no amount of arithmetic on a single delta can
+// tell apart from a second flick. This one gesture must move exactly one view.
+const JUMP_FLICK = [3, 9, 20, 34, 30, 22];
+for (let v = 96, i = 0; i < 80; i++) {
+  JUMP_FLICK.push(Math.max(1, Math.round(v)));
+  v *= 0.962;
 }
 
 // A slow, deliberate two-finger drag. Every event is below any per-event noise
@@ -200,6 +215,7 @@ try {
   };
 
   await oneView("a flick with a long momentum tail moves one view", TAIL_FLICK);
+  await oneView("a flick whose momentum starts big moves one view", JUMP_FLICK);
   await oneView("a gentle drag pages rather than crawling", DRAG);
 
   await load();
@@ -215,8 +231,9 @@ try {
 
   // AGAIN: the second flick is the one that used to be eaten by the first
   // flick's lock. 150ms is the gap that failed -- long enough to have ended the
-  // gesture, short enough that the lock was still held.
-  for (const gap of [0, 150, 400]) {
+  // gesture, short enough that the lock was still held. It is also the tightest
+  // gap a hand can actually produce, which is why nothing below it is asserted.
+  for (const gap of [150, 400, 800]) {
     await load();
     await page.mouse.move(700, 450);
     await emit(TAIL_FLICK);

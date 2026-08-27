@@ -35,14 +35,28 @@ import { useEffect } from "react";
  * stopped, and the page read as frozen. That was "scrolling is sometimes not
  * working", measured at 120px of native crawl and 0 panels moved.
  *
- * **Momentum is told from intent by shape, not by a stopwatch.** After the
- * fingers lift, a trackpad keeps emitting for up to two seconds, decaying
- * smoothly. This used to hold the lock for a fixed ceiling and then let go --
- * so on any firm flick the tail outlived the ceiling while its deltas were
- * still large, and paged a second time. Measured: every hard flick moved two
- * panels. A tail never accelerates, so the tail is now recognised by its decay
- * and held to the end, and a genuine second push during it is recognised by
- * being suddenly bigger than what came before.
+ * **Momentum is not a gesture, and no amount of arithmetic on a delta will tell
+ * you which one you are holding.** After the fingers lift, a trackpad keeps
+ * emitting for up to two seconds. Two ways of ending that have been tried and
+ * cut:
+ *
+ * - *A fixed ceiling.* It expires in the middle of the tail while the deltas
+ *   are still large, and the remainder pages a second time. Measured at two
+ *   panels per hard flick, every time.
+ * - *Reading the tail's shape*, on the theory that momentum only ever decays,
+ *   so an event suddenly bigger than the one before it must be a fresh push.
+ *   It is not: on macOS the momentum stream **starts above the peak of the
+ *   gesture that threw it**, and wobbles on the way down. Every firm flick
+ *   read as one page plus two phantom pushes, and a normal flick went three
+ *   case studies down. That is what this rule replaced.
+ *
+ * So the stream is the gesture: one unbroken run of wheel events pages exactly
+ * once, however long it runs and whatever shape it has. The only thing that
+ * starts a new gesture is a pause, because momentum arrives at the frame rate
+ * and never pauses. The cost is that a second flick thrown with no pause at all
+ * is absorbed rather than obeyed, and that is the right side to err on: a
+ * gesture ignored is a gesture you make again, while a gesture doubled has
+ * already taken you somewhere you did not ask to go.
  */
 
 // The distance a stream has to cover before it counts as a deliberate gesture.
@@ -50,28 +64,20 @@ import { useEffect } from "react";
 // stray twitch on the pad does not move the page.
 const GESTURE_PX = 20;
 
-// A pause longer than this ends the stream. What follows is a new gesture and
-// starts accumulating from zero, rather than adding to whatever was left over.
-const STREAM_GAP_MS = 150;
+// A pause longer than this ends the stream, and is the *only* thing that does.
+// Sized off the two rates it has to separate: momentum arrives every 8-16ms and
+// must never look like a pause, while lifting the fingers, putting them back
+// down and starting to move again cannot be done in under about a tenth of a
+// second. Anything in between is margin.
+const STREAM_GAP_MS = 80;
 
 // How long the wheel has to be quiet before the lock lets go. There is no
 // ceiling beside it any more: a ceiling can only ever expire in the middle of
 // something, and the middle of a momentum tail is the one place it must not.
 // What used to need the ceiling -- a hand resting on the pad emitting forever
-// and holding the page hostage -- is handled by the push test below, which lets
-// a real flick through whatever the lock believes.
+// and holding the page hostage -- is handled by STREAM_GAP_MS instead, which
+// drops the lock outright the moment the pad goes quiet for a moment.
 const QUIET_MS = 220;
-
-// Reading the shape of a stream.
-//
-// A delta this far below the stream's peak means the fingers have lifted and
-// what is arriving now is momentum. From that point a delta suddenly RESURGE
-// times bigger than the one before it is the user pushing again, not physics --
-// momentum only ever decays. The floor keeps a jittery tail from looking like a
-// push at the point where the numbers are down in the single digits.
-const DECAYED = 0.7;
-const RESURGE = 1.6;
-const PUSH_PX = 12;
 
 // A scroll of about a viewport takes roughly this long. The wheel does not wait
 // on it -- it aims from where the page is *heading* instead -- but the keyboard
@@ -142,16 +148,10 @@ export default function PagedScroll() {
     let stops = null; // cached for the stream -- these are document positions,
     let acc = 0; //     so scrolling does not move them and a stream is short
     let lastAt = 0;
-    let lastAbs = 0;
-    let peak = 0;
-    let decaying = false;
 
     const endStream = () => {
       stops = null;
       acc = 0;
-      lastAbs = 0;
-      peak = 0;
-      decaying = false;
     };
 
     // The stop a gesture in this direction should land on, or undefined for
@@ -242,53 +242,32 @@ export default function PagedScroll() {
       const delta =
         event.deltaY *
         (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1);
-      const abs = Math.abs(delta);
       const now = performance.now();
 
       if (now - lastAt > STREAM_GAP_MS) {
+        // The pad went quiet, so the fingers left it: whatever the lock was
+        // absorbing is over and this is a new gesture. This is the only way a
+        // new gesture ever begins, and dropping the lock here is the only way
+        // the lock ever ends early.
         endStream();
-        // A gap this long is the fingers leaving the pad. Momentum arrives at
-        // the frame rate and never pauses, so whatever the lock was absorbing is
-        // over and this is a new gesture -- release it here rather than making
-        // the push test below recognise a flick it has seen no decay in front
-        // of. Without this, a second flick a sixth of a second after the first
-        // was swallowed whole: the lock still had a hundred milliseconds to run
-        // and every event of a rising ramp looks like more of the same stream.
         locked = false;
         window.clearTimeout(quiet);
       }
       lastAt = now;
 
-      // Read the shape of the stream before deciding anything with it. Rising
-      // is still the flick itself; once a delta comes in well under the peak the
-      // fingers have lifted and the rest is momentum.
-      if (abs > peak) peak = abs;
-      else if (peak >= PUSH_PX && abs < peak * DECAYED) decaying = true;
-      const push = decaying && abs >= PUSH_PX && abs > lastAbs * RESURGE;
-      lastAbs = abs;
-
       if (locked) {
-        // The lock swallows everything. Nothing about a wheel event's size makes
-        // it safe to let through while a paged scroll is running: an event the
-        // handler declines to claim is one the browser scrolls on, and a page
-        // being scrolled natively underneath a programmatic smooth scroll
-        // cancels it outright, leaving the page stranded between two panels for
-        // snapping to drag back.
+        // The lock swallows everything, for as long as the stream keeps coming.
+        // Nothing about a wheel event's size makes it safe to let through while
+        // a paged scroll is running: an event the handler declines to claim is
+        // one the browser scrolls on, and a page being scrolled natively
+        // underneath a programmatic smooth scroll cancels it outright, leaving
+        // the page stranded between two panels for snapping to drag back.
         event.preventDefault();
-        if (!push) {
-          window.clearTimeout(quiet);
-          quiet = window.setTimeout(() => {
-            locked = false;
-          }, QUIET_MS);
-          return;
-        }
-        // A real push arriving mid-tail. Let it through as a gesture of its own,
-        // starting a fresh stream so that its own ramp up is not read as yet
-        // another push a frame later.
-        locked = false;
-        endStream();
-        peak = abs;
-        lastAbs = abs;
+        window.clearTimeout(quiet);
+        quiet = window.setTimeout(() => {
+          locked = false;
+        }, QUIET_MS);
+        return;
       }
 
       // The gesture is the sum of its events. A direction change starts the sum

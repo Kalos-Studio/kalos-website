@@ -123,13 +123,21 @@ working" has been a violation of one of them:
   crawled ~120px natively and snapping dragged it back. Every wheel event is now
   claimed as long as there is a stop to move to; only the accumulated total
   decides whether to page.
-- **Momentum is told from intent by shape, not by a stopwatch.** A firm flick
-  keeps emitting for up to two seconds after the fingers lift. The lock used to
-  be released on a fixed ceiling, which expired mid-tail while the deltas were
-  still large and paged a second time — measurably, every hard flick moved two
-  panels. A tail only ever decays, so it is now held to its end, and a genuine
-  second push during it is recognised by being suddenly bigger than what came
-  before. A pause of 150ms also ends it outright, because momentum never pauses.
+- **Momentum is not a gesture, and no arithmetic on a delta will tell you which
+  one you are holding.** A firm flick keeps emitting for up to two seconds after
+  the fingers lift, and two ways of ending that have been tried and cut. A fixed
+  ceiling expires mid-tail while the deltas are still large and pages a second
+  time — every hard flick moved two panels. Reading the tail's *shape* instead,
+  on the theory that momentum only decays so a delta bigger than the last must
+  be a fresh push, was worse: on macOS the momentum stream **starts above the
+  peak of the gesture that threw it**, so a normal flick went three case studies
+  down. What runs now is that one unbroken run of wheel events pages exactly
+  once, however long it runs and whatever shape it has, and **only a pause of
+  80ms starts a new one** — momentum arrives every 8-16ms and never pauses, and
+  no hand can lift, land and move again in less. The cost is that a second flick
+  thrown with no pause at all is absorbed rather than obeyed, which is the right
+  side to err on: a gesture ignored is one you make again, a gesture doubled has
+  already taken you somewhere you did not ask to go.
 
 The wheel aims from where the page is *heading* rather than from where it is, so
 a second flick during a running scroll targets the stop after the one being
@@ -301,8 +309,9 @@ and exists because every scroll bug in this project was reported as a feeling
 ("impossible to scroll", "it kinda freaks out", "super weird") and every one had
 a specific cause a browser could measure. It asserts that one trackpad flick
 moves exactly one view — a short one, a hard one whose tail runs a second and a
-half, and a gentle drag made entirely of 3px events — that a twitch moves
-nothing, that a second flick 0/150/400ms after the first still pages, that the
+half, one whose momentum onset is three times the flick's own peak, and a gentle
+drag made entirely of 3px events — that a twitch moves nothing, that a second
+flick 150/400/800ms after the first still pages, that the
 wheel and the keyboard each leave the other usable straight afterwards, that
 typing and modified keys are handed back, and that "Back to Work" lands on its
 own panel. **A synthetic wheel event is not a trackpad** — a flick is a burst of
