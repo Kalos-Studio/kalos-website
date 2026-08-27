@@ -96,6 +96,45 @@
   --duration-settle: 500ms;
   --duration-morph: 520ms;
 
+  /* Two named animations, for the modal variant of the case study password
+     gate (app/work/PasswordGate.js). Declared here because a keyframe has to
+     live in a stylesheet and @theme is where this project keeps motion --
+     `--animate-*` generates the utility, so the component writes
+     `motion-safe:animate-gate-scrim` and a reduced-motion visitor gets the
+     finished state on the first frame with nothing to turn off.
+
+     The delay is the whole point of them, and it is `--duration-morph` rather
+     than a number picked by eye. The modal arrives on a page whose cover is
+     still flying in from the landing panel, and while a view transition runs
+     the live DOM is hidden behind its snapshot -- so anything animating during
+     it is invisible and then pops in at whatever value it had reached. Starting
+     at the morph's own length means the scrim begins from zero on the first
+     frame the reader can actually see, after the cover has landed. */
+  --animate-gate-scrim: gate-scrim var(--duration-settle) var(--ease-brand)
+    var(--duration-morph) both;
+  --animate-gate-card: gate-card var(--duration-settle) var(--ease-brand)
+    calc(var(--duration-morph) + 90ms) both;
+
+  @keyframes gate-scrim {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes gate-card {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   /* --- Shape ------------------------------------------------------------ */
 
   /* One radius for every control, and it is a full round.

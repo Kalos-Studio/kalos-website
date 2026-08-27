@@ -1,58 +1,158 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useId } from "react";
+import Link from "next/link";
 import { unlockCaseStudy } from "./unlock";
 
+// The one line either variant says, and all it says. It was three sentences
+// admitting the write-up was not finished, which told a visitor something they
+// had no reason to be told and turned a locked page into an apology. The work
+// shipped; the only fact a reader needs here is that there is a door.
+const PROMPT = "Enter password to access full case study.";
+
 /**
- * What stands in for a case study's body while it is locked.
+ * Two ways of asking for the password over one case study, switchable so they
+ * can be looked at side by side rather than one being iterated into the other.
+ * The debug menu in GateDebugMenu.js flips between them; WORK_GATE sets which
+ * one real visitors get. See lib/work-lock.js.
  *
- * Written to read as part of the page rather than as a login screen. The old
- * gate was a centred card on its own route with an eyebrow, a heading and a
- * box around it, which is what a password page looks like when it is the whole
- * page. This one is a sentence and a field sitting in the reading column, under
- * a hero that has already told you what you are looking at, so the page still
- * reads as the case study it is.
+ *   inline -- the gate stands where the body would, in the reading column, and
+ *             the page around it behaves normally. Cheapest and quietest: the
+ *             study still scrolls, the closer is still reachable, and nothing
+ *             is covering anything.
  *
- * The error is state rather than a query parameter (`?error=1`, as before) so a
- * wrong attempt does not rewrite the URL of a page reached through a view
- * transition -- and so the address that gets shared is still the study's own.
+ *   modal  -- a translucent layer over the whole page with the ask centred on
+ *             it, arriving after the cover has finished flying in from the
+ *             landing panel. Louder, unambiguous, and it stops the page.
+ *
+ * Neither variant is given the prose. The check that produced them ran on the
+ * server, so the locked writing was never sent to the browser and there is
+ * nothing behind the scrim to read.
  */
-export default function PasswordGate({ slug }) {
+export default function PasswordGate({ slug, variant = "inline" }) {
+  return variant === "modal" ? (
+    <ModalGate slug={slug} />
+  ) : (
+    <InlineGate slug={slug} />
+  );
+}
+
+function InlineGate({ slug }) {
+  return (
+    <div className="max-w-[46ch]">
+      <p className="text-lead tracking-tight">{PROMPT}</p>
+      <GateForm slug={slug} className="mt-6" />
+    </div>
+  );
+}
+
+function ModalGate({ slug }) {
+  const labelId = useId();
+
+  // The page underneath must not scroll while the layer is over it, or the
+  // reader can push the hero off screen behind a modal they cannot dismiss and
+  // end up looking at nothing. Restored on unmount, which is what unlocking
+  // does -- the prose arrives and this component goes away.
+  //
+  // On <html> rather than <body>, because the document is the scroll container
+  // here (see the note on snapping in app/layout.js).
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, []);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={labelId}
+      className={
+        "fixed inset-0 z-50 flex items-center justify-center px-5 " +
+        // Warm white rather than the usual black scrim: the site's ground is
+        // white and a dark wash would read as a different product's dialog.
+        // The blur is what makes it a layer rather than a tint -- it says the
+        // page is still there and is being held back.
+        "bg-white/70 backdrop-blur-md motion-safe:animate-gate-scrim"
+      }
+    >
+      {/* Square and hairline black, which is the case study's own panel frame.
+          The site has no cards and no elevation except under a screenshot, so a
+          rounded, shadowed box here would be the one object on the page
+          borrowed from somewhere else. */}
+      <div className="w-full max-w-[26rem] border border-black bg-white px-6 py-7 motion-safe:animate-gate-card sm:px-8 sm:py-9">
+        <p id={labelId} className="text-lead tracking-tight">
+          {PROMPT}
+        </p>
+
+        <GateForm slug={slug} className="mt-6" autoFocus stacked />
+
+        {/* A way out. There is no Escape and no backdrop click, because both
+            would leave a reader on a page with nothing on it -- so the exit is
+            the one the masthead already offers, back to this study's own panel
+            on the landing page. */}
+        <Link
+          href={`/#case-${slug}`}
+          className="mt-5 inline-block text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
+        >
+          Back to Work
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The field, the button and the error, shared so the two variants differ in
+ * where they sit rather than in what they are.
+ *
+ * `stacked` gives the modal a full-width button under the field instead of
+ * beside it: at 26rem the pair on one line leaves the field too short to see
+ * what you typed.
+ *
+ * The error is component state rather than a query parameter (`?error=1`, which
+ * is what the gate this replaced used) so a wrong attempt does not rewrite the
+ * URL of a page reached through a view transition, and the address that gets
+ * shared is still the study's own.
+ */
+function GateForm({ slug, className = "", autoFocus = false, stacked = false }) {
   const [state, formAction, pending] = useActionState(unlockCaseStudy, {
     error: null,
   });
+  const fieldId = useId();
 
   return (
-    <div className="max-w-[46ch]">
-      <p className="text-lead tracking-tight">This one is still being written.</p>
-
-      <p className="mt-3 text-control tracking-tight text-muted">
-        The work shipped; the write-up has not. Enter the password if you have
-        it, or book a call below and I will walk you through it.
-      </p>
-
-      <form action={formAction} className="mt-6 flex flex-wrap gap-3">
+    <div className={className}>
+      <form
+        action={formAction}
+        className={stacked ? "flex flex-col gap-3" : "flex flex-wrap gap-3"}
+      >
         <input type="hidden" name="slug" value={slug} />
 
-        <label htmlFor={`pw-${slug}`} className="sr-only">
+        <label htmlFor={fieldId} className="sr-only">
           Password
         </label>
 
-        {/* The control's own tokens: --radius-control is shared with the button
-            beside it because they are the same kind of object, and the height
-            matches BookACall's so the pair sits on one line. */}
+        {/* --radius-control, shared with the button, because they are the same
+            kind of object -- and the heights match BookACall's so the pair sits
+            on one line in the inline variant. */}
         <input
-          id={`pw-${slug}`}
+          id={fieldId}
           name="password"
           type="password"
           autoComplete="current-password"
           placeholder="Password"
+          autoFocus={autoFocus}
           required
           className={
-            "h-11 min-w-0 flex-1 rounded-control border border-black/25 bg-transparent " +
+            "h-11 min-w-0 rounded-control border border-black/25 bg-transparent " +
             "px-4 text-control tracking-tight placeholder:text-muted " +
             "transition-colors duration-[var(--duration-quick)] " +
-            "focus:border-black focus:outline-none lg:h-12"
+            "focus:border-black focus:outline-none lg:h-12 " +
+            (stacked ? "w-full" : "flex-1")
           }
         />
 
@@ -63,13 +163,14 @@ export default function PasswordGate({ slug }) {
           type="submit"
           disabled={pending}
           className={
-            "inline-flex h-11 shrink-0 items-center justify-center rounded-control " +
+            "inline-flex h-11 items-center justify-center rounded-control " +
             "border border-current bg-transparent px-7 text-control tracking-tight text-black " +
             "transition-colors duration-[var(--duration-quick)] " +
-            "hover:bg-black hover:text-white disabled:opacity-50 lg:h-12"
+            "hover:bg-black hover:text-white disabled:opacity-50 lg:h-12 " +
+            (stacked ? "w-full" : "shrink-0")
           }
         >
-          {pending ? "Checking" : "Read it"}
+          {pending ? "Checking" : "Enter"}
         </button>
       </form>
 
