@@ -419,7 +419,7 @@ const allWork = [
     role: "Design Exploration, User Research, Product Design",
     cover: {
       src: "/work/my-heb-app/cover.webp",
-      alt: "Three My H-E-B app screens: a shopping list, the trip drawn as a route across the store map with an estimated total, and an in-store camera view with a turn arrow and a running total",
+      alt: "Three My H-E-B app screens: a shopping list ready to start a trip, an in-store camera view with a turn arrow and a running total, and the trip drawn as a route across the store map with an estimated total",
     },
     // No `landingCover`. There used to be one, carrying a second trimmed copy
     // of the artwork, because the cover had a dark maroon ground that had to be
