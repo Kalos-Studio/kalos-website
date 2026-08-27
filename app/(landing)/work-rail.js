@@ -309,6 +309,17 @@ export default function WorkRail({ items }) {
         // the masthead's flat fill somewhere to stop: leave a gap and the panels
         // scroll through it. See the gradient comment in hero.js.
         "sticky top-15 z-10 flex flex-col gap-4 self-start bg-white py-3 " +
+        // Pulled out of the page's gutter so the strip is as wide as the window.
+        //
+        // Inside the content column the scroller was 350px of a 390px phone, and
+        // pills ran out of it 20px early -- against nothing, in the middle of
+        // white space, which reads as a clipped box rather than a row that
+        // continues. The gutter is restored as padding on the <ul> below, so the
+        // pills still come to rest on the column's edge; it is only the travel
+        // that goes the whole way. The negative margins match the column's own
+        // padding in `page.js`, which is the one thing here that has to stay in
+        // step with it.
+        "-mx-5 sm:-mx-8 lg:mx-0 " +
         // From lg: the column the wireframe draws. It rests exactly where the
         // grid puts it, rides up with the page, and once it would pass the
         // sticky offset it holds there — vertically centred, because that offset
@@ -336,7 +347,13 @@ export default function WorkRail({ items }) {
 
       <ul
         ref={listRef}
-        className="flex w-full flex-row gap-2 overflow-x-auto [scrollbar-width:none] lg:flex-col lg:gap-4 lg:overflow-visible [&::-webkit-scrollbar]:hidden"
+        // px-5/sm:px-8 puts the page's gutter back inside the scroller, so the
+        // first and last pills rest on the column's edge while the scroll itself
+        // reaches the window's. Padding on a flex scroller, not a spacer element:
+        // the trailing edge has to be scrollable-to, and a margin on the last
+        // child is collapsed out of the scroll extent where padding-inline-end
+        // is not.
+        className="flex w-full flex-row gap-2 overflow-x-auto px-5 [scrollbar-width:none] sm:px-8 lg:flex-col lg:gap-4 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden"
       >
         {items.map((item, i) => (
           <li
