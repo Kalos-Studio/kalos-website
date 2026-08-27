@@ -426,7 +426,7 @@ export default function DesignSystemPage() {
         />
         <Row
           name="PagedScroll"
-          meaning="One gesture, one view. Takes the wheel and the bare arrow and page keys, and nothing else — touch, find-in-page, anchor links, Home and End, and every modified key stay the browser's. Keys and wheel share one lock, but only the wheel holds it through its momentum tail, because a keystroke has none."
+          meaning="The bare arrow and page keys, and nothing else. The wheel is the browser's, and so are touch, find-in-page, anchor links, Home, End, space and every modified key. One lock, held for the length of a scroll, so a held key cannot fly through the page."
         />
         <Row
           name="Hero handover"
@@ -461,18 +461,34 @@ export default function DesignSystemPage() {
             why="A design system whose colours nothing uses is a plan, not a system. Every day it stays this way, more black-and-white decisions get made that the palette will have to be retrofitted into."
             fix="Apply it in one pass: obsidian-black and snow-white replace black and white, vulcan-gold takes the active pill and the primary button. dark-silver is the open question — it is a dark-ground colour, so either the site goes dark, or that hex is revised for a light ground, or it stays reserved for dark surfaces like the lightbox and --color-muted remains the light-ground answer."
           />
-          <Issue
-            n={2}
-            severity="low"
-            title="The landing page jacks the scroll wheel and the arrow keys"
-            evidence="paged-scroll.js calls preventDefault on wheel events, and on unmodified arrow and page keys."
-            why="It was asked for and it is scoped carefully — touch, find-in-page, typing, Home, End and every modified key are handed straight back — but it is a deliberate exception to a rule this codebase otherwise holds, and exceptions get copied. The keyboard came under it late, because leaving it out was worse: an arrow key scrolled 40px and proximity snapping dragged the page back, so the press did nothing at all."
-            fix="Nothing, unless it stops feeling right. Recorded here so the next person knows it was a decision rather than an accident."
-          />
         </ol>
 
         <h3 className="mt-14 text-lead font-medium tracking-tight">Fixed</h3>
         <ul className="mt-4">
+          <li className="border-b border-black/10 py-6">
+            <p className="text-sm font-medium tracking-tight">
+              The wheel is the browser&rsquo;s again
+            </p>
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+              This was logged as &ldquo;the landing page jacks the scroll wheel
+              and the arrow keys&rdquo;. The wheel half is gone: there is no
+              wheel listener on this site. Chrome does not tell a script which
+              wheel events are fingers and which are the momentum the OS
+              synthesises after they lift, so four hand-rolled handlers each
+              fixed the gesture they were written for and broke another. The
+              compositor has the phase information a script does not, which
+              makes scroll-snap-type: y mandatory the whole answer.
+            </p>
+            <p className="mt-2 max-w-[72ch] text-sm tracking-tight text-muted">
+              The keyboard half stays, and is a decision rather than an
+              accident. Snapping cannot fix an arrow key: the press moves about
+              40px, too little to change which stop is nearest, so the page is
+              put straight back and nothing happens. PagedScroll is that and
+              nothing else now, still scoped the way the issue credited it for
+              being: touch, find-in-page, typing, Home, End and every modified
+              key are handed straight back.
+            </p>
+          </li>
           <li className="border-b border-black/10 py-6">
             <p className="text-sm font-medium tracking-tight">
               Seven greys collapsed to two tokens

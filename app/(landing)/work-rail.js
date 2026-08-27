@@ -282,8 +282,16 @@ export default function WorkRail({ items }) {
       }
     >
       {/* Below lg this label lives in the masthead instead -- see the
-          comment on it in hero.js. */}
-      <p className="hidden text-lead tracking-tight lg:block">{workLabel}</p>
+          comment on it in hero.js.
+
+          self-center opts out of the nav's lg:items-end for this one child. The
+          pills are lg:w-full so they already span the whole rail, and the label
+          was the only thing taking its alignment from items-end -- which left it
+          hard against the right edge, 45px off the centre of the column it
+          titles. It heads the pills, so it is centred on them. */}
+      <p className="hidden text-lead tracking-tight lg:block lg:self-center">
+        {workLabel}
+      </p>
 
       <ul
         ref={listRef}
