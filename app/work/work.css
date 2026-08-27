@@ -1,417 +1,286 @@
-/* Scoped to /work — the homepage's globals.css sets html/body to
-   overflow:hidden (the spotlight page never scrolls), so this section gets
-   its own scroll container instead of fighting that. */
-.work-root {
-  height: 100dvh;
-  overflow-y: auto;
-  color: #fff;
-  position: relative;
-  z-index: 0; /* forms a real stacking context so the ::before backdrop
-                 (z-index: -1) sits behind this element's own children
-                 instead of behind its background */
-  background: #000;
-}
+/* Scoped to /work.
+ *
+ * What this file used to be: a whole dark section. It painted its own #000
+ * surface over the document, laid a fixed magenta diagonal-line texture and a
+ * corner glow behind everything, rounded every image to 12px and set its own
+ * type scale in fixed rems. All of it came from a reference template and
+ * predates the brand wireframe, so a visitor crossing from the landing page
+ * into a case study changed sites: white to black, square to rounded, fluid
+ * type to fixed.
+ *
+ * What it is now: the typography of the prose column, and the lightbox. The
+ * page's structure -- column, masthead, header, cover, rail, closer -- is
+ * Tailwind in the page component, per CLAUDE.md's split. There is no `.work-root`
+ * surface any more; the section inherits the white ground from <body> like every
+ * other page.
+ *
+ * The imagery rules the rest of the site keeps, and this file must not break
+ * them again: no borders on imagery at all, and no radius on it either except
+ * on a device screenshot. Which images count as one is not a judgement call --
+ * see "Case study imagery" in CLAUDE.md for the test. Both of these were the
+ * other way round when this was a dark template.
+ */
 
-/* Backdrop: a faint magenta diagonal-line texture plus a soft glow in the
-   corner, echoing the reference template without competing with content.
-   Fixed (not absolute) so it reads as a static backdrop rather than
-   scrolling away with the page. */
-.work-root::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse 60% 45% at 12% 8%,
-      rgba(255, 0, 170, 0.4),
-      transparent 62%
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 0, 170, 0.18) 0px,
-      rgba(255, 0, 170, 0.18) 2px,
-      transparent 2px,
-      transparent 22px
-    );
-}
+/* --- Prose ------------------------------------------------------------- */
 
-/* globals.css sets a blanket uppercase/letter-spaced style on <p> for the
-   homepage's "coming soon" subtitle — reset it here so /work's body copy
-   reads as normal sentence case. Classes below still set their own color
-   and font-size on top of this. */
-.work-root p {
-  text-transform: none;
-  letter-spacing: normal;
-}
-
-.work-shell {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 4rem 1.5rem 6rem;
-}
-
-/* The listing page's card grid wants a bit more room per card than a single
-   case study's images need. */
-.work-shell--wide {
-  max-width: 1160px;
-}
-
-.work-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 4rem;
-}
-
-.work-wordmark {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-  color: #fff;
-}
-
-.work-wordmark span {
-  color: #9a9a9a;
-  font-weight: 400;
-}
-
-.work-intro {
-  color: #b8b8b8;
-  font-size: 1rem;
-  line-height: 1.6;
-  max-width: 34rem;
-  margin-bottom: 4rem;
-}
-
-/* --- Case study list -------------------------------------------------- */
-
-.work-construction-note {
-  color: #ffcc66;
-  font-size: 0.9rem;
-  font-weight: 500;
-  line-height: 1.5;
-  background: rgba(255, 204, 102, 0.08);
-  border: 1px solid rgba(255, 204, 102, 0.4);
-  border-radius: 0.5rem;
-  padding: 0.85rem 1.1rem;
-  margin-bottom: 2.5rem;
-}
-
-.work-list {
-  list-style: none;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 3rem 2rem;
-}
-
-@media (min-width: 640px) {
-  .work-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.work-card {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-
-/* Shared "rounded, bordered" frame for every image box on /work — the
-   listing card cover, the case study hero, the "more case studies" preview
-   thumbnails, and inline body figures. */
-.work-card-cover,
-.work-case-cover,
-.work-more-cover,
-.work-case-body figure img {
-  border-radius: 0.75rem;
-  border: 1px solid #1f1f1f;
-}
-
-/* The card cover, case study hero, and preview thumbnail additionally crop
-   to a fixed aspect ratio (figures below just flow at their natural height). */
-.work-card-cover,
-.work-case-cover,
-.work-more-cover {
-  position: relative;
-  overflow: hidden;
-  background: #111;
-}
-
-.work-card-cover img,
-.work-case-cover img,
-.work-more-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.work-card-cover {
-  aspect-ratio: 16 / 10;
-  margin-bottom: 1.25rem;
-}
-
-/* Both link out via a .work-card wrapper (the main listing and the "more
-   case studies" preview grid), so they share the same hover zoom. */
-.work-card-cover img,
-.work-more-cover img {
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.work-card:hover .work-card-cover img,
-.work-card:hover .work-more-cover img {
-  transform: scale(1.02);
-}
-
-.work-card-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #444;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: radial-gradient(circle at 30% 20%, #1a1a1a, #050505);
-}
-
-.work-card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.work-card-summary {
-  color: #b8b8b8;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin-top: 0.4rem;
-}
-
-.work-card-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
-  color: #ccc;
-}
-
-.work-card:hover .work-card-link {
-  color: #fff;
-}
-
-.work-empty {
-  color: #9a9a9a;
-  font-size: 0.95rem;
-  border: 1px dashed #2a2a2a;
-  border-radius: 0.75rem;
-  padding: 2rem;
-}
-
-/* --- Case study page --------------------------------------------------- */
-
-.work-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: #b8b8b8;
-  text-decoration: none;
-  font-size: 0.9rem;
-  margin-bottom: 2.5rem;
-}
-
-.work-back:hover {
-  color: #fff;
-}
-
-/* Used inline within a sentence on the not-found page instead of standalone
-   above a title — plain inline flow instead of inline-flex, so it doesn't
-   pick up the standalone variant's block-ish vertical margin. */
-.work-not-found .work-back {
-  display: inline;
-  margin-bottom: 0;
-}
-
-.work-case-header {
-  margin-bottom: 2.5rem;
-}
-
-/* Shared look for small-caps labels — the case study eyebrow, each fact's
-   label, and the login eyebrow all use it, differing only in size/spacing. */
-.work-case-eyebrow,
-.work-case-fact dt,
-.work-login-eyebrow {
-  color: #9a9a9a;
-  text-transform: uppercase;
-}
-
-.work-case-eyebrow {
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.75rem;
-}
-
-.work-case-title {
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  margin-bottom: 1rem;
-}
-
-.work-case-summary {
-  color: #fff;
-  font-size: 1.05rem;
-  line-height: 1.6;
-  max-width: 40rem;
-}
-
-.work-case-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #1f1f1f;
-}
-
-.work-case-fact dt {
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.25rem;
-}
-
-.work-case-fact dd {
-  color: #fff;
-  font-size: 0.95rem;
-}
-
-.work-case-cover {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: #111;
-  border: 1px solid #1f1f1f;
-  margin: 2.5rem 0;
-}
-
-.work-case-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.work-case-body {
+/* The reading column of a case study. Scoped to a class rather than written as
+   bare element rules: globals.css deliberately stopped styling bare `p` and `h2`
+   (an unlayered element rule there outranks every Tailwind utility on every
+   page), and this file is imported by a layout, so the same trap applies. */
+.work-prose {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  color: #fff;
-  font-size: 1.05rem;
-  line-height: 1.7;
+  /* Long-form copy, so this is set for reading rather than to the landing
+     page's fluid tokens. text-lead would be 28px at desktop width -- fine for a
+     single definition line, punishing across a thousand words. */
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
 }
 
-/* globals.css's blanket `p { color: #888 }` (for the homepage subtitle)
-   targets these paragraphs directly, so it wins over the inherited color
-   from .work-case-body above no matter what that's set to — override it
-   here instead. Also caps text at a comfortable reading width — the column
-   itself is wider than that so images (figure, below) can be bigger. */
-.work-case-body p,
-.work-case-body ul {
-  color: #fff;
-  max-width: 40rem;
+/* A measure in `ch`, matching how the landing page caps its own text blocks
+   (26ch on the positioning line, 52ch on the definition, 60ch on a panel
+   summary). Images below are deliberately not capped: the column is wider than
+   the prose so a dense screenshot has room. */
+.work-prose p,
+.work-prose ul {
+  max-width: 68ch;
 }
 
-.work-case-body h2 {
-  color: #fff;
-  font-size: 1.4rem;
-  font-weight: 600;
-  margin-top: 1rem;
-}
-
-/* A kicker + headline pair (see the "section" block type) — the pairing
-   itself gets the breathing room a standalone heading would, and the h2
-   inside sits flush under its kicker instead of adding that again. */
-.work-case-section-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.work-case-section-header h2 {
-  margin-top: 0;
-}
-
-/* --- Columns body layout (opt-in via bodyLayout: "columns") ------------ */
-
-/* Each heading becomes a row: pinned as a label to the left, with the
-   paragraphs/images that followed it in the flat block list to the right.
-   Row-level margin-top replaces the plain layout's per-heading margin-top,
-   since the label's own h2 sits flush at the top of its row instead. */
-.work-case-body--columns .work-case-row {
-  display: grid;
-  grid-template-columns: 10rem 1fr;
-  gap: 0.75rem 2rem;
+.work-prose h2 {
+  font-size: var(--text-lead);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
   margin-top: 2.5rem;
 }
 
-.work-case-body--columns .work-case-row:first-child {
+/* A kicker + headline pair (the "section" block type). The pair takes the
+   breathing room a standalone heading would, and the h2 sits flush under its
+   kicker rather than adding that spacing again. */
+.work-prose-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 2.5rem;
+}
+
+.work-prose-section h2 {
   margin-top: 0;
 }
 
-.work-case-row-label {
-  grid-column: 1;
-  align-self: start;
+.work-prose-kicker {
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  color: var(--color-muted); /* the one secondary text colour, see globals.css */
 }
 
-.work-case-row-label h2,
-.work-case-row-label .work-case-section-header {
-  margin-top: 0;
+.work-prose ul {
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.work-case-row-text {
-  grid-column: 2;
+/* --- Figures ----------------------------------------------------------- */
+
+/* Square, hairline black, exactly like the landing page's work panels. The
+   guard keeps this off .work-prose-quote, which is also a <figure> and carries
+   its own much larger margins. */
+.work-prose figure:not(.work-prose-quote) {
+  margin: 1rem 0;
 }
 
-/* Images still get the full row width, not just the content column —
-   the whole point of widening the shell was bigger images. */
-.work-case-row-full {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 640px) {
-  .work-case-body--columns .work-case-row {
-    grid-template-columns: 1fr;
-  }
-
-  .work-case-row-label,
-  .work-case-row-text,
-  .work-case-row-full {
-    grid-column: 1;
-  }
-}
-
-.work-case-body figure {
-  margin: 0.5rem 0;
-}
-
-/* border-radius/border come from the shared frame rule above; this just
-   handles layout (figure img isn't a fixed-aspect crop like the covers). */
-.work-case-body figure img {
+.work-prose figure img {
   width: 100%;
   display: block;
 }
 
-/* The <button> wrapper ExpandableImage renders around each body image —
-   strip button chrome so it looks exactly like the plain <img> it replaces. */
+/* The black hairline that used to sit on every figure image is gone.
+ *
+ * It came from the dark template this page started as, where a 1px rule was the
+ * only thing separating a screenshot from the surface behind it. On white it is
+ * a frame drawn around images that already have their own edges -- and around
+ * product screenshots, a frame around a frame. Screens carry a radius and a
+ * shadow instead; see --radius-screen and --shadow-screen. */
+
+/* --- Product screenshots ------------------------------------------------
+ *
+ * The one exception to "no radius on imagery": a screenshot is a picture of a
+ * device, and a device has round corners. Square ones make it read as a crop of
+ * a screen rather than as a screen. The shadow is what lifts it off a white page
+ * now that nothing draws an edge around it.
+ *
+ * Nothing here caps the width. A `max-width: 24rem` lived on this class once,
+ * which is right for a 390-wide phone and wrong for everything else -- it
+ * squeezed a 1920x1080 dashboard into 384px. A phone screen gets its width from
+ * the split column it sits in, which is what that layout is for. */
+.work-prose-shot img {
+  border-radius: var(--radius-screen);
+  box-shadow: var(--shadow-screen);
+}
+
+/* Two or three screens under one caption, side by side. Below 640px they stack
+ * -- three phones abreast on a phone is three unreadable slivers. */
+.work-prose-screens {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+  justify-items: center;
+}
+
+@media (min-width: 640px) {
+  .work-prose-screens {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    gap: clamp(1rem, 2.5vw, 2rem);
+  }
+}
+
+/* --- Text beside the screens ---------------------------------------------
+ *
+ * The `split` block, and the reason it exists: a run of full-width phone
+ * screens separated by paragraphs gave the page a tall-thin, tall-thin rhythm
+ * with nothing to break it. A phone screen is 390 wide and the reading column is
+ * far wider, so a screen on its own leaves most of the line empty either side
+ * and then the text starts again underneath.
+ *
+ * Setting the text alongside gives the screens somewhere to sit and the page a
+ * horizontal beat. Sides alternate down the page so it does not become a
+ * column of its own.
+ *
+ * One column below 900px. Text beside a 390px screen on a phone is two things
+ * too narrow to read. */
+.work-prose-split {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+  margin: 3rem 0;
+}
+
+.work-prose-split p {
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  .work-prose-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  }
+
+  /* Two screens side by side need the room, so they take the wider half. */
+  .work-prose-split--pair {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
+  }
+
+  /* Flipping has to swap the track widths, not just the order.
+   *
+   * `order: 2` alone moves the text into the second track and leaves the figure
+   * in the first -- which is the *wide* one. So every flipped row came out
+   * inverted: the paragraph squeezed into 352px while a 390-wide phone screen
+   * was blown up to 848. It read as a different layout rather than as the same
+   * one mirrored, which is the opposite of what alternating sides is for.
+   *
+   * Measured, not eyeballed: the widths are what caught it. The compound
+   * selector below has to stay more specific than `--pair` above, or a flipped
+   * pair takes the unflipped tracks. */
+  .work-prose-split--flip {
+    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+  }
+
+  .work-prose-split--flip.work-prose-split--pair {
+    grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+  }
+
+  .work-prose-split--flip .work-prose-split-text {
+    order: 2;
+  }
+}
+
+/* The figure inside a split has already been given its margins by the grid. */
+.work-prose-split figure {
+  margin: 0;
+}
+
+/* A screen too tall to show whole scrolls inside a capped frame.
+ *
+ * The affordance is a fade at the bottom edge rather than a border, because
+ * imagery on this page does not get borders. It is a static mask -- it
+ * stays faded even at the end of the scroll -- which is a small lie in exchange
+ * for not needing a scroll listener to maintain.
+ *
+ * overscroll-behavior stops the page scrolling on once this reaches its end,
+ * which matters most on a trackpad where the gesture carries past it. */
+.work-prose-scroller {
+  border-radius: var(--radius-screen);
+  max-height: min(70svh, 34rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - 3rem),
+    transparent
+  );
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent);
+}
+
+/* The scrollbar is the other half of the affordance, so it stays visible rather
+   than being hidden the way the pill rail's is. */
+.work-prose-scroller::-webkit-scrollbar {
+  width: 6px;
+}
+
+.work-prose-scroller::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 0.25);
+  border-radius: 3px;
+}
+
+.work-prose figcaption {
+  margin-top: 0.625rem;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  color: var(--color-muted);
+}
+
+/* --- Quote -------------------------------------------------------------- */
+
+/* A client testimonial, set to interrupt the column rather than decorate it:
+   larger than the body and past the prose measure. The rule is black, not the
+   template's gold -- the site is being built in black and white first and the
+   brand palette gets applied across all of it at once.
+
+   Nothing renders this at the moment: named client contacts came off the site
+   and both quotes went with them. See the quote branch in CaseStudyBody.js. */
+.work-prose-quote {
+  margin: 3.5rem 0 1rem;
+  max-width: 46rem;
+  border-left: 2px solid #000;
+  padding-left: clamp(1.25rem, 4vw, 2rem);
+}
+
+.work-prose-quote blockquote {
+  margin: 0;
+  font-size: var(--text-lead);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* When there is a name, it matters more than the quote does, so it is not
+   whispered away. */
+.work-prose-quote figcaption {
+  margin-top: 0.85rem;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  color: var(--color-muted);
+}
+
+/* --- Expandable images + lightbox --------------------------------------- */
+
+/* The <button> ExpandableImage wraps each body image in -- strip the button
+   chrome so it looks exactly like the plain <img> it replaces. */
 .work-expandable-image {
   display: block;
   width: 100%;
@@ -422,6 +291,9 @@
   cursor: zoom-in;
 }
 
+/* The scrim stays near-black on a white site. It is the one place a dark
+   surface is still right: the point is to take the page away so a dense
+   screenshot can be read, and a white scrim on white imagery does not. */
 .work-lightbox {
   position: fixed;
   inset: 0;
@@ -430,7 +302,7 @@
   align-items: center;
   justify-content: center;
   padding: 3rem 1.5rem;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(4, 4, 6, 0.9);
   cursor: zoom-out;
 }
 
@@ -439,7 +311,6 @@
   max-height: 100%;
   width: auto;
   height: auto;
-  border-radius: 0.5rem;
   cursor: default;
 }
 
@@ -453,169 +324,101 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1px solid #333;
-  background: #111;
+  border: 1px solid #fff;
+  background: transparent;
   color: #fff;
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .work-lightbox-close:hover {
-  border-color: #555;
-}
-
-.work-case-body figcaption {
-  color: #9a9a9a;
-  font-size: 0.85rem;
-  margin-top: 0.6rem;
-}
-
-.work-case-body ul {
-  padding-left: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.work-not-found {
-  color: #b8b8b8;
-}
-
-/* --- More case studies (bottom of a case study page) ------------------- */
-
-.work-more {
-  margin-top: 4rem;
-  padding-top: 2.5rem;
-  border-top: 1px solid #1f1f1f;
-}
-
-.work-more-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.work-more-heading {
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.work-more-view-all {
-  color: #b8b8b8;
-  text-decoration: none;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-
-.work-more-view-all:hover {
-  color: #fff;
-}
-
-.work-more-grid {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.work-more-cover {
-  aspect-ratio: 16 / 10;
-}
-
-/* A permanent gray tint + white title sitting on top of the cover image,
-   rather than a caption below it — the title bolds on hover as the only
-   interactive cue (the image itself already zooms slightly via the shared
-   .work-card-cover/.work-more-cover hover rule above). */
-.work-more-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  padding: 0.85rem;
-  background: rgba(17, 17, 17, 0.5);
-  transition: background-color 0.2s ease;
-}
-
-.work-more-title {
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  transition: font-weight 0.2s ease;
-}
-
-.work-more-card:hover .work-more-overlay {
-  background: rgba(17, 17, 17, 0.65);
-}
-
-.work-more-card:hover .work-more-title {
-  font-weight: 800;
-}
-
-/* --- Login page --------------------------------------------------------- */
-
-.work-login {
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-}
-
-.work-login-card {
-  width: 100%;
-  max-width: 22rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.work-login-eyebrow {
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-}
-
-.work-login-card h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
-}
-
-.work-login-card input[type="password"],
-.work-login-card button {
-  border-radius: 0.5rem;
-  padding: 0.85rem 1rem;
-  font-size: 1rem;
-}
-
-.work-login-card input[type="password"] {
-  background: #111;
-  border: 1px solid #2a2a2a;
-  color: #fff;
-  outline: none;
-}
-
-.work-login-card input[type="password"]:focus {
-  border-color: #555;
-}
-
-.work-login-card button {
   background: #fff;
-  color: #000;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
+  color: #040406;
 }
 
-.work-login-card button:hover {
-  background: #e6e6e6;
-}
+/* --- Phone ---------------------------------------------------------------
+ *
+ * Audited at 390x844. Three things were wrong, and the first is the one that
+ * matters: a case study exists to show the work, and the work here is dense
+ * product screenshots. Inside the page's 20px gutters those render 350px wide
+ * on a phone, which is not enough to read a dispatch board or a well table --
+ * the images were present and useless.
+ *
+ * 639px rather than a Tailwind breakpoint name because this file is plain CSS;
+ * it is `sm` (640px) minus one, so it hands over exactly where `sm:` takes
+ * over in the component.
+ */
+@media (max-width: 639px) {
+  /* Full bleed. It only buys 40px, but it is 11% more image and edge-to-edge
+     imagery is the right idiom on a phone anyway -- the picture stops being a
+     card sitting in a column and becomes the page.
 
-.work-login-error {
-  color: #ff6b6b;
-  font-size: 0.85rem;
+     Negative margins of exactly one gutter, not `calc(50% - 50vw)` with a
+     `100vw` width. The vw version is the usual recipe and it is wrong wherever
+     scrollbars take up space -- Windows, or macOS set to show them always:
+     `100vw` includes the scrollbar and the container's `50%` does not, so the
+     element ends up about half a scrollbar wider than the viewport on each side
+     and the page grows a horizontal scrollbar. Overlay scrollbars hide it, which
+     is why it does not reproduce in headless Chrome or on a default Mac.
+
+     This works because below 640px the column's padding is exactly `px-5` and
+     its `max-w-[120rem]` is not binding, so the content box is the viewport
+     less the two gutters and pulling one gutter back off each side lands on the
+     viewport edge. If the gutter changes, this changes with it. */
+  .work-bleed,
+  .work-prose figure:not(.work-prose-quote) {
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    width: auto;
+    max-width: none;
+  }
+
+  /* A hairline sitting exactly on the edge of the screen reads as a rendering
+     artifact rather than a frame, so the sides come off and the top and bottom
+     rules stay to separate the image from the prose. */
+  .work-bleed,
+  .work-prose figure:not(.work-prose-quote) img {
+    border-left: 0;
+    border-right: 0;
+  }
+
+  /* The caption is text, so it goes back into the column the prose sits in --
+     one gutter, matching the page's `px-5`. */
+  .work-prose figcaption {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  /* Second problem: no step between the summary and the body. text-lead floors
+     at 18px on a phone and the prose was 17px, so the lead paragraph and the
+     thousand words under it were the same size. 16px is the mobile default
+     anyway, and the tighter leading fits more of a sentence per line in a
+     350px measure. */
+  .work-prose {
+    font-size: 1rem;
+    line-height: 1.6;
+    gap: 1.25rem;
+  }
+
+  /* Which leaves h2 at text-lead, only 2px above the body. Nudged up so a
+     section break is visible without scrolling to find it. */
+  .work-prose h2 {
+    font-size: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  /* Third: the lightbox was padded 3rem 1.5rem, so tapping an image to expand
+     it rendered the image *smaller* than the one on the page -- and now that
+     figures bleed, much smaller. The padding is for a mouse pointer that needs
+     somewhere to click to dismiss; on a phone the whole screen does that. */
+  .work-lightbox {
+    padding: 0.75rem;
+  }
+
+  .work-lightbox-close {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
 }

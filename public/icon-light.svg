@@ -1,0 +1,12 @@
+<!-- Favicon for light UI: the Kalos mark in Obsidian Black, on transparency.
+     Squared off the 69x62 export with symmetric padding (canvas 76, glyph
+     translated 3.5/7) so browsers that letterbox a non-square favicon cannot
+     squash it, and so this and icon-dark.svg land at the same optical size.
+     No double hyphen anywhere in these comments: XML forbids it inside a
+     comment, and the file silently stops parsing. -->
+<svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(3.5 7)">
+<path d="M28.7111 0.748995L0.743904 28.7162C-0.247967 29.7081 -0.247968 31.3162 0.743903 32.3081L28.7111 60.2753C30.3111 61.8753 33.0469 60.7421 33.0469 58.4794L33.0469 2.54493C33.0469 0.282176 30.3111 -0.851018 28.7111 0.748995Z" fill="#040406"/>
+<path d="M51.8489 16.3266C52.8408 15.3348 54.4489 15.3348 55.4408 16.3266L67.8385 28.7244C68.8304 29.7163 68.8304 31.3244 67.8385 32.3163L55.4408 44.714C54.4489 45.7059 52.8408 45.7059 51.8489 44.714L39.4511 32.3163C38.4593 31.3244 38.4593 29.7163 39.4511 28.7244L51.8489 16.3266Z" fill="#040406"/>
+</g>
+</svg>

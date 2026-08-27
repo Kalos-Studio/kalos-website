@@ -1,77 +1,283 @@
 # Kalos website
 
-Next.js 15 (App Router) marketing site. Three areas: a spotlight hero at `/`, a
-WebGL hero at `/lab`, and a password-gated case study section under `/work`.
+Next.js 15 (App Router) portfolio site. Two areas:
 
-Stack: React 19, plain CSS + Tailwind v4, `@react-three/fiber` + `drei` for the
-3D, Inter via `next/font/google`, deployed on Netlify. Package manager is `bun`.
+- **`/`** — the landing page, in `app/(landing)/`. It *is* the portfolio: a hero
+  that hands over to a masthead as you scroll, then the case studies as a run of
+  full-width panels with a pill rail indexing them.
+- **`/work/<slug>`** — the case studies themselves. There is no `/work` index;
+  that URL permanently redirects to `/#work` (see `next.config.mjs`), because a
+  second list of the same projects would only drift from the first.
+
+Stack: React 19, Tailwind v4, Space Grotesk via `next/font/google`, deployed on
+Netlify. Package manager is `bun`.
 
 ## Commands
 
 ```bash
 bun install
-bun run dev        # next dev
-bun run build      # production build — run before claiming a change works
-bun run lint       # eslint . — must be clean before committing
+bun run dev            # next dev
+bun run build          # production build — run before claiming a change works
+bun run lint           # eslint . — must be clean before committing
 bun run lint:fix
+bun run check:landing  # geometry checks against a running dev server
 ```
-
-There is no test suite. See **Verifying changes** below for what to do instead.
 
 ## Styling
 
-Two systems live here on purpose, and the split matters.
+**Tailwind owns the landing page.** `app/(landing)/` has no stylesheet at all —
+layout, type and colour are utilities, and the shared values are tokens.
 
-**Plain CSS owns art direction.** `app/globals.css`, `app/lab/lab.css` and
-`app/work/work.css` hold values that were arrived at by looking at the result —
-vignette falloff percentages, tilt ranges, gold lighting, entrance timings.
-Those files carry comments explaining what was tried and rejected. Do not
-convert them to utility classes: the comments and the named values are the
-point, and a wall of `[0.42]` arbitrary values would destroy both.
+**Plain CSS owns the case studies' prose.** `app/work/work.css` styles the
+reading column, its figures and the lightbox. That is long-form typography with
+reasons behind the numbers, and it carries comments explaining them.
 
-**Tailwind owns new, ordinary layout.** Structural work — a new section, a grid,
-a responsive stack — should use utilities rather than growing another bespoke
-stylesheet.
+### Tokens live in `@theme`
 
-### How the two coexist
+Tailwind v4 has **no `tailwind.config.js`** — configuration is CSS. Everything
+shared is declared in `@theme` in `app/globals.css` and becomes a utility:
 
-`app/globals.css` starts with `@import "tailwindcss"`. Everything after that
-import is **unlayered**, and unlayered CSS beats any `@layer` regardless of
-source order. Tailwind's preflight lives in `@layer base`, so the site's own
-element styling wins automatically — no `!important`, no ordering games.
+- `--font-sans` is Space Grotesk, so preflight applies it everywhere and nothing
+  needs a `font-sans` class.
+- `--text-display`, `--text-lead`, `--text-control` are fluid clamps. They exist
+  because the brand wireframe is drawn at 1920 wide, where the body copy is 32px
+  — a size that is absurd on a laptop and unreadable when scaled down naively.
+  Tailwind's own scale (`text-sm`, `text-base`, …) is still there and still
+  preferred for ordinary work.
+- The five brand colours are named for the role they play: `vulcan-gold`,
+  `eerie-gray`, `dark-silver`, `snow-white`, `obsidian-black`. Most are declared
+  and unused — the site is being built in black and white first and moves onto
+  the palette in one pass. That is deliberate, not dead code to prune.
+- `--color-muted` is the one secondary text colour and `--color-surface` the one
+  grey plate. They do not resolve against `dark-silver`, and that is measured:
+  it is 2.38:1 on white, below what even large text needs, against 8.61:1 on
+  obsidian. It is a dark-ground colour and this site is light.
+- `--ease-brand` is the one easing curve, with `--duration-quick`, `-settle` and
+  `-morph` beside it. Each duration is a kind of event, not a point on a scale.
+- `--radius-control` is a full round, shared by buttons and pills because they
+  are the same kind of object. It was `--radius-button`; a token that sounds like
+  it covers one thing is how a third radius gets invented.
+- `--radius-screen` and `--shadow-screen` are for device screens only, and they
+  are the **one exception** to the rule that imagery has no radius and no shadow.
+  See *Case study imagery* for which images qualify — guessing gets it wrong.
 
-Consequences to keep in mind:
+### The trap this file used to document
 
-- Utilities (`@layer utilities`) still apply normally, because they target
-  classes rather than elements.
-- Where an element rule in `globals.css` and a utility set the same property on
-  the same element, **the element rule wins**. Add a plain class rather than
-  fighting it. The live example: `globals.css` styles bare `p`, so
-  `<p className="text-sm">` renders at the `globals.css` size, not `text-sm`.
-  Verified, not theoretical. Wrap it or use a `span`/class instead.
-- **Never reintroduce a bare `* { margin: 0; padding: 0 }`.** Preflight already
-  does it. An unlayered copy outranks `@layer utilities`, which silently
-  resolves every `p-*` and `m-*` in the project to 0 — no error, no warning,
-  the classes are simply inert.
-- `html, body` pins `line-height: normal`. Preflight sets the root to `1.5`,
-  which silently moved existing pages (the work login card grew 17px, the home
-  hero shifted 3px). New components should set their own leading explicitly
-  instead of relying on either default.
-- Preflight makes form controls inherit the page font. That is wanted — the
-  login input and button rendered in Arial before and now match the site.
+`app/globals.css` now contains only `@theme`, a `prefers-reduced-motion` rule,
+and a view-transition prototype. **Keep it that way.** Everything after
+`@import "tailwindcss"` is *unlayered*, and unlayered CSS beats any `@layer`
+regardless of source order — so an element rule here silently outranks every
+Tailwind utility touching that property, on every page.
+
+That was not hypothetical. `globals.css` used to style bare `h1` and `p` for a
+hero that no longer exists, and `/work` carried a `.work-root p` reset whose only
+job was to undo it.
+
+Two specific rules that must never come back:
+
+- **`* { margin: 0; padding: 0 }`.** Preflight already does exactly that from
+  inside `@layer base`. An unlayered copy changes nothing visually and silently
+  resolves every `p-*` and `m-*` in the project to 0 — no error, no warning.
+- **Element styling on `h1`, `p`, `html`, `body`.** The base ground is set with
+  utilities on `<body>` in `app/layout.js`. `/work` paints its own surface from
+  `work.css`.
 
 ### Tailwind conventions
 
-- Tailwind v4 has **no `tailwind.config.js`**. Configure from CSS: `@theme` for
-  design tokens, `@utility` for custom utilities, in `app/globals.css`.
-- Put shared tokens in `@theme` rather than repeating hex values across files.
-- Avoid arbitrary values (`w-[347px]`) for anything that reads as a design
-  decision. If a number needs a reason, it needs a comment, which means it wants
-  to be real CSS.
-- Order utilities structure → box → type → colour → state. Keep class lists
-  short enough to read; past roughly a dozen, extract a component or a class.
-- Don't `@apply` in a stylesheet to recreate a component. Either use utilities
-  in the markup or write plain CSS.
+- Put shared values in `@theme` rather than repeating them across files.
+- Arbitrary values (`w-[347px]`) are fine when the number is a ratio from the
+  wireframe — but say which ratio in a comment. `aspect-[1195/681]` is the case
+  study frame; `lg:pt-[35svh]` is sized to give the hero's handover room.
+- Order utilities structure → box → type → colour → state. Past roughly a dozen,
+  extract a component.
+- Don't `@apply` in a stylesheet to recreate a component.
+
+## The landing page
+
+Read the comments in `app/(landing)/hero.js` before changing it. The scroll
+choreography is three beats — the block rises with the page, catches at the top
+and is *held* there while everything fades, and the symbol alone flies into the
+masthead — and most of the non-obvious lines record a specific failure.
+
+The rule that matters: **the geometry is derived, not tuned.** The hold ends when
+the first case study panel's top would reach the held block's bottom, less a
+clearance. Picking that length by eye produced a version that measured 11px of
+clearance mid-scroll — fine until the definition wrapped to another line. If you
+change the hero's height or the panel offset, run `bun run check:landing` rather
+than trusting your eye.
+
+**The wheel is the browser's.** "One gesture, one view" is CSS: `scroll-snap-type:
+y mandatory` on `<html>` in `app/layout.js`, with `snap-always snap-center` on
+every case study, `snap-always snap-start` on the closer, and `snap-always
+snap-start` on the hero's `<header>` — that last one is load-bearing, because
+without a snap point at the top of the document the page can never come back to
+rest on the hero.
+
+It was `snap-proximity` plus a JavaScript wheel handler, and that handler was
+wrong four separate ways before the reason became clear: **Chrome does not tell a
+script which wheel events are fingers and which are the momentum the OS
+synthesises after they lift**, and the two cannot be told apart by size, timing or
+shape. Each attempt fixed the case it was written for and broke another — a
+per-event threshold killed slow drags, a lock ceiling paged twice, reading the
+tail's shape paged three times (macOS momentum *starts above* the peak of the
+gesture that threw it), and treating a stream as a gesture went deaf mid-swipe.
+All four are written up in `app/(landing)/paged-scroll.js`. **Read that list
+before adding a `wheel` listener to this page.** The compositor has the phase
+information; a script does not.
+
+Measured under real phased gestures: a gentle, normal or firm flick moves exactly
+one view in both directions, a five-pixel flick moves exactly one view (there is
+no dead zone at the bottom of the range, which every hand-rolled version had), a
+drag whose fingers stop before they lift moves nothing, and any gesture from the
+last panel crosses the 1026px gap onto the closer. A deliberately *hard* throw
+travels two views, and about four at 12000px/s: `scroll-snap-stop: always` is
+declared on every panel and Chrome does not honour it for compositor flings.
+That is left alone — correcting the landing afterwards is a visible snap back,
+and a hard throw going further is what every native surface does.
+
+What `paged-scroll.js` still does is the keyboard, which snapping genuinely
+cannot: an arrow key scrolls about 40px, too little to change which snap point is
+nearest, so the page is put straight back and the press does nothing. `Home`,
+`End`, space, every modified key and typing are handed to the browser.
+
+`app/lockup.js` holds the Kalos mark and wordmark as vector paths, in three
+exports: the full `Lockup`, and `Mark` / `Wordmark` separately so the hero can
+fly one and fade the other. **Never re-export the logo from Figma** — these paths
+are the only copy in the repo.
+
+## The case study page
+
+`app/work/[slug]/page.js` is built from the landing page's vocabulary on
+purpose, and names what it borrows in a comment at the top: the same content
+column, the same `text-display`/`lead`/`control` tokens, the same 1195/681 panel
+frame, the same closer. It used to be a reference template with its own black
+surface and type scale, and a visitor crossing from `/` changed sites. Keep the
+two in step or that comes back.
+
+That file also records **four attempts at putting navigation on a case study
+that were built and cut** — an eyebrow, a masthead call to action, a pill rail,
+and previous/next. Read the list before adding a fifth. What survived is one
+"Back to Work" and the hero. Both return to *this* study's panel on the landing
+page rather than to the top of the work section: the hero flies its cover back
+there, and the link is a `#case-<slug>` anchor that `HashTarget` centres, since
+an anchor on its own top-aligns. They used to disagree, and the text link was
+the one that was wrong.
+
+**One image per case study.** `landingCover` is spread over `cover` and the hero
+renders the result, so the panel and the hero are always the same picture at the
+same crop. That is a design decision *and* the precondition for the morph below
+— overriding one without the other puts the animation back to a swap with a
+slide on it.
+
+### The cover morph
+
+`app/view-transition-link.js`. Clicking a panel flies its cover into the case
+study hero and clicking the hero flies it back. Hand-rolled rather than React's
+`<ViewTransition>`, which needs the experimental React channel.
+
+Three things there are load-bearing, all of them things that were got wrong
+first:
+
+- **Never wait on a frame inside the update callback.** Rendering is suppressed
+  while it is pending, so `requestAnimationFrame` never fires and the transition
+  deadlocks until Chrome kills it with *"Transition was aborted because of
+  timeout in DOM update"*. Timers and promises are fine.
+- **Both ends of a pair carry `data-vt-target`,** because either can be the
+  destination. The waiter has to exclude the element being navigated away from,
+  or the first `querySelector` matches it and resolves before React has rendered.
+- **The page-level cross-fade is off** (`::view-transition-old/new(root)` in
+  `globals.css`). The old root snapshot is the whole outgoing page, so leaving
+  the landing it still held the panels above and below the clicked one and
+  ghosted them over the case study. Shortening the fade only makes the ghost
+  briefer; it has to be zero.
+
+### Case study imagery
+
+**Two kinds of image, and the difference decides the treatment.** Test it, do not
+eyeball it — open the file and look at the corner pixels:
+
+- **Product screenshots** are opaque rectangles with a hard edge. They get
+  `screenshot: true` in `data.js`, which gives them `--radius-screen`,
+  `--shadow-screen` and no border. A screen with square corners sitting flat on
+  white reads as a crop of a screen rather than a screen.
+- **Floating artwork** — marketing renders with transparent corners, elements
+  hanging off the frame, often its own shadow baked in — gets **no flag at all**.
+  Rounding it draws a rounded rectangle around something that is not rectangular,
+  and adds a second shadow under the one it already has. Vital and Shell's body
+  images are this; EchoCare's and H-E-B's are screenshots.
+
+```python
+# The check, run against the file itself
+Image.open(path).convert("RGBA").getchannel("A").getextrema()   # (0, 255) -> floating
+```
+
+**No black borders on imagery anywhere.** The `1px solid #000` hairline came from
+the dark template this section began as, where a rule was the only thing
+separating an image from the surface. On white it framed things that already had
+edges. Controls keep their borders; images do not.
+
+**A case study image has two render paths and they do not share code.** The hero
+goes through `CoverImage` in `app/work/[slug]/page.js`; body images go through
+`imageFigure` in `CaseStudyBody.js` and the `.work-prose-shot` rules. Changing
+one changes nothing about the other — a fix verified on the body while the hero
+stayed square shipped exactly that way once.
+
+**A composited image bakes its own treatment in.** Rounding a flat composite of
+three phones rounds the outer edge of the picture, not the phones. If screens
+have to share one file, mask and shadow each one at composite time — or better,
+use `srcs: [...]` and let the markup put them side by side, which keeps each at
+its own resolution and needs no plate behind it.
+
+**Block types beyond `image`:** `srcs` puts two or three screens under one
+caption; `split` sets a paragraph beside its screens, alternating sides with
+`flip`; `scroll` caps a very tall screen and scrolls it. A run of full-width
+phone screens separated by paragraphs gives the page a tall-thin rhythm with
+nothing to break it, which is what `split` exists to fix. Do not apply `scroll`
+to an ordinary phone screen — it is for the outliers, the ones near 0.37 and
+below.
+
+**Exports from Figma never upscale.** `get_screenshot`'s `maxDimension` only
+caps, so a 390-wide phone frame comes back at 390 and looks soft on any retina
+display. Use `download_assets` with `defaultScale: 3`.
+
+### Editing `app/work/data.js`
+
+It is a large hand-written object literal, and two things have gone wrong in it:
+
+- **Measure indentation off the line, never from terminal output.** Anything
+  piped through `sed 's/^/  /'` has been shifted, and anchors built from that
+  silently fail to match. Several edits failed this way, and one script that
+  parsed blocks by assumed indent found none and wrote an **empty `body: []`**,
+  deleting a whole case study's content.
+- **Never rebuild the array from parsed blocks.** Insert and replace lines in
+  place, and verify by loading the module afterwards:
+
+```bash
+node --input-type=module -e "import {caseStudies} from './app/work/data.js'; ..."
+```
+
+Compare that count against the file's own (`grep -c`). They must agree —
+**duplicate keys in an object literal collapse silently**, so a re-applied edit
+looks correct while being wrong.
+
+### Images and icons
+
+`app/work/work.css` is the prose column's typography and the lightbox, nothing
+else — everything structural is Tailwind in the component. Its phone block
+bleeds figures to the viewport edge below 640px, because a dense product
+screenshot inside the gutters renders 350px wide and is unreadable.
+
+Favicons are declared in `metadata.icons` in `app/layout.js`, not as
+`app/icon.*` files: the file convention emits one unconditional `<link>` with no
+way to hang a media query off it, which is exactly what a light/dark pair needs.
+Declaring `icons` at all **switches off the `app/apple-icon.*` convention**, so
+that one is listed explicitly too.
+
+`app/opengraph-image.alt.txt` must have **no trailing newline**. With one, Next
+drops the `og:image:alt` tag altogether rather than emitting the string with
+whitespace — no error, no warning, just a share card with no description. The
+card itself is regenerated from its SVG source with
+`python3 scripts/render-og-image.py`.
 
 ## Linting
 
@@ -79,73 +285,62 @@ Consequences to keep in mind:
 `eslint-config-next` on the same major as `next` — mismatched majors resolve but
 misbehave.
 
-`react-hooks/exhaustive-deps` is promoted to **error**. The `/lab` code drives an
-imperative render loop through `useFrame`, where a stale closure shows up as a
-subtly wrong animation rather than a crash — close to impossible to catch by eye.
-Fix the dependency rather than silencing the rule; if a value genuinely must not
-retrigger an effect, hold it in a ref and say why in a comment.
-
-## /lab, the WebGL hero
-
-Read the comments in these files before changing them — most non-obvious lines
-record a specific failure.
-
-- `app/lab/device.js` — capability probes and gyroscope input. **Must never
-  import three, drei or fiber.** The page shell imports it, so a three import
-  here pulls the whole renderer into the page's own chunk and defeats the
-  dynamic import. That cost ~350KB of First Load JS once already.
-- `app/lab/stage.js` — shared material, lighting rig, pointer helper. The gold
-  environment is hand-built from `Lightformer` planes rather than an HDRI: no
-  CDN fetch on first paint, and the highlights are aimed deliberately.
-- `app/lab/variants/solid.js` — the `Canvas` and the mark.
-
-### Load sequencing
-
-The renderer is ~250–300KB gzipped behind `dynamic(ssr: false)`, so on a phone
-it lands seconds after the page shell. Rules that follow from that:
-
-- **Never put an entrance on a fixed delay that assumes the 3D is present.** It
-  will fire over an empty background. Gate on the stage being ready instead —
-  `Solid` takes an `onReady` callback that fires on its first painted frame.
-- Anything gated on the renderer needs a timeout fallback, because a lost
-  context or a failed chunk must not strand it forever. See
-  `STAGE_READY_TIMEOUT_MS` in `app/lab/page.js`.
-- The mark's entrance swing (damping out of an off-target start rotation) is the
-  page's only cue that it responds to movement. It is held until the canvas is
-  revealed and must stay that way — frame counting alone isn't enough, since
-  shader compilation and the cubemap bake make the first frames very long.
-
-### Layout
-
-`/lab` is a fixed single viewport — no scroll, no zoom, no selection callout.
-Conditional content (the gyroscope prompt) must be **out of the flow** of
-anything that anchors other elements, or showing and hiding it moves the page.
-The prompt is anchored to the viewport bottom with a safe-area inset for exactly
-this reason. Any new conditional element gets the same treatment.
+`react-hooks/exhaustive-deps` is promoted to **error**. Fix the dependency rather
+than silencing the rule; if a value genuinely must not retrigger an effect, hold
+it in a ref and say why in a comment.
 
 ## Verifying changes
 
-There is no test suite, and the interesting behaviour here is visual. Drive a
-real browser instead of assuming:
+There is no unit test suite and there should not be one — almost nothing here is
+a pure function. What can break is geometric, and geometry can be measured:
 
-```js
-// Chromium is preinstalled; do NOT run `playwright install`.
-chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" })
+```bash
+bun run dev            # one shell
+bun run check:landing  # another -- where things sit
+bun run check:scroll   #         -- what happens when the page is driven
 ```
 
-- Prefer **computed styles and bounding boxes** over screenshot diffing. The home
-  page has animated grain and `/lab` renders live, so no two frames ever match
-  byte-for-byte — a size comparison proves nothing.
-- For before/after work, build each side cleanly. Starting a server and then
-  rebuilding underneath it serves a `.next` whose hashed CSS no longer exists,
-  and the page comes back **unstyled** — which looks like a catastrophic
-  regression and is purely an artifact.
-- Throttle when judging load behaviour: CDP `Network.emulateNetworkConditions`
-  plus `Emulation.setCPUThrottlingRate`.
-- **Headless here has no GPU** — WebGL runs through SwiftShader, a CPU
-  rasterizer. First-frame and shader-compile timings are wildly inflated and say
-  nothing about a real phone. Load *ordering* is trustworthy; timings are not.
-  Say which is which when reporting.
+`check-landing.mjs` measures geometry. `check-scroll.mjs` measures behaviour, and exists because every scroll bug in
+this project was reported as a feeling ("impossible to scroll", "it kinda freaks
+out", "super weird", "it gets stuck") and every one had a specific cause a
+browser could measure.
+
+**It drives the page through CDP's `Input.synthesizeScrollGesture`, not
+`page.mouse.wheel`, and that is not a preference.** Paging happens in the
+compositor off the gesture phase. A synthetic wheel event has no phase, so Chrome
+treats each one as a whole scroll and snaps it straight back — a burst of forty
+of them moves the page *zero pixels*, which reads as a catastrophic regression
+and is purely an artifact of the input. CDP synthesizes a real phased fling with
+momentum, so the checks exercise the path a hand does. This file's predecessor
+already warned that a synthetic wheel event is not a trackpad; it is not even a
+gesture.
+
+It asserts that a gentle, normal and firm flick each move exactly one view in
+both directions, that four in a row move four, that a five-pixel flick moves one
+and a drag released without a flick moves none, that every gesture lands on a
+stop and crosses the gap to the closer, that the hero and the foot of the
+document stay reachable, that arrow and page keys land centred, that typing and
+modified keys are handed back, and that "Back to Work" lands on its own panel.
+
+`scripts/check-landing.mjs` drives real Chrome across five viewports and asserts
+the two things that have actually gone wrong: that landing on a case study leaves
+the hero fully faded and the panel centred, and that scrolling *through* the
+handover never brings the definition block over an image. Both guard bugs that
+shipped. It uses the installed Google Chrome via `channel: "chrome"`, so there is
+no browser to download.
+
+Beyond that:
+
+- Prefer **computed styles and bounding boxes** over screenshot diffing.
+- **Never trust a `PASS` that measured nothing.** An early version of the check
+  reported four green viewports while finding zero pills, because it waited on
+  `networkidle` rather than on the elements it was about to measure. It now
+  fails when it has nothing to assert.
+- **Do not run `bun run build` while a dev server is up.** The build rewrites
+  `.next` underneath it and the server starts throwing `Cannot find module for
+  page: /_document` — which looks like a catastrophic regression and is purely
+  an artifact. Kill the server, `rm -rf .next`, then build. This bites hardest
+  when two sessions share the working tree.
 
 ## Code style
 
@@ -153,12 +348,22 @@ chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/c
 - Comments explain **why**, and record what was tried and rejected. This is the
   strongest convention in the codebase and the reason changes here are fast to
   make safely. A comment that restates the code is worse than none.
-- Entrances are CSS rather than JS where possible, so a slow hydration still
-  resolves to a readable page.
+- Keep comments true. Several in here outlived the code they described — a stale
+  comment in a codebase that leans this hard on them is worse than a missing one.
 - Respect `prefers-reduced-motion` in anything that animates.
+- Scroll-driven work writes to the DOM in a `requestAnimationFrame`, not through
+  React state. See `hero.js` and `work-rail.js`.
+- No em dashes in shipping copy. Nothing enforces it; it is a brand preference.
 
 ## Git
 
-Work on a feature branch and confirm before pushing anywhere else. Commit
-messages: short imperative subject, then prose explaining the reasoning — match
-the existing log, which is unusually descriptive and worth keeping that way.
+Work on a feature branch. Commit messages: short imperative subject, then prose
+explaining the reasoning — match the existing log, which is unusually descriptive
+and worth keeping that way.
+
+**Every local commit gets pushed to its own branch on GitHub, in the same
+breath.** Not at the end of the session, not when asked: commit then
+`git push origin <branch>`. Parallel sessions share this working tree and the
+remote is the only place they can see each other's work, so an unpushed commit is
+invisible to everything but this checkout. Pushing anywhere *other* than the
+current feature branch — `main` especially — still needs confirming first.
