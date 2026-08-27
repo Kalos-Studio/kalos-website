@@ -73,10 +73,12 @@ function renderBlock(block, key) {
     case "paragraph":
       return <p key={key}>{block.text}</p>;
     case "quote":
-      // A client saying it is worth more than us saying it, so this is set to
-      // interrupt rather than to decorate: larger than the body, off the prose
-      // measure, and attributed to a named person with their title. An
-      // unattributed pull quote is just our own copy in bigger type.
+      // Unused, and kept rather than deleted only because the shape is right if
+      // an attributable quote ever exists again. The two that shipped -- a CTO
+      // and a global product manager -- were removed: named client contacts do
+      // not appear on this site. Dropping just the attribution is not the
+      // fallback, since an unattributed pull quote is our own copy in bigger
+      // type. See the block comment in data.js.
       return (
         <figure className="work-prose-quote" key={key}>
           <blockquote>{block.text}</blockquote>

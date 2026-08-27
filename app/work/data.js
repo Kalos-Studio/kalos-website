@@ -83,9 +83,13 @@
 //     { type: "image", src: "/work/kebab-case-id/detail-1.jpg", alt: "...", caption: "..." },
 //     { type: "list", items: ["...", "..."] },
 //     { type: "quote", text: "...", attribution: "Name, Title, Company" },
-//                               // a client testimonial. Always attribute it to
-//                               // a named person: an unattributed pull quote is
-//                               // our own copy set in bigger type.
+//                               // a client testimonial. NO ENTRY USES THIS.
+//                               // Vital Energy and Shell TapUp both carried one
+//                               // and both were pulled: we do not put a named
+//                               // client contact's words on this site. The type
+//                               // still renders, but an unattributed pull quote
+//                               // is our own copy set in bigger type, so there
+//                               // is no version of this block to reach for.
 //   ],
 // }
 
@@ -398,11 +402,6 @@ const allWork = [
         type: "paragraph",
         text: "The platform is in the field now, and the change it makes is not dramatic to look at. Data is where the decision is being made instead of back at the office. The day's stops are in the order that pays. The operators are the ones who noticed first.",
       },
-      {
-        type: "quote",
-        text: "We are very excited and very proud of our dynamic routing application, which the team helped us develop and build.",
-        attribution: "Brandon Brown, CTO, Vital Energy",
-      },
     ],
   },
   {
@@ -551,11 +550,6 @@ const allWork = [
       {
         type: "paragraph",
         text: "What shipped is a pair of native iOS and Android apps, running globally, where a driver manages orders, operates the pump remotely and submits the invoice without leaving the screen. The separate tools and the paperwork between them are gone. For Shell's customers the visible change is smaller and more useful: the fuel arrives, the numbers are right, and nobody has to sort it out afterwards.",
-      },
-      {
-        type: "quote",
-        text: "Very strong at managing product delivery, great at adapting to curve balls, and re-prioritizing.",
-        attribution: "Humza Saleem, Global Product Manager, Shell TapUp",
       },
     ],
   },

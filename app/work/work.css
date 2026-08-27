@@ -248,7 +248,10 @@
 /* A client testimonial, set to interrupt the column rather than decorate it:
    larger than the body and past the prose measure. The rule is black, not the
    template's gold -- the site is being built in black and white first and the
-   brand palette gets applied across all of it at once. */
+   brand palette gets applied across all of it at once.
+
+   Nothing renders this at the moment: named client contacts came off the site
+   and both quotes went with them. See the quote branch in CaseStudyBody.js. */
 .work-prose-quote {
   margin: 3.5rem 0 1rem;
   max-width: 46rem;
@@ -265,7 +268,8 @@
   text-wrap: balance;
 }
 
-/* The name matters more than the quote does, so it is not whispered away. */
+/* When there is a name, it matters more than the quote does, so it is not
+   whispered away. */
 .work-prose-quote figcaption {
   margin-top: 0.85rem;
   font-size: 0.9375rem;
