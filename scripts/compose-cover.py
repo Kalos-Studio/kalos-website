@@ -15,9 +15,16 @@ shadowing it puts one shadow under all three.
 The numbers below were measured off the cover this replaced, so a regenerated
 cover looks like the hand-made ones beside it:
 
-  radius   0.185 x the phone's width
   shadow   soft, no offset -- 247/255 immediately outside the edge, white again
            by ~30px out at this scale
+
+The radius is NOT measured off that file. The cover it replaced rounded each
+phone by 0.185 of its width, which is a proportion rather than a length, and a
+proportion is the wrong kind of number here: the same one that looks right on a
+649px phone reads as a lozenge on a 578px one. `--radius-screen` in globals.css
+is the site's one screen radius and it is a length -- 1.5rem, the same 24px every
+product screenshot in the prose gets. The cover is drawn at 2x its 1195px frame,
+so that is 48px here.
 
 The reason it was rebuilt at all: the original composite laid its phones out
 1405px tall on a 1362px canvas, so 226px of every phone was cut off. That took
@@ -37,7 +44,12 @@ WIDTH, HEIGHT = 2390, 1362
 # than a composite that lets them run off the bottom and is the entire point.
 MARGIN = 56
 
-RADIUS_RATIO = 0.185
+# --radius-screen (1.5rem) at this file's scale. A length, not a ratio: these
+# phones must round like every other screenshot on the site, not in proportion
+# to how big they happen to be drawn.
+RADIUS_SCREEN_PX = 24
+COVER_SCALE = 2  # 2390px drawn for a 1195px frame
+
 GAP_RATIO = 0.052  # gap between phones, as a fraction of a phone's width
 
 # Matched to the measurement above: a blurred rounded rectangle at this alpha
@@ -67,7 +79,7 @@ def main():
     # Every screen is assumed to share the first one's aspect, which is true of
     # a set of exports from one device and obvious in the output if it is not.
     phone_w = round(phone_h * screens[0].width / screens[0].height)
-    radius = round(phone_w * RADIUS_RATIO)
+    radius = RADIUS_SCREEN_PX * COVER_SCALE
     gap = round(phone_w * GAP_RATIO)
 
     total = len(screens) * phone_w + (len(screens) - 1) * gap

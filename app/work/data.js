@@ -538,13 +538,10 @@ const allWork = [
         text: "We started with the drivers, because they were the ones absorbing the problem. Through interviews, working sessions and on-site visits we built up a picture of how fuel actually moves through Shell's delivery ecosystem, which turned out to be a good deal messier than any process document described. The errors were not carelessness. They were what happens when a job has more steps than a person can hold while standing next to a running pump.",
       },
       {
-        type: "image",
+        type: "split",
         src: "/work/shell-tapup/orders.webp",
         alt: "The Shell TapUp orders screen, showing two tank gauges, begin and stop fueling controls, and the next order on the route",
         caption: "Tank levels, the pump control and the next stop, on one screen.",
-      },
-      {
-        type: "paragraph",
         text: "So the app was built around that rather than around the org chart. Fewer steps to complete a job. Status legible at a glance instead of recalled from memory. Wetstock tracked in real time, vehicles found and fueled through a guided flow, invoicing wired straight into billing and reconciliation, and safety reporting for incidents, spills and inspections put where a driver would actually reach for it. Even truck-to-truck transfers, the kind of edge case that usually lives in somebody's notebook, got a place in the product.",
       },
       {
