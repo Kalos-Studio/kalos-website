@@ -573,9 +573,10 @@ export default function DesignSystemPage() {
 
         <p className="mt-10 max-w-[70ch] text-sm tracking-tight text-muted">
           Not listed, because they are decisions rather than defects: the
-          placeholder ConEdison entry ({workRail.length} pills against{" "}
-          {caseStudies.length} case studies), the black-and-white build, and the
-          absence of a unit test suite.
+          black-and-white build, and the absence of a unit test suite. The
+          placeholder slot used to be listed here too, back when ConEdison held
+          it. It is written up now, so the rail and the case studies agree at{" "}
+          {workRail.length} again.
         </p>
       </Section>
     </div>

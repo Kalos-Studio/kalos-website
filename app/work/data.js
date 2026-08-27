@@ -333,22 +333,84 @@ const allWork = [
     ],
   },
   {
-    // Not written up yet. It renders on the landing page as an empty framed
-    // slot in the run of case studies, and as a muted pill in the rail, so the
-    // work reads as eight projects with one still to come rather than seven and
-    // a gap. `placeholder` is what keeps it out of everything else: it never
-    // gets a route, never appears in "more case studies", and has no /work page.
-    //
-    // To publish it: write the `body`, add a cover and a logo, delete the
-    // `placeholder` flag. Nothing else needs changing.
     slug: "conedison",
     title: "ConEdison SmartCharge",
     shortName: "ConEdison",
     summary:
       "A zero to one build for an electric vehicle charging incentive programme.",
-    role: "Product Strategy, Product Design, Development",
+    role: "User Research, Product Strategy, Product Design, Development",
     logo: "/home/logos/conedison.webp",
-    placeholder: true,
+    // The public programme page rather than the platform, for the same reason
+    // Allganize and Priority open on a homepage: the thing a visitor recognises
+    // comes first and the product follows underneath it. Captured at 1200 CSS
+    // wide because that is the width where the band from the masthead down to
+    // the anchor nav lands at 1.74, which is the case study frame's 1195/681.
+    cover: {
+      src: "/work/conedison/cover.webp",
+      alt: "The Con Edison SmartCharge programme page, \"SmartCharge New York Program (for EV Drivers and Light-Duty Fleets),\" with a wrapped electric vehicle parked at a charging bay",
+      // The 16:10 card is narrower than the shot, and the default even crop
+      // takes the conEdison mark off the left. Anchoring left spends the whole
+      // crop on the right edge of the photograph, which has nothing in it.
+      cardPosition: "left center",
+    },
+    body: [
+      {
+        type: "paragraph",
+        text: "An electric vehicle is a very large appliance that turns up without asking. One of them on a residential block is nothing. Twenty vans in a depot, all plugged in at six in the evening because that is when the last shift ends, is a load the local network was never sized to carry. A utility watching that happen across its territory has two ways out: build more grid, which takes years and costs what it costs, or persuade the charging to happen at a different hour.",
+      },
+      {
+        type: "paragraph",
+        text: "Con Edison chose the second, and SmartCharge Commercial is how. The mechanism is money. A site that shifts its charging into the overnight window, or stays out of the summer weekday afternoons when the system is at full stretch, earns a payment for the kilowatt hours it moved. That is simple to say. Running it is not, and there was no option to run it late: the programme was a regulatory commitment with a date attached.",
+      },
+      {
+        type: "paragraph",
+        text: "So we spent eight weeks before building anything, most of it with the people who would have to live inside the result. Interviews, working sessions and site visits, on both sides of the counter: the drivers and supervisors running the vehicles, and the programme managers at the utility who would be processing what those sites submitted. Five personas came out of it, and mapping their journeys is what turned a piece of energy policy into a product with a shape. It also settled which functionality the first release had to carry, which is the argument that usually eats the deadline.",
+      },
+      {
+        type: "paragraph",
+        text: "What a participant sees is a portal that tells them where they stand. Enrolment, application, the agreement, the state of the current review, and then the two numbers the programme exists to produce: what the site has earned and how much energy it moved off peak. Notifications carry an application through its stages on their own, so nobody has to ring anyone to find out whether a letter went out.",
+      },
+      {
+        type: "image",
+        src: "/work/conedison/participant-portal.webp",
+        alt: "The SmartCharge participant portal, showing a site marked active, savings and off-peak energy totals, a table of the participant's sites, and their uploaded files with approval states",
+        caption: "The participant's view: where the site stands, and what it has earned.",
+      },
+      {
+        type: "paragraph",
+        text: "Underneath that is the part that decides whether any of it works. Charging data has to come in from the site, and there is no standard for it. The programme accepts submissions from hundreds of network providers, each with its own format, its own idea of what a meter reading is, and its own billing cycle. We built a custom intake and transformation tool to absorb them, so that a file leaving a charger vendor in whatever shape it left in arrives as a row the incentive engine can read.",
+      },
+      {
+        type: "image",
+        src: "/work/conedison/site-data.webp",
+        screenshot: true,
+        alt: "A site's Data and Incentives tab, showing the monthly upload deadline, the charger type and data type it submits, and the bill cycle list open",
+        caption: "Monthly submission, with the deadline and the cycle the data belongs to on the same screen as the upload.",
+      },
+      {
+        type: "paragraph",
+        text: "The engine on the other side works out what the month was worth. Off-peak kilowatt hours, per plug incentives, the adders a given offering carries, all applied to data the participant has approved rather than to data that merely arrived, and then handed to Oracle to be paid. An incentive programme that cannot pay on time is a press release, so this was the piece that had to be right before it was allowed to be clever.",
+      },
+      {
+        type: "paragraph",
+        text: "The internal side runs on Salesforce, and it is a queue before it is anything else. Every site sits at a stage, and a programme manager's real question each morning is which ones are waiting on them: applications under review, eligibility letters, data samples, agreements out for signature. It is the least interesting screen in the product to look at and the one the programme is actually run from.",
+      },
+      {
+        type: "image",
+        src: "/work/conedison/programme-queue.webp",
+        screenshot: true,
+        alt: "The internal programme queue, with counts by stage across the top and a table of sites listing stage, status and the programme manager each one is assigned to",
+        caption: "Every site, the stage it is at, and whose desk it is on.",
+      },
+      {
+        type: "paragraph",
+        text: "The first release shipped sixty days after definition ended, carrying the functionality the programme was required to have on the day it opened and nothing beyond it. Six releases followed, widening that first commitment into something that could hold the volume the programme was going to attract. Then we finished the way an engagement like this should finish and often does not, with documentation, knowledge transfer and training, so the platform belongs to the people running the programme rather than to the people who built it.",
+      },
+      {
+        type: "paragraph",
+        text: "What exists now enrols a commercial site, verifies it, takes in its charging data in whatever form it arrives, works out what the month earned and pays it. To the participant the result is money back. To the grid it is a peak that did not happen.",
+      },
+    ],
   },
   {
     slug: "vital-energy",
