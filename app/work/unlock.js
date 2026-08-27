@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { caseStudies } from "./data";
-import { clearKeys, grantKey, passwordFor } from "@/lib/work-lock";
+import { grantKey, passwordFor } from "@/lib/work-lock";
 
 // The one action behind PasswordGate.
 //
@@ -29,11 +29,4 @@ export async function unlockCaseStudy(_prevState, formData) {
   await grantKey(passwordFor(cs));
   revalidatePath(`/work/${slug}`);
   return { error: null };
-}
-
-// Relocking, for the debug menu only. Cheap to expose: the worst it can do to
-// anyone is ask them for a password they already have.
-export async function relockWork(slug) {
-  await clearKeys();
-  revalidatePath(`/work/${slug}`);
 }

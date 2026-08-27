@@ -3,13 +3,12 @@ import { notFound } from "next/navigation";
 import CoverImage from "../CoverImage";
 import CaseStudyBody from "../CaseStudyBody";
 import PasswordGate from "../PasswordGate";
-import GateDebugMenu from "../GateDebugMenu";
 import { Mark } from "../../lockup";
 import ViewTransitionLink from "../../view-transition-link";
 import { caseStudies, workPageTitle } from "../data";
 import BookACall from "../../(landing)/book-a-call";
 import { closer } from "../../(landing)/content";
-import { debugEnabled, gateVariant, isUnlocked } from "@/lib/work-lock";
+import { isUnlocked } from "@/lib/work-lock";
 
 // A case study, built from the landing page's vocabulary rather than its own.
 //
@@ -80,7 +79,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CaseStudyPage({ params, searchParams }) {
+export default async function CaseStudyPage({ params }) {
   const { slug } = await params;
   const cs = getCaseStudy(slug);
 
@@ -107,12 +106,6 @@ export default async function CaseStudyPage({ params, searchParams }) {
   // What is behind the password is the writing, which is the part that is not
   // finished. See lib/work-lock.js.
   const unlocked = await isUnlocked(cs);
-
-  // Two ways of asking, kept side by side rather than one replacing the other,
-  // and a menu to flip between them. See app/work/PasswordGate.js for the pair
-  // and lib/work-lock.js for who gets which.
-  const variant = await gateVariant();
-  const debug = await debugEnabled(await searchParams);
 
   return (
     <div className={COLUMN}>
@@ -235,7 +228,7 @@ export default async function CaseStudyPage({ params, searchParams }) {
         {unlocked ? (
           <CaseStudyBody blocks={cs.body} />
         ) : (
-          <PasswordGate slug={cs.slug} variant={variant} />
+          <PasswordGate slug={cs.slug} />
         )}
       </div>
 
@@ -246,10 +239,6 @@ export default async function CaseStudyPage({ params, searchParams }) {
         <p className="text-display font-medium tracking-tight">{closer}</p>
         <BookACall variant="outline" />
       </footer>
-
-      {debug && (
-        <GateDebugMenu slug={cs.slug} variant={variant} unlocked={unlocked} />
-      )}
     </div>
   );
 }

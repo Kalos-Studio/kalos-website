@@ -4,50 +4,37 @@ import { useActionState, useEffect, useId } from "react";
 import Link from "next/link";
 import { unlockCaseStudy } from "./unlock";
 
-// The one line either variant says, and all it says. It was three sentences
-// admitting the write-up was not finished, which told a visitor something they
-// had no reason to be told and turned a locked page into an apology. The work
-// shipped; the only fact a reader needs here is that there is a door.
+// The one thing it says, and all it says.
+//
+// It was three sentences admitting the write-up was not finished and offering a
+// call instead. That told a visitor something they had no reason to be told:
+// the work shipped, and a locked page that apologises for itself reads as an
+// unfinished portfolio rather than a private one.
 const PROMPT = "Enter password to access full case study.";
 
 /**
- * Two ways of asking for the password over one case study, switchable so they
- * can be looked at side by side rather than one being iterated into the other.
- * The debug menu in GateDebugMenu.js flips between them; WORK_GATE sets which
- * one real visitors get. See lib/work-lock.js.
+ * The ask that stands over a locked case study: a translucent layer across the
+ * whole page with the prompt centred on it, arriving once the cover has landed.
  *
- *   inline -- the gate stands where the body would, in the reading column, and
- *             the page around it behaves normally. Cheapest and quietest: the
- *             study still scrolls, the closer is still reachable, and nothing
- *             is covering anything.
+ * The other one, built and cut. An inline variant put the same prompt where the
+ * body would be, in the reading column, and left the page around it behaving
+ * normally. It was quieter and it was the wrong kind of quiet -- sitting in the
+ * flow at the top of an empty column it read as a small piece of the page rather
+ * than as a door, and a reader who scrolled past it found a case study that
+ * simply stopped. Covering the page says the thing the inline one only implied.
+ * The two were switchable behind a debug menu for exactly as long as it took to
+ * look at them side by side; that menu and the switch went with the decision.
  *
- *   modal  -- a translucent layer over the whole page with the ask centred on
- *             it, arriving after the cover has finished flying in from the
- *             landing panel. Louder, unambiguous, and it stops the page.
- *
- * Neither variant is given the prose. The check that produced them ran on the
- * server, so the locked writing was never sent to the browser and there is
- * nothing behind the scrim to read.
+ * There is nothing behind the scrim to read. The check that produced this ran
+ * on the server, so the locked prose was never sent to the browser -- the layer
+ * is not what is hiding it.
  */
-export default function PasswordGate({ slug, variant = "inline" }) {
-  return variant === "modal" ? (
-    <ModalGate slug={slug} />
-  ) : (
-    <InlineGate slug={slug} />
-  );
-}
-
-function InlineGate({ slug }) {
-  return (
-    <div className="max-w-[46ch]">
-      <p className="text-lead tracking-tight">{PROMPT}</p>
-      <GateForm slug={slug} className="mt-6" />
-    </div>
-  );
-}
-
-function ModalGate({ slug }) {
+export default function PasswordGate({ slug }) {
+  const [state, formAction, pending] = useActionState(unlockCaseStudy, {
+    error: null,
+  });
   const labelId = useId();
+  const fieldId = useId();
 
   // The page underneath must not scroll while the layer is over it, or the
   // reader can push the hero off screen behind a modal they cannot dismiss and
@@ -88,7 +75,66 @@ function ModalGate({ slug }) {
           {PROMPT}
         </p>
 
-        <GateForm slug={slug} className="mt-6" autoFocus stacked />
+        <form action={formAction} className="mt-6 flex flex-col gap-3">
+          <input type="hidden" name="slug" value={slug} />
+
+          <label htmlFor={fieldId} className="sr-only">
+            Password
+          </label>
+
+          {/* Full width and stacked rather than a field with the button beside
+              it: at 26rem the pair on one line leaves the field too short to
+              see what you have typed.
+
+              --radius-control, shared with the button, because they are the
+              same kind of object. */}
+          <input
+            id={fieldId}
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Password"
+            autoFocus
+            required
+            className={
+              "h-11 w-full min-w-0 rounded-control border border-black/25 bg-transparent " +
+              "px-4 text-control tracking-tight placeholder:text-muted " +
+              "transition-colors duration-[var(--duration-quick)] " +
+              "focus:border-black focus:outline-none lg:h-12"
+            }
+          />
+
+          {/* The closer's outlined treatment, not the hero's filled one. A black
+              button here would be the loudest thing on a page whose subject is a
+              picture. */}
+          <button
+            type="submit"
+            disabled={pending}
+            className={
+              "inline-flex h-11 w-full items-center justify-center rounded-control " +
+              "border border-current bg-transparent px-7 text-control tracking-tight text-black " +
+              "transition-colors duration-[var(--duration-quick)] " +
+              "hover:bg-black hover:text-white disabled:opacity-50 lg:h-12"
+            }
+          >
+            {pending ? "Checking" : "Enter"}
+          </button>
+        </form>
+
+        {/* aria-live, because on a wrong password nothing else on the page moves
+            and a screen reader would otherwise be told nothing at all.
+
+            The error is component state rather than a query parameter
+            (`?error=1`, which is what the gate this replaced used) so a wrong
+            attempt does not rewrite the URL of a page reached through a view
+            transition, and the address that gets shared is still the study's
+            own. */}
+        <p
+          aria-live="polite"
+          className="mt-3 min-h-5 text-control tracking-tight text-muted"
+        >
+          {state?.error}
+        </p>
 
         {/* A way out. There is no Escape and no backdrop click, because both
             would leave a reader on a page with nothing on it -- so the exit is
@@ -96,92 +142,11 @@ function ModalGate({ slug }) {
             on the landing page. */}
         <Link
           href={`/#case-${slug}`}
-          className="mt-5 inline-block text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
+          className="mt-2 inline-block text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
         >
           Back to Work
         </Link>
       </div>
-    </div>
-  );
-}
-
-/**
- * The field, the button and the error, shared so the two variants differ in
- * where they sit rather than in what they are.
- *
- * `stacked` gives the modal a full-width button under the field instead of
- * beside it: at 26rem the pair on one line leaves the field too short to see
- * what you typed.
- *
- * The error is component state rather than a query parameter (`?error=1`, which
- * is what the gate this replaced used) so a wrong attempt does not rewrite the
- * URL of a page reached through a view transition, and the address that gets
- * shared is still the study's own.
- */
-function GateForm({ slug, className = "", autoFocus = false, stacked = false }) {
-  const [state, formAction, pending] = useActionState(unlockCaseStudy, {
-    error: null,
-  });
-  const fieldId = useId();
-
-  return (
-    <div className={className}>
-      <form
-        action={formAction}
-        className={stacked ? "flex flex-col gap-3" : "flex flex-wrap gap-3"}
-      >
-        <input type="hidden" name="slug" value={slug} />
-
-        <label htmlFor={fieldId} className="sr-only">
-          Password
-        </label>
-
-        {/* --radius-control, shared with the button, because they are the same
-            kind of object -- and the heights match BookACall's so the pair sits
-            on one line in the inline variant. */}
-        <input
-          id={fieldId}
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          placeholder="Password"
-          autoFocus={autoFocus}
-          required
-          className={
-            "h-11 min-w-0 rounded-control border border-black/25 bg-transparent " +
-            "px-4 text-control tracking-tight placeholder:text-muted " +
-            "transition-colors duration-[var(--duration-quick)] " +
-            "focus:border-black focus:outline-none lg:h-12 " +
-            (stacked ? "w-full" : "flex-1")
-          }
-        />
-
-        {/* The closer's outlined treatment, not the hero's filled one. A black
-            button here would be the loudest thing on a page whose subject is a
-            picture. */}
-        <button
-          type="submit"
-          disabled={pending}
-          className={
-            "inline-flex h-11 items-center justify-center rounded-control " +
-            "border border-current bg-transparent px-7 text-control tracking-tight text-black " +
-            "transition-colors duration-[var(--duration-quick)] " +
-            "hover:bg-black hover:text-white disabled:opacity-50 lg:h-12 " +
-            (stacked ? "w-full" : "shrink-0")
-          }
-        >
-          {pending ? "Checking" : "Enter"}
-        </button>
-      </form>
-
-      {/* aria-live, because on a wrong password nothing else on the page moves
-          and a screen reader would otherwise be told nothing at all. */}
-      <p
-        aria-live="polite"
-        className="mt-3 min-h-5 text-control tracking-tight text-muted"
-      >
-        {state?.error}
-      </p>
     </div>
   );
 }

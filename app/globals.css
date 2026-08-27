@@ -96,8 +96,8 @@
   --duration-settle: 500ms;
   --duration-morph: 520ms;
 
-  /* Two named animations, for the modal variant of the case study password
-     gate (app/work/PasswordGate.js). Declared here because a keyframe has to
+  /* Two named animations, for the case study password gate
+     (app/work/PasswordGate.js). Declared here because a keyframe has to
      live in a stylesheet and @theme is where this project keeps motion --
      `--animate-*` generates the utility, so the component writes
      `motion-safe:animate-gate-scrim` and a reduced-motion visitor gets the
