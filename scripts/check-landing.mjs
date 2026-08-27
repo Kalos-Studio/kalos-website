@@ -98,6 +98,17 @@ async function clearance(page) {
     let at = null;
     let sampled = 0;
     const limit = window.innerHeight * 2;
+
+    // Snapping off for the sweep, and restored below.
+    //
+    // The page snaps mandatorily, so every `scrollTo` below would be pulled to
+    // the nearest snap point and the sweep would sample two positions instead
+    // of a hundred and eighty. What is being measured here is the *layout*
+    // through the handover -- where the definition block sits relative to the
+    // first image at each offset -- which is a property of the page at that
+    // offset whether or not a reader can come to rest there.
+    const snapping = document.documentElement.style.scrollSnapType;
+    document.documentElement.style.scrollSnapType = "none";
     for (let y = 0; y <= limit; y += 10) {
       window.scrollTo(0, y);
       // Two frames: one for the scroll handler to run, one for it to paint.
@@ -115,6 +126,7 @@ async function clearance(page) {
       }
     }
     window.scrollTo(0, 0);
+    document.documentElement.style.scrollSnapType = snapping;
     if (!sampled || worst === Infinity) return null;
     return { gap: Math.round(worst), at };
   });

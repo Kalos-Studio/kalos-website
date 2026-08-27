@@ -106,43 +106,39 @@ clearance mid-scroll — fine until the definition wrapped to another line. If y
 change the hero's height or the panel offset, run `bun run check:landing` rather
 than trusting your eye.
 
-The wheel **and the unmodified arrow and page keys** are paged by
-`app/(landing)/paged-scroll.js`; `Home`, `End`, space, every modified key,
-typing and touch are handed straight back to the browser. The keyboard was left
-out at first and that was the bug: an arrow key scrolls about 40px, proximity
-snapping decides the page is still nearest the stop it just left and drags it
-back, so the press does nothing.
+**The wheel is the browser's.** "One gesture, one view" is CSS: `scroll-snap-type:
+y mandatory` on `<html>` in `app/layout.js`, with `snap-always snap-center` on
+every case study, `snap-always snap-start` on the closer, and `snap-always
+snap-start` on the hero's `<header>` — that last one is load-bearing, because
+without a snap point at the top of the document the page can never come back to
+rest on the hero.
 
-Two rules run that file, and everything reported as "scrolling is sometimes not
-working" has been a violation of one of them:
+It was `snap-proximity` plus a JavaScript wheel handler, and that handler was
+wrong four separate ways before the reason became clear: **Chrome does not tell a
+script which wheel events are fingers and which are the momentum the OS
+synthesises after they lift**, and the two cannot be told apart by size, timing or
+shape. Each attempt fixed the case it was written for and broke another — a
+per-event threshold killed slow drags, a lock ceiling paged twice, reading the
+tail's shape paged three times (macOS momentum *starts above* the peak of the
+gesture that threw it), and treating a stream as a gesture went deaf mid-swipe.
+All four are written up in `app/(landing)/paged-scroll.js`. **Read that list
+before adding a `wheel` listener to this page.** The compositor has the phase
+information; a script does not.
 
-- **A gesture is the sum of its events, never one of them.** A trackpad emits a
-  scroll as dozens of deltas, and a gentle drag's are all one to three pixels.
-  Thresholding each event on its own threw the whole drag away — and because an
-  event the handler declines to claim is one the *browser* scrolls on, the page
-  crawled ~120px natively and snapping dragged it back. Every wheel event is now
-  claimed as long as there is a stop to move to; only the accumulated total
-  decides whether to page.
-- **Momentum is not a gesture, and no arithmetic on a delta will tell you which
-  one you are holding.** A firm flick keeps emitting for up to two seconds after
-  the fingers lift, and two ways of ending that have been tried and cut. A fixed
-  ceiling expires mid-tail while the deltas are still large and pages a second
-  time — every hard flick moved two panels. Reading the tail's *shape* instead,
-  on the theory that momentum only decays so a delta bigger than the last must
-  be a fresh push, was worse: on macOS the momentum stream **starts above the
-  peak of the gesture that threw it**, so a normal flick went three case studies
-  down. What runs now is that one unbroken run of wheel events pages exactly
-  once, however long it runs and whatever shape it has, and **only a pause of
-  80ms starts a new one** — momentum arrives every 8-16ms and never pauses, and
-  no hand can lift, land and move again in less. The cost is that a second flick
-  thrown with no pause at all is absorbed rather than obeyed, which is the right
-  side to err on: a gesture ignored is one you make again, a gesture doubled has
-  already taken you somewhere you did not ask to go.
+Measured under real phased gestures: a gentle, normal or firm flick moves exactly
+one view in both directions, a five-pixel flick moves exactly one view (there is
+no dead zone at the bottom of the range, which every hand-rolled version had), a
+drag whose fingers stop before they lift moves nothing, and any gesture from the
+last panel crosses the 1026px gap onto the closer. A deliberately *hard* throw
+travels two views, and about four at 12000px/s: `scroll-snap-stop: always` is
+declared on every panel and Chrome does not honour it for compositor flings.
+That is left alone — correcting the landing afterwards is a visible snap back,
+and a hard throw going further is what every native surface does.
 
-The wheel aims from where the page is *heading* rather than from where it is, so
-a second flick during a running scroll targets the stop after the one being
-travelled to. The keyboard still waits for the scroll to settle, because a held
-key repeats about thirty times a second.
+What `paged-scroll.js` still does is the keyboard, which snapping genuinely
+cannot: an arrow key scrolls about 40px, too little to change which snap point is
+nearest, so the page is put straight back and the press does nothing. `Home`,
+`End`, space, every modified key and typing are handed to the browser.
 
 `app/lockup.js` holds the Kalos mark and wordmark as vector paths, in three
 exports: the full `Lockup`, and `Mark` / `Wordmark` separately so the hero can
@@ -304,21 +300,27 @@ bun run check:landing  # another -- where things sit
 bun run check:scroll   #         -- what happens when the page is driven
 ```
 
-`check-landing.mjs` measures geometry. `check-scroll.mjs` measures behaviour,
-and exists because every scroll bug in this project was reported as a feeling
-("impossible to scroll", "it kinda freaks out", "super weird") and every one had
-a specific cause a browser could measure. It asserts that one trackpad flick
-moves exactly one view — a short one, a hard one whose tail runs a second and a
-half, one whose momentum onset is three times the flick's own peak, and a gentle
-drag made entirely of 3px events — that a twitch moves nothing, that a second
-flick 150/400/800ms after the first still pages, that the
-wheel and the keyboard each leave the other usable straight afterwards, that
-typing and modified keys are handed back, and that "Back to Work" lands on its
-own panel. **A synthetic wheel event is not a trackpad** — a flick is a burst of
-small deltas plus a decaying tail, and an earlier round of tuning passed with
-single large deltas while the real trackpad was unusable. The check emits the
-burst, and it emits a long one: a short tail ends before any plausible lock does
-and so never exercises the case that broke.
+`check-landing.mjs` measures geometry. `check-scroll.mjs` measures behaviour, and exists because every scroll bug in
+this project was reported as a feeling ("impossible to scroll", "it kinda freaks
+out", "super weird", "it gets stuck") and every one had a specific cause a
+browser could measure.
+
+**It drives the page through CDP's `Input.synthesizeScrollGesture`, not
+`page.mouse.wheel`, and that is not a preference.** Paging happens in the
+compositor off the gesture phase. A synthetic wheel event has no phase, so Chrome
+treats each one as a whole scroll and snaps it straight back — a burst of forty
+of them moves the page *zero pixels*, which reads as a catastrophic regression
+and is purely an artifact of the input. CDP synthesizes a real phased fling with
+momentum, so the checks exercise the path a hand does. This file's predecessor
+already warned that a synthetic wheel event is not a trackpad; it is not even a
+gesture.
+
+It asserts that a gentle, normal and firm flick each move exactly one view in
+both directions, that four in a row move four, that a five-pixel flick moves one
+and a drag released without a flick moves none, that every gesture lands on a
+stop and crosses the gap to the closer, that the hero and the foot of the
+document stay reachable, that arrow and page keys land centred, that typing and
+modified keys are handed back, and that "Back to Work" lands on its own panel.
 
 `scripts/check-landing.mjs` drives real Chrome across five viewports and asserts
 the two things that have actually gone wrong: that landing on a case study leaves

@@ -8,49 +8,57 @@
  * measures what the page does when it is driven, because that is the part that
  * has broken most often and the part an eye is worst at judging -- every scroll
  * bug in this project's history was reported as a feeling ("impossible to
- * scroll", "it kinda freaks out", "super weird") and every one of them turned
- * out to be a specific, measurable rule firing in the wrong order.
+ * scroll", "it kinda freaks out", "super weird", "it gets stuck") and every one
+ * of them turned out to be a specific, measurable rule firing in the wrong
+ * order.
  *
- * Each assertion below is a bug that shipped:
+ * **How this drives the page, and why it is not `page.mouse.wheel`.** Paging is
+ * done by CSS mandatory scroll snapping, in the compositor, off the gesture
+ * phase -- which tells the browser where the fingers went down and came up.
+ * Playwright's synthetic wheel events have no phase, so Chrome treats each one
+ * as a whole scroll of its own and snaps it straight back: a burst of forty of
+ * them moves the page *zero pixels*, which would have read as a catastrophic
+ * regression and is purely an artifact of the input. So the gestures here are
+ * synthesized through CDP's `Input.synthesizeScrollGesture`, which produces a
+ * real phased fling with momentum on it. This file's predecessor already warned
+ * that a synthetic wheel event is not a trackpad; it is not even a gesture.
  *
- *   FLICKS      One trackpad gesture must move exactly one view. A flick is a
- *               burst of small deltas followed by a decaying momentum tail, and
- *               without holding the lock through that tail one flick paged three
- *               panels.
+ *   ONEVIEW     A gentle, a normal and a firm flick each move exactly one view,
+ *               in both directions, and four in a row move four. This is the
+ *               whole of what "one gesture, one view" means and every scroll
+ *               complaint on this page has been a violation of it.
  *
- *   TAIL        A firm flick's momentum runs for well over a second, and the
- *               two ways of ending it early both shipped a bug. A fixed ceiling
- *               expired mid-tail while the deltas were still large and paged a
- *               second time: every hard flick moved two panels. Reading the
- *               tail's shape instead -- momentum only decays, so a delta bigger
- *               than the last must be a new push -- was worse, because on macOS
- *               the momentum stream STARTS above the peak of the gesture that
- *               threw it: a normal flick went three case studies down. FLICK is
- *               deliberately short and outlives neither; TAIL_FLICK outlives a
- *               ceiling and JUMP_FLICK has the onset that broke the shape rule.
+ *               The bottom of the range is asserted too: a five-pixel flick
+ *               moves one view, because Chrome resolves any fling to the next
+ *               snap point in its direction. There is no dead zone where a
+ *               small deliberate gesture does nothing, and a dead zone at the
+ *               bottom of the range is what every hand-rolled version of this
+ *               had. A drag whose fingers stop before they lift is not a fling
+ *               and correctly moves nothing.
  *
- *   CRAWL       A gentle two-finger drag emits deltas of one to three pixels.
- *               Thresholding each event on its own discarded all of them as
- *               noise, and a discarded event was also an unclaimed one, so the
- *               browser scrolled natively on it: the page crawled ~120px and
- *               snapping dragged it back when the fingers stopped. Reported as
- *               "scrolling is sometimes not working".
+ *               Deliberately thrown *hard* -- 700px at 2500/s and up -- a fling
+ *               travels two views, and about four at 12000/s. That is measured,
+ *               not chosen: `scroll-snap-stop: always` is declared on every
+ *               panel and Chrome does not honour it for compositor flings. It
+ *               is left alone because the alternative is correcting the landing
+ *               afterwards, which is a visible snap back, and because a hard
+ *               throw going further is what every native surface does.
  *
- *   AGAIN       A second flick shortly after the first must page again. The lock
- *               outlives a short gesture, so a flick arriving while it is still
- *               held was swallowed whole -- "I scroll once and then it gets
- *               stuck". Only a pause ends a gesture, so the gaps tested here
- *               start at one: a flick thrown with no pause at all is absorbed
- *               on purpose, being indistinguishable from a momentum onset.
+ *   ATREST      Whatever the gesture, the page comes to rest exactly on a stop
+ *               and never between two. The 1026px gap before the closer has no
+ *               snap point in it, which is what mandatory rather than proximity
+ *               snapping is for, and a medium scroll used to stop in it showing
+ *               the tail of one panel and the top of the other.
  *
- *   INTERLEAVE  The wheel and the keyboard share a lock, so the interesting case
- *               is one straight after the other. An early version had the
- *               keyboard take the wheel's momentum lock, which left the trackpad
- *               swallowed after a keystroke that had no momentum to absorb.
+ *   REACH       The hero and the foot of the document stay reachable. Under
+ *               mandatory snapping the top of the page is only reachable
+ *               because the hero carries `snap-start`; without it the nearest
+ *               snap point going up is the first case study you just left.
  *
- *   KEYS        Arrow and page keys must land on stops. Before they were handled
- *               at all, an arrow key scrolled ~40px and proximity snapping
- *               dragged the page straight back, so the press did nothing.
+ *   KEYS        Arrow and page keys must land on stops. Snapping cannot do this
+ *               one: an arrow key scrolls ~40px, which is too small to change
+ *               which snap point is nearest, so the page is put straight back
+ *               and the press does nothing.
  *
  *   HANDBACK    Everything that is not a bare arrow or page key must reach the
  *               browser: typing in a field, Cmd-Arrow, a modal's own keys. A
@@ -69,50 +77,42 @@ import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 
-// A panel counts as centred within this. Not zero: browsers land on fractional
+// A stop counts as reached within this. Not zero: browsers land on fractional
 // pixels and device pixel ratios differ.
-const CENTRE_TOLERANCE = 2;
+const TOLERANCE = 2;
 // Below this the hero counts as gone.
 const FADED = 0.02;
-// Long enough for a paged scroll to run and settle (SETTLE_MS is 500).
+// Long enough for a scroll to run and for snapping to settle after it.
 const SETTLE = 1000;
 
-// A trackpad flick, as the hardware actually emits it: a short ramp up, then a
-// decaying tail after the fingers have lifted. A single large delta is a mouse
-// wheel and does not exercise the lock at all, which is why an earlier round of
-// this was tested with synthetic events and reported working while the real
-// trackpad was unusable.
-const FLICK = [6, 14, 28, 44, 52, 44, 30, 18, 10, 6, 4, 3, 2];
+// The gestures, as distance and speed rather than as a list of deltas: CDP
+// synthesizes the event stream and the momentum from these, the way the
+// hardware would. Everyday gestures, all of which must move exactly one view.
+const GESTURES = [
+  ["a gentle drag", 150, 400],
+  ["a normal flick", 400, 800],
+  ["a firm flick", 500, 1200],
+];
 
-// The same flick thrown harder: the tail decays for a second and a half rather
-// than a quarter of one. This is the gesture that used to page twice, and the
-// reason FLICK on its own is not enough -- it ends before any plausible ceiling
-// and so never exercises the case that broke.
-const TAIL_FLICK = [2, 3, 6, 14, 28, 44, 52, 44];
-for (let v = 30, i = 0; i < 70; i++) {
-  TAIL_FLICK.push(Math.max(1, Math.round(v)));
-  v *= 0.955;
-}
+// The smallest gesture a hand can make and still be flicking. Five pixels, and
+// it moves a whole view -- which is not a bug and is worth knowing on purpose:
+// Chrome resolves any fling to the next snap point in its direction, so there
+// is no dead zone at the bottom of the range where a small deliberate flick
+// does nothing. That dead zone is what every hand-rolled version of this had.
+const TINY = [5, 200];
 
-// A flick whose momentum begins *above* the peak of the gesture, which is what
-// macOS actually emits and what no amount of arithmetic on a single delta can
-// tell apart from a second flick. This one gesture must move exactly one view.
-const JUMP_FLICK = [3, 9, 20, 34, 30, 22];
-for (let v = 96, i = 0; i < 80; i++) {
-  JUMP_FLICK.push(Math.max(1, Math.round(v)));
-  v *= 0.962;
-}
+// A throw. Travels further than one view on purpose -- see ONEVIEW above -- so
+// it is asserted to land on a stop rather than to land on a particular one.
+const THROW = [1200, 6000];
 
-// A slow, deliberate two-finger drag. Every event is below any per-event noise
-// threshold worth having, which is the point: the gesture is the sum.
-const DRAG = Array(40).fill(3);
-
-// A twitch. Must move nothing at all -- the counterpart to DRAG, since both are
-// made of events too small to mean anything on their own.
-const TWITCH = [2, 3, 2];
+// A drag, not a flick: the fingers come to a stop before they lift, so there is
+// no fling and nothing for the snap to resolve forwards. The page must return
+// to the stop it started from rather than be left partway.
+const HOLD = [200, 800];
 
 const browser = await chromium.launch({ channel: "chrome" });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const cdp = await page.context().newCDPSession(page);
 
 let failed = false;
 let measured = 0;
@@ -138,19 +138,47 @@ const panels = () =>
 const nearest = async () =>
   (await panels()).reduce((a, b) => (Math.abs(a.off) < Math.abs(b.off) ? a : b));
 
+// Every stop on the page, the hero and the closer included -- the same list the
+// keyboard computes, so "rests on a stop" means the same thing to both.
+const stops = () =>
+  page.evaluate(() => {
+    const vh = window.innerHeight;
+    const out = [0];
+    for (const el of document.querySelectorAll('[id^="case-"]')) {
+      const r = el.getBoundingClientRect();
+      out.push(r.top + window.scrollY + r.height / 2 - vh / 2);
+    }
+    const closer = document.getElementById("connect");
+    if (closer) out.push(closer.getBoundingClientRect().top + window.scrollY);
+    return out.sort((a, b) => a - b);
+  });
+
+const distanceToStop = async () => {
+  const list = await stops();
+  const y = await scrollY();
+  return Math.round(Math.min(...list.map((stop) => Math.abs(stop - y))));
+};
+
 const heroOpacity = () =>
   page.evaluate(() => +getComputedStyle(document.querySelector("header")).opacity);
 
-const scrollY = () => page.evaluate(() => window.scrollY);
+const scrollY = () => page.evaluate(() => Math.round(window.scrollY));
 
-const emit = async (deltas, direction = 1) => {
-  for (const delta of deltas) {
-    await page.mouse.wheel(0, delta * direction);
-    await page.waitForTimeout(16);
-  }
+// One gesture: fingers down, a swipe of `distance` at `speed`, fingers up, and
+// whatever momentum that earns. `direction` is 1 for down the page.
+const fling = async ([distance, speed], direction = 1, preventFling = false) => {
+  await cdp.send("Input.synthesizeScrollGesture", {
+    x: 700,
+    y: 450,
+    xDistance: 0,
+    yDistance: -distance * direction,
+    speed,
+    gestureSourceType: "touch",
+    preventFling,
+  });
 };
 
-const flick = (direction) => emit(FLICK, direction);
+const flick = (direction) => fling(GESTURES[1].slice(1), direction);
 
 const step = async (act) => {
   await act();
@@ -172,83 +200,128 @@ try {
   await load();
   const order = (await panels()).map((p) => p.id);
   if (order.length < 5) throw new Error(`only ${order.length} panels found`);
-  await page.mouse.move(700, 450);
 
-  // --- FLICKS ------------------------------------------------------------
-  const down = [];
-  for (let i = 0; i < 4; i++) down.push((await step(() => flick(1))).id);
-  check(
-    "one trackpad flick moves exactly one view",
-    down.join(",") === order.slice(0, 4).join(","),
-    down.join(" -> "),
-  );
-
-  const up = [];
-  for (let i = 0; i < 3; i++) up.push((await step(() => flick(-1))).id);
-  check(
-    "flicking back up reverses it",
-    up.join(",") === order.slice(0, 3).reverse().join(","),
-    up.join(" -> "),
-  );
-
-  // --- TAIL / CRAWL / AGAIN ----------------------------------------------
-  // Every gesture below is one gesture and must move exactly one view. They are
-  // separate checks rather than a loop because each is a different bug.
-  const oneView = async (label, deltas) => {
-    await load();
-    await page.mouse.move(700, 450);
-    // Off the hero first. From the top of the document a gesture lands on the
-    // first panel rather than stepping from one panel to the next, and it is
-    // the step between panels being measured here.
-    await emit(FLICK);
+  // --- ONEVIEW -----------------------------------------------------------
+  const goto = async (target) => {
+    await page.evaluate((t) => window.scrollTo(0, t), target);
     await page.waitForTimeout(SETTLE);
-    const from = (await nearest()).id;
-    await emit(deltas);
-    await page.waitForTimeout(SETTLE);
-    const to = await nearest();
-    const stepped = order.indexOf(to.id) - order.indexOf(from);
-    check(
-      label,
-      stepped === 1 && Math.abs(to.off) <= CENTRE_TOLERANCE,
-      `${from} -> ${to.id}@${to.off}px (${stepped} views)`,
-    );
   };
 
-  await oneView("a flick with a long momentum tail moves one view", TAIL_FLICK);
-  await oneView("a flick whose momentum starts big moves one view", JUMP_FLICK);
-  await oneView("a gentle drag pages rather than crawling", DRAG);
+  const stopList = await stops();
+  const firstPanel = stopList[1];
+  const lastPanel = stopList[stopList.length - 2];
+  const closerStop = stopList[stopList.length - 1];
 
-  await load();
-  await page.mouse.move(700, 450);
-  const stillY = await scrollY();
-  await emit(TWITCH);
-  await page.waitForTimeout(SETTLE);
-  check(
-    "a twitch too small to be a gesture moves nothing",
-    (await scrollY()) === stillY,
-    `${stillY} -> ${await scrollY()}`,
-  );
-
-  // AGAIN: the second flick is the one that used to be eaten by the first
-  // flick's lock. 150ms is the gap that failed -- long enough to have ended the
-  // gesture, short enough that the lock was still held. It is also the tightest
-  // gap a hand can actually produce, which is why nothing below it is asserted.
-  for (const gap of [150, 400, 800]) {
-    await load();
-    await page.mouse.move(700, 450);
-    await emit(TAIL_FLICK);
-    await page.waitForTimeout(gap);
-    const between = (await nearest()).id;
-    await emit(TAIL_FLICK);
-    await page.waitForTimeout(SETTLE + 500);
-    const landed = await nearest();
+  for (const [label, distance, speed] of GESTURES) {
+    await goto(firstPanel);
+    const from = (await nearest()).id;
+    await fling([distance, speed]);
+    await page.waitForTimeout(SETTLE);
+    const to = await nearest();
     check(
-      `a flick ${gap}ms after another one still pages`,
-      order.indexOf(landed.id) - order.indexOf(between) === 1 &&
-        Math.abs(landed.off) <= CENTRE_TOLERANCE,
-      `${between} -> ${landed.id}@${landed.off}px`,
+      `${label} moves exactly one view`,
+      order.indexOf(to.id) - order.indexOf(from) === 1 &&
+        Math.abs(to.off) <= TOLERANCE,
+      `${from} -> ${to.id}@${to.off}px`,
     );
   }
+
+  await goto(stopList[3]);
+  const fromUp = (await nearest()).id;
+  await flick(-1);
+  await page.waitForTimeout(SETTLE);
+  const toUp = await nearest();
+  check(
+    "a flick up moves exactly one view",
+    order.indexOf(fromUp) - order.indexOf(toUp.id) === 1 &&
+      Math.abs(toUp.off) <= TOLERANCE,
+    `${fromUp} -> ${toUp.id}@${toUp.off}px`,
+  );
+
+  // Consecutive gestures, which is where every hand-rolled lock went deaf: the
+  // second flick landed inside the first one's momentum and was swallowed.
+  await load();
+  const run = [];
+  for (let i = 0; i < 4; i++) {
+    await flick(1);
+    await page.waitForTimeout(SETTLE);
+    run.push((await nearest()).id);
+  }
+  check(
+    "four flicks in a row move four views",
+    run.join(",") === order.slice(0, 4).join(","),
+    run.join(" -> "),
+  );
+
+  // --- ATREST ------------------------------------------------------------
+  await goto(firstPanel);
+  await fling(THROW);
+  await page.waitForTimeout(SETTLE);
+  const thrown = await distanceToStop();
+  check(
+    "a hard throw still lands on a stop",
+    thrown <= TOLERANCE,
+    `${thrown}px off, at y=${await scrollY()}`,
+  );
+
+  await goto(firstPanel);
+  const tinyFrom = (await nearest()).id;
+  await fling(TINY);
+  await page.waitForTimeout(SETTLE);
+  const tinyTo = await nearest();
+  check(
+    "even a 5px flick moves exactly one view",
+    order.indexOf(tinyTo.id) - order.indexOf(tinyFrom) === 1 &&
+      Math.abs(tinyTo.off) <= TOLERANCE,
+    `${tinyFrom} -> ${tinyTo.id}@${tinyTo.off}px`,
+  );
+
+  await goto(firstPanel);
+  const heldY = await scrollY();
+  await fling(HOLD, 1, true);
+  await page.waitForTimeout(SETTLE);
+  check(
+    "a drag released without a flick returns to its stop",
+    (await scrollY()) === heldY,
+    `${heldY} -> ${await scrollY()}`,
+  );
+
+  // The gap the whole paging apparatus was originally built for: 1026px between
+  // the last panel and the closer, with no snap point in it. A medium scroll
+  // used to come to rest inside it, showing the tail of one and the top of the
+  // other. Mandatory snapping is what makes that unreachable.
+  for (const [label, distance, speed] of GESTURES) {
+    await goto(lastPanel);
+    await fling([distance, speed]);
+    await page.waitForTimeout(SETTLE);
+    const landed = await scrollY();
+    check(
+      `${label} crosses the gap to the closer`,
+      Math.abs(landed - closerStop) <= TOLERANCE,
+      `${landed} (want ${Math.round(closerStop)})`,
+    );
+  }
+
+  // --- REACH -------------------------------------------------------------
+  await goto(firstPanel);
+  await flick(-1);
+  await page.waitForTimeout(SETTLE);
+  const backAtTop = await scrollY();
+  const heroBack = await heroOpacity();
+  check(
+    "flicking up from the first panel reaches the hero",
+    backAtTop === 0 && heroBack > 0.9,
+    `y=${backAtTop} hero ${heroBack}`,
+  );
+
+  await load();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(SETTLE);
+  const bottom = await scrollY();
+  const max = await page.evaluate(() =>
+    Math.round(document.documentElement.scrollHeight - window.innerHeight),
+  );
+  check("the foot of the document is reachable", bottom === max, `${bottom}/${max}`);
 
   // --- KEYS --------------------------------------------------------------
   await load();
@@ -263,7 +336,7 @@ try {
   );
   check(
     "every key step lands centred",
-    keyed.every((k) => Math.abs(k.off) <= CENTRE_TOLERANCE),
+    keyed.every((k) => Math.abs(k.off) <= TOLERANCE),
     keyed.map((k) => `${k.off}px`).join(" "),
   );
   const heroGone = await heroOpacity();
@@ -272,35 +345,33 @@ try {
   const paged = await step(() => page.keyboard.press("PageDown"));
   check(
     "PageDown lands on a stop rather than between two",
-    Math.abs(paged.off) <= CENTRE_TOLERANCE,
+    Math.abs(paged.off) <= TOLERANCE,
     `${paged.id}@${paged.off}px`,
   );
 
   for (let i = 0; i < 6; i++) await step(() => page.keyboard.press("ArrowUp"));
   check("ArrowUp all the way reaches the hero", (await scrollY()) === 0);
 
-  // --- INTERLEAVE --------------------------------------------------------
-  // The wheel and the keyboard share one lock, so each must leave the other
-  // usable straight afterwards.
+  // The wheel and the keyboard no longer share any state -- one is the browser's
+  // and the other is this page's -- but they did, and each used to be able to
+  // leave the other deaf, so each still has to work straight after the other.
   await load();
-  await page.mouse.move(700, 450);
   await page.evaluate(() => document.body.focus());
-
   await page.keyboard.press("ArrowDown");
-  await page.waitForTimeout(600); // just past SETTLE_MS
+  await page.waitForTimeout(600);
   const beforePad = (await nearest()).id;
   const afterPad = await step(() => flick(1));
   check(
-    "a trackpad flick straight after an arrow key still pages",
-    afterPad.id !== beforePad && Math.abs(afterPad.off) <= CENTRE_TOLERANCE,
+    "a flick straight after an arrow key still pages",
+    afterPad.id !== beforePad && Math.abs(afterPad.off) <= TOLERANCE,
     `${beforePad} -> ${afterPad.id}@${afterPad.off}px`,
   );
 
   const beforeKey = (await step(() => flick(1))).id;
   const afterKey = await step(() => page.keyboard.press("ArrowDown"));
   check(
-    "an arrow key straight after a trackpad flick still pages",
-    afterKey.id !== beforeKey && Math.abs(afterKey.off) <= CENTRE_TOLERANCE,
+    "an arrow key straight after a flick still pages",
+    afterKey.id !== beforeKey && Math.abs(afterKey.off) <= TOLERANCE,
     `${beforeKey} -> ${afterKey.id}@${afterKey.off}px`,
   );
 
@@ -349,7 +420,7 @@ try {
     check(
       `Back to Work from ${slug} returns to its own panel`,
       landed.id === `case-${slug}` &&
-        Math.abs(landed.off) <= CENTRE_TOLERANCE &&
+        Math.abs(landed.off) <= TOLERANCE &&
         hero < FADED,
       `${landed.id}@${landed.off}px  hero ${hero}`,
     );

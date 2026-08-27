@@ -115,10 +115,27 @@ export default function RootLayout({ children }) {
     // element that opts in with a snap-* alignment a stop; anything that does
     // not opt in is scrolled past normally.
     //
-    // proximity, not mandatory: mandatory never lets the page rest between two
-    // snap points, so the hero's handover to the masthead could only ever be
-    // glimpsed during a snap glide. Proximity still stops on each case study
-    // while leaving the hero free to be scrolled through.
+    // mandatory, and this is the whole of "one gesture, one view".
+    //
+    // It was proximity, on the grounds that mandatory never lets the page rest
+    // between two snap points so the hero's handover could only be glimpsed
+    // during a snap glide. That reason is gone: the design settled on the hero
+    // being a stop in both directions, so there is nothing to rest between any
+    // more, and the handover plays across the glide by intent.
+    //
+    // What replaced proximity in the meantime was a wheel handler that read
+    // trackpad gestures in JavaScript, and it was wrong four separate ways
+    // before the reason became clear -- Chrome does not tell a script which
+    // wheel events are fingers and which are the momentum the OS synthesises
+    // after they lift, and the two are not distinguishable by size, timing or
+    // shape. The compositor does know, and this is where the compositor is
+    // told. See paged-scroll.js for the four attempts, kept because the next
+    // person to reach for a wheel handler should read them first.
+    //
+    // Every case study carries `snap-always snap-center` and the closer
+    // `snap-always snap-start`, so `scroll-snap-stop: always` is what stops a
+    // hard flick skipping panels, and mandatory is what stops the page resting
+    // in the 1026px gap before the closer, which has no snap point in it.
     //
     // No `scroll-smooth` here, and it must not come back.
     //
@@ -132,7 +149,7 @@ export default function RootLayout({ children }) {
     // development.
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} snap-y snap-proximity`}
+      className={`${spaceGrotesk.variable} snap-y snap-mandatory`}
     >
       {/* The base ground, on utilities rather than an unlayered `html, body`
           rule in globals.css -- see the note at the foot of that file. Light by

@@ -41,8 +41,9 @@ export default function LandingPage() {
     // centred, capped column that behaves at every width.
     <div className="mx-auto w-full max-w-[120rem] px-5 sm:px-8 lg:px-12 xl:px-24">
       <Hero />
-      {/* One gesture, one view -- wheel and arrow keys. Renders nothing; see
-          paged-scroll.js for what it does and does not take. */}
+      {/* Arrow and page keys only. The wheel is the browser's, paged by
+          mandatory scroll snapping -- see paged-scroll.js for why reading it
+          here cannot work. Renders nothing. */}
       <PagedScroll />
       {/* Opens on a panel when arrived at as /#case-<slug>, which is where
           "Back to Work" on that case study points. Also renders nothing. */}

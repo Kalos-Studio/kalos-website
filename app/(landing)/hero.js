@@ -372,7 +372,11 @@ export default function Hero() {
           inside goes together and there is one place to change the timing. */}
       <header
         ref={fadeRef}
-        className="flex min-h-[88svh] flex-col justify-between pb-4 lg:pb-6"
+        // snap-start, and load-bearing under mandatory snapping: with no snap
+        // point at the top of the document the page can never come back to
+        // rest on the hero, because the nearest one going up is the first case
+        // study it just left.
+        className="flex min-h-[88svh] snap-always snap-start flex-col justify-between pb-4 lg:pb-6"
         style={{ opacity: "var(--hero-fade, 1)" }}
       >
         <div className="flex flex-col items-end gap-5 pt-6 sm:pt-10 lg:pt-16">
