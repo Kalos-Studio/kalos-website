@@ -147,10 +147,13 @@ export default function LandingPage() {
               hero would reveal the first case study alongside the rail — and the
               first thing a visitor sees should be the index, not a project.
 
-              The arithmetic: the hero is 88svh, so the work section begins 0.12
-              of a viewport above the fold, and the panels start below it. The
-              wireframe does the same — rail at y=1012 against a fold at y=1113,
-              first panel not until y=1292.
+              The arithmetic: the hero is 88svh from lg, so the work section
+              begins 0.12 of a viewport above the fold and the panels start
+              below it. The wireframe does the same — rail at y=1012 against a
+              fold at y=1113, first panel not until y=1292. Below lg the hero
+              gives the rail a fixed 6.25rem instead, because on a phone the
+              fraction came to less than the strip's own height; see the header
+              in hero.js.
 
               35svh rather than the 17svh this started at, because the hero's
               handover needs somewhere to happen. The block catches at the top

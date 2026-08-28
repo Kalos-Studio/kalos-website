@@ -394,7 +394,23 @@ export default function Hero() {
         // point at the top of the document the page can never come back to
         // rest on the hero, because the nearest one going up is the first case
         // study it just left.
-        className="flex min-h-[88svh] snap-always snap-start flex-col justify-between pb-4 lg:pb-6"
+        // 88svh, except where 12svh is not enough to stand the rail in.
+        //
+        // What this hero does not take is what the pill rail gets: the work
+        // section opens with it, and the intent is that it peeks above the fold
+        // while the panels stay below (see the offset comment in page.js).
+        // Below lg that peek is a 12svh remainder against a strip exactly 60px
+        // tall -- an h-9 pill in py-3 -- which leaves 20px of white under the
+        // pills on a 664px window and 8px on a 568px one. Reported as the pills
+        // being cut off at the bottom, and on a phone whose toolbars take a few
+        // more pixels than svh admits to they genuinely are.
+        //
+        // So the peek is a distance rather than a fraction: 6.25rem is that
+        // 60px strip plus 40px of clear. min() rather than a replacement,
+        // because from the point where 12svh exceeds 100px -- tablets and up --
+        // 88svh already leaves more than this asks for, and a hero that grew to
+        // fill the difference would be the fraction going the other way.
+        className="flex min-h-[min(88svh,calc(100svh_-_6.25rem))] snap-always snap-start flex-col justify-between pb-4 lg:min-h-[88svh] lg:pb-6"
         style={{ opacity: "var(--hero-fade, 1)" }}
       >
         <div className="flex flex-col items-end gap-5 pt-6 sm:pt-10 lg:pt-16">
