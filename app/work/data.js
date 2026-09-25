@@ -287,10 +287,8 @@ const allWork = [
     ],
   },
   // PLACEHOLDER COPY. Every string below is a stand-in until the real write-up
-  // arrives, which is why it has no logo, no cover and no `open` flag: the
-  // gate keeps the body private and CoverImage draws its "coming soon" plate.
-  // The cover goes in public/work/young-muslims/ -- the subway poster, "For
-  // the youth. By the youth."
+  // arrives, which is why it has no logo and no `open` flag: the gate keeps
+  // the body private. The cover is real.
   {
     slug: "young-muslims",
     title: "Young Muslims",
@@ -298,6 +296,10 @@ const allWork = [
     summary:
       "Placeholder summary. A nonprofit for young Muslims, and the brand that lets it speak to them in their own voice.",
     role: "Brand Strategy, Brand Identity, Brand Application",
+    cover: {
+      src: "/work/young-muslims/cover.jpg",
+      alt: "A Young Muslims poster on a subway platform, \"For the youth. By the youth.\", over a group of young women embracing, with a train blurring past behind",
+    },
     body: [
       {
         type: "paragraph",

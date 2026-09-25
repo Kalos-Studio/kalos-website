@@ -36,18 +36,27 @@ import ViewTransitionLink from "../view-transition-link";
  *
  * The inverse scale is not linear in progress, and keyframes interpolate
  * linearly, so the curve is sampled at STEPS points rather than given as two
- * ends. At 32 the aspect error between samples is well under a pixel.
+ * ends. At 48 the aspect error between samples is well under a pixel.
  *
- * Progress is scroll position over the distance from the top of the page to
- * this study's own snap stop, so the expansion is complete exactly where the
- * page comes to rest on it and nothing is tuned by eye. With mandatory snapping
- * one flick from the hero plays the whole thing across the glide.
+ * The frame's top edge is never animated. It is the top of this section, in
+ * flow, so it scrolls with the page exactly as the hero's type does and the
+ * gap under Book a call stays what it was drawn at. What grows is the width,
+ * and the height, which is held down to the bottom of the window the whole way
+ * so no white ever shows underneath. Both rules together decide the timing:
+ * the frame can only be full bleed when its top reaches the window's top, so
+ * progress is scroll over the distance to that point. That is also where
+ * `#case-<slug>` is centred and where the snap area in page.js stops covering
+ * the window -- free scrolling ends exactly at full bleed, and scrolling back
+ * up retraces the same poses into the inset frame it started from.
  *
- * The snap stop is its own element (`#case-<slug>`) at the foot of the section
- * rather than the sticky stage. A sticky element's snap position is resolved
- * against where it is stuck, which moves with the scroll it is trying to
- * resolve; an ordinary block at the end of the runway has one position. It is
- * also what paged-scroll.js, HashTarget and check-scroll.mjs already look for.
+ * It used to pin the stage with sticky for a window's worth of scroll and grow
+ * inside it. The frame then rose more slowly than the page, so the gap under
+ * the button opened up as you scrolled, and it could reach the top of the
+ * window while still inset.
+ *
+ * `#case-<slug>` carries no snap alignment of its own; the wrapper in page.js
+ * does the snapping. It is a separate block because paged-scroll.js,
+ * HashTarget and check-scroll.mjs look it up by id.
  */
 
 // How far the picture starts zoomed in, relative to just covering the frame.
@@ -58,25 +67,54 @@ const ZOOM = 1.35;
 const INSET = { lg: 0.6, sm: 0.88 };
 const ASPECT = 1.6;
 
-const STEPS = 32;
+// The inset frame's corner radius, as a share of its width, easing to square
+// at full bleed (rounded corners on the window's own edges read as a gap).
+// Set against the mark at hero size: its corners are soft rather than round,
+// about a twelfth of the diamond's width, and at that ratio a 60% frame came
+// out bubbly. A third of it sits with the mark rather than competing with it.
+const RADIUS = 0.028;
+
+const STEPS = 48;
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (n) => Math.min(Math.max(n, 0), 1);
 
-// The frame and picture transforms at progress p, for a W x H stage. Both
-// origins are the top left, so each transform reads as "put the top left here,
-// then scale".
-function pose(p, W, H) {
-  const w0 = W * (W >= 1024 ? INSET.lg : INSET.sm);
-  const h0 = Math.min(w0 / ASPECT, H);
-  // Top-aligned on a wide window, the way the wireframe sits it under the
-  // hero; centred where the stage is only as tall as the picture.
-  const y0 = W >= 1024 ? 0 : (H - h0) / 2;
+// The frame and picture transforms at scroll position `s`. Both origins are
+// the top left, so each transform reads as "put the top left here, then
+// scale".
+//
+// Worked out in *window* coordinates and converted to the stage's, because
+// the rule is about the window: the frame starts exactly where it sits under
+// the hero, its top edge rises from there to the top of the window, and its
+// bottom edge never comes above the bottom of the window. The first version
+// was worked out in the stage's coordinates -- the stage rode up with the page
+// and the frame grew from its top -- so the inset frame reached the top of the
+// window while it was still inset, with white showing underneath it.
+//
+// `g` is the geometry measured once per layout: the stage's size, where the
+// stage starts in the document (which is also the frame's starting top in the
+// window, at scroll 0), and the scroll at which the expansion completes.
+function pose(s, g) {
+  const { W, H, start, end } = g;
+  const p = clamp01(s / end);
 
+  const w0 = W * (W >= 1024 ? INSET.lg : INSET.sm);
+  const h0 = w0 / ASPECT;
+
+  // In the window. The height is at least whatever reaches the window's
+  // bottom edge, so there is never a gap below the frame.
+  const top = lerp(start, 0, p);
   const w = lerp(w0, W, p);
-  const h = lerp(h0, H, p);
+  const h = Math.max(lerp(h0, H, p), H - top);
   const x = (W - w) / 2;
-  const y = lerp(y0, 0, p);
+
+  // Into the stage, which is in flow and scrolls with the page. With the end
+  // where it is, `top` and `stageTop` are the same line and y is 0 -- the
+  // frame's top edge is the section's -- but the conversion stays so the rule
+  // is stated in window terms.
+  const stageTop = Math.max(start - s, 0);
+  const y = top - stageTop;
+
   const sx = w / W;
   const sy = h / H;
 
@@ -88,8 +126,13 @@ function pose(p, W, H) {
   const u = (w / 2 - (k * W) / 2) / sx;
   const v = (h / 2 - (k * H) / 2) / sy;
 
+  // The frame is scaled non-uniformly, and its radius is scaled with it, so
+  // the radius is given per axis in its own coordinates to come out round.
+  const r = lerp(w0 * RADIUS, 0, p);
+
   return {
     frame: `translate(${x}px, ${y}px) scale(${sx}, ${sy})`,
+    radius: `${r / sx}px / ${r / sy}px`,
     image: `translate(${u}px, ${v}px) scale(${a}, ${b})`,
   };
 }
@@ -113,10 +156,17 @@ export default function Reveal({ cs }) {
     const root = document.documentElement;
     const compositor = typeof window.ScrollTimeline === "function";
 
-    // Where this study's stop is: the scroll position that centres it.
-    const endOf = () => {
+    const geometry = () => {
       const r = stop.getBoundingClientRect();
-      return r.top + window.scrollY + r.height / 2 - window.innerHeight / 2;
+      const section = stage.parentElement.getBoundingClientRect();
+      return {
+        W: stage.clientWidth,
+        H: stage.clientHeight,
+        start: section.top + window.scrollY,
+        // The scroll that centres the stop, i.e. the section filling the
+        // window: see the note at the top of the file.
+        end: r.top + window.scrollY + r.height / 2 - window.innerHeight / 2,
+      };
     };
 
     let animations = [];
@@ -124,32 +174,43 @@ export default function Reveal({ cs }) {
       animations.forEach((a) => a.cancel());
       animations = [];
       frame.style.transform = "";
+      frame.style.borderRadius = "";
       image.style.transform = "";
     };
 
     // Compositor path. Keyframe offsets are fractions of the whole document's
     // scroll range, since that is what a ScrollTimeline on the root measures;
-    // past this study's stop the last pose simply holds.
+    // past the end the last pose simply holds.
+    //
+    // Sampled, because keyframes interpolate linearly and the pose is not
+    // linear in scroll: the inverse scale is a quotient, and there are kinks
+    // where the frame's bottom stops needing to be held down. `start` is
+    // sampled exactly in case the end ever moves past it again.
     const build = () => {
       clear();
       if (reduced.matches) return;
-      const W = stage.clientWidth;
-      const H = stage.clientHeight;
-      const end = endOf();
+      const g = geometry();
       const max = root.scrollHeight - root.clientHeight;
-      if (end <= 0 || max <= 0) return;
+      if (g.end <= 0 || max <= 0) return;
+
+      const scrolls = [];
+      for (let i = 0; i <= STEPS; i++) scrolls.push((i / STEPS) * g.end);
+      if (g.start > 0 && g.start < g.end) scrolls.push(g.start);
+      scrolls.sort((a, b) => a - b);
 
       const frameFrames = [];
       const imageFrames = [];
-      for (let i = 0; i <= STEPS; i++) {
-        const p = i / STEPS;
-        const offset = (p * end) / max;
-        const { frame: f, image: g } = pose(p, W, H);
-        frameFrames.push({ offset, transform: f });
-        imageFrames.push({ offset, transform: g });
+      // The radius rides along with the frame's transform. It is not a
+      // compositor property, so it is the one value here painted on the main
+      // thread; a frame's lag on a corner a few pixels across is invisible,
+      // where the same lag on the frame's edges was the stutter.
+      for (const s of scrolls) {
+        const { frame: f, radius, image: i } = pose(s, g);
+        frameFrames.push({ offset: s / max, transform: f, borderRadius: radius });
+        imageFrames.push({ offset: s / max, transform: i });
       }
-      const last = pose(1, W, H);
-      frameFrames.push({ offset: 1, transform: last.frame });
+      const last = pose(g.end, g);
+      frameFrames.push({ offset: 1, transform: last.frame, borderRadius: last.radius });
       imageFrames.push({ offset: 1, transform: last.image });
 
       const timeline = new window.ScrollTimeline({ source: root, axis: "block" });
@@ -165,11 +226,12 @@ export default function Reveal({ cs }) {
     const draw = () => {
       raf = 0;
       if (reduced.matches) return clear();
-      const end = endOf();
-      const p = end <= 0 ? 1 : clamp01(window.scrollY / end);
-      const { frame: f, image: g } = pose(p, stage.clientWidth, stage.clientHeight);
+      const g = geometry();
+      if (g.end <= 0) return clear();
+      const { frame: f, radius, image: i } = pose(window.scrollY, g);
       frame.style.transform = f;
-      image.style.transform = g;
+      frame.style.borderRadius = radius;
+      image.style.transform = i;
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(draw);
@@ -197,13 +259,14 @@ export default function Reveal({ cs }) {
   const vtName = `cover-${cs.slug}`;
 
   return (
-    // The runway. On a wide window the stage is a full viewport held by sticky
-    // for one extra view, which is the scroll the expansion plays across. Below
-    // lg the panels are 16:9 strips rather than full windows (a landscape
-    // picture cropped to a portrait phone loses everything that makes it this
-    // picture), so the stage is one of those strips and does not stick.
-    <section className="relative h-[56.25vw] lg:h-[200svh]">
-      <div ref={stageRef} className="relative h-full w-full overflow-hidden lg:sticky lg:top-0 lg:h-svh">
+    // One window tall, in flow, on every width -- phones included, since the
+    // whole point of this panel is the move. At full bleed a phone shows a
+    // portrait crop of the collage, which holds up because it is a field of
+    // cards rather than one picture with a subject to lose.
+    //
+    // `id="work"` because /work redirects to /#work.
+    <section id="work" className="relative h-svh">
+      <div ref={stageRef} className="relative h-full w-full overflow-hidden">
         <ViewTransitionLink
           href={`/work/${cs.slug}`}
           vtName={vtName}
@@ -226,11 +289,11 @@ export default function Reveal({ cs }) {
         </ViewTransitionLink>
       </div>
 
-      {/* The snap stop. See the note at the top of the file. */}
+      {/* Where the expansion completes. See the note at the top of the file. */}
       <div
         ref={stopRef}
         id={`case-${cs.slug}`}
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-full snap-always snap-center lg:h-svh"
+        className="pointer-events-none absolute inset-0"
       />
     </section>
   );

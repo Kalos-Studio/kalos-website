@@ -223,6 +223,19 @@ const load = async (url = BASE) => {
   // not hydrated.
   await page.waitForSelector('[id^="case-"]', { timeout: 30000 });
   await page.evaluate(() => document.fonts.ready);
+  // Hydrated, not just rendered: the keyboard handler and the reveal both
+  // attach in effects. The reveal's ScrollTimeline is the signal because it is
+  // there on every browser this runs in. Before the free-scrolling reveal this
+  // did not matter -- an arrow press that reached the browser unhandled moved
+  // 40px and snapping put it back -- but at the top of the page 40px is now a
+  // valid place to rest, so a press before hydration reads as a broken key.
+  await page
+    .waitForFunction(
+      () => document.getAnimations().some((a) => a.timeline?.constructor?.name === "ScrollTimeline"),
+      null,
+      { timeout: 15000 },
+    )
+    .catch(() => {});
   await page.waitForTimeout(300);
 };
 
@@ -271,15 +284,19 @@ try {
   // Consecutive gestures, which is where every hand-rolled lock went deaf: the
   // second flick landed inside the first one's momentum and was swallowed.
   await load();
+  // From the first study rather than the top: between the top and the first
+  // study at full bleed the page scrolls freely (see page.js), so a flick there
+  // moves as far as the flick does rather than one view.
+  await goto(firstPanel);
   const run = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     await flick(1);
     await page.waitForTimeout(SETTLE);
     run.push((await nearest()).id);
   }
   check(
-    "four flicks in a row move four views",
-    run.join(",") === order.slice(0, 4).join(","),
+    "three flicks in a row move three views",
+    run.join(",") === order.slice(1, 4).join(","),
     run.join(" -> "),
   );
 
@@ -333,13 +350,27 @@ try {
   }
 
   // --- REACH -------------------------------------------------------------
+  // Up from the first study is the free-scrolling reveal, run backwards: a
+  // flick moves the page by the flick and the frame retreats with it. It must
+  // come to rest inside the reveal rather than being snapped to either end,
+  // and the top must still be reachable by carrying on.
   await goto(firstPanel);
   await flick(-1);
   await page.waitForTimeout(SETTLE);
+  const partWay = await scrollY();
+  check(
+    "a flick up from the first study rests inside the reveal",
+    partWay > 0 && partWay < firstPanel - TOLERANCE,
+    `y=${partWay} of ${Math.round(firstPanel)}`,
+  );
+  for (let i = 0; i < 6 && (await scrollY()) > 0; i++) {
+    await flick(-1);
+    await page.waitForTimeout(SETTLE);
+  }
   const backAtTop = await scrollY();
   const heroBack = await heroOpacity();
   check(
-    "flicking up from the first panel reaches the hero",
+    "flicking up from the first study reaches the hero",
     backAtTop === 0 && heroBack > 0.9,
     `y=${backAtTop} hero ${heroBack}`,
   );

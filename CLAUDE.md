@@ -98,29 +98,32 @@ Four studies, not all of them: `landingWork` in `app/work/data.js` names which
 and in what order. The rest keep their pages, and their "Back to Work" goes to
 the top of the landing page because there is no panel to return to (`onLanding`).
 
-- **`masthead.js`** — the lockup, fixed top left, hidden until the hero has left
-  the screen (the wireframe's note). White on a black fade over the work, black
-  with no fade over the closer. It was `mix-blend-difference`, which turned into
-  a patchwork of inverted colours over the MARA collage.
-- **`reveal.js`** — the first study. An inset frame peeks over the fold, then
-  grows to full bleed while the picture inside zooms out (the Venice / Collins
-  move). **Transforms only, on a ScrollTimeline** — the compositor runs it off
-  the scroll position, so it cannot lag a frame behind the sticky stage the way
-  a scroll listener did. It was `clip-path` from a listener and it stuttered;
-  read the top of the file before bringing either back. **The geometry is
-  derived, not tuned:** progress is scroll position over
-  the distance to that study's own snap stop, so it is exactly full bleed where
-  the page comes to rest. The stop is a plain block at the foot of the runway,
-  not the sticky stage, because a sticky element's snap position moves with the
-  scroll it is resolving.
-- Below lg the panels are 16:9 strips rather than full windows, and the reveal
-  does not pin: a landscape picture cropped to a portrait phone loses everything
-  that made it worth showing.
+- **`masthead.js`** — the lockup, fixed top left, hidden until the first study
+  reaches full bleed (the wireframe says "after the hero"; before that there is
+  white at the top of the window). White on a soft black fade in the corner over
+  the work, black with no fade over the closer. It was `mix-blend-difference`,
+  which turned into a patchwork of inverted colours over the MARA collage.
+- **`reveal.js`** — the first study. An inset frame with rounded corners peeks
+  over the fold, then grows to full bleed while the picture inside zooms out
+  (the Venice / Collins move). Its top edge is in flow, so the gap under Book a
+  call never changes; its bottom is held to the window's bottom, so no white
+  shows under it. Those two rules fix the timing: it is full bleed exactly when
+  its top reaches the window's top. **Transforms only, on a ScrollTimeline** —
+  the compositor runs it off the scroll position. It was `clip-path` from a
+  scroll listener, which repainted every frame and lagged the scroll by one; read
+  the top of the file before bringing either back.
+- **The top of the page scrolls freely.** The hero and the reveal share one snap
+  area in `page.js`, exactly as long as the expansion, and a snap area taller
+  than the window makes every position where it covers the window valid. So the
+  reveal can be watched and scrubbed, and the stops begin at full bleed.
+- Below lg the other panels are 16:9 strips rather than full windows: a
+  landscape picture cropped to a portrait phone loses what made it worth showing.
 
 **The wheel is the browser's.** "One gesture, one view" is CSS: `scroll-snap-type:
 y mandatory` on `<html>` in `app/layout.js`, with `snap-always snap-center` on
-every `#case-<slug>`, `snap-always snap-start` on the closer, and `snap-always
-snap-start` on the hero section (`#top`) — that last one is load-bearing, because
+every `#case-<slug>` after the first, `snap-always snap-start` on the closer, and
+`snap-always snap-start` on the hero-and-reveal wrapper — that last one is
+load-bearing, because
 without a snap point at the top of the document the page can never come back to
 rest on the hero.
 
