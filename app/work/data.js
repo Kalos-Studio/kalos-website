@@ -286,6 +286,33 @@ const allWork = [
       },
     ],
   },
+  // PLACEHOLDER COPY. Every string below is a stand-in until the real write-up
+  // arrives, which is why it has no logo, no cover and no `open` flag: the
+  // gate keeps the body private and CoverImage draws its "coming soon" plate.
+  // The cover goes in public/work/young-muslims/ -- the subway poster, "For
+  // the youth. By the youth."
+  {
+    slug: "young-muslims",
+    title: "Young Muslims",
+    shortName: "Young Muslims",
+    summary:
+      "Placeholder summary. A nonprofit for young Muslims, and the brand that lets it speak to them in their own voice.",
+    role: "Brand Strategy, Brand Identity, Brand Application",
+    body: [
+      {
+        type: "paragraph",
+        text: "Placeholder paragraph. Who Young Muslims are, who they serve, and what they needed when they came to us.",
+      },
+      {
+        type: "paragraph",
+        text: "Placeholder paragraph. What we built: the brand foundation, the identity, and how it shows up in the world.",
+      },
+      {
+        type: "paragraph",
+        text: "Placeholder paragraph. What changed for the organisation once it had a brand that looked like the people it is for.",
+      },
+    ],
+  },
   {
     slug: "allganize-website-redesign",
     title: "Allganize Website Redesign",
@@ -640,4 +667,22 @@ const allWork = [
 export const caseStudies = allWork.filter((cs) => !cs.placeholder);
 
 export const workRail = allWork;
+
+// The landing page shows four studies, not all of them, and in its own order:
+// the redesign's wireframe opens on MARA's collage (the one that grows to full
+// bleed) and then runs EchoCare, Young Muslims, Priority. A list of slugs
+// rather than a flag on each entry, because the order is part of the decision
+// and a flag would leave it to array position, which is already spoken for by
+// `workRail` above.
+//
+// The studies left off still have their pages. What they lose is a panel to
+// return to, so their "Back to Work" goes to the top of the landing page
+// instead -- see `onLanding`, which both exits on a case study read.
+const LANDING = ["mara", "echocare", "young-muslims", "priority-ambulance-transfer"];
+
+export const landingWork = LANDING.map((slug) =>
+  caseStudies.find((cs) => cs.slug === slug),
+);
+
+export const onLanding = (slug) => LANDING.includes(slug);
 

@@ -6,27 +6,13 @@
 // No em dashes anywhere: a brand preference that applies to every line that
 // ships, and nothing enforces it automatically here.
 
-// The line above the first call to action. Right-aligned against the same edge
-// the work rail uses, which is what ties the two sides of the page together.
+// The hero's one line, under the mark and over the call to action.
 export const positioning =
   "Companies turn to us to build presence and get recognized.";
 
-// The name means something, and the page opens by saying what. `term` is set
-// larger than the definition under it, the way a dictionary entry is.
-export const definition = {
-  term: "καλός • adjective",
-  detail:
-    "An ancient Greek concept to signify beauty, excellence, praiseworthiness, and nobility",
-};
-
-// The label over the pill rail.
-export const workLabel = "Our Work";
-
 export const closer = "Let’s connect.";
 
-// One primary action, in two places: top right, and at the foot of the page.
-// The wireframe draws them differently on purpose — the top one is filled and
-// the bottom one is outlined — so the label is shared and the treatment is not.
+// One primary action, in two places: under the hero line and under the closer.
 export const cta = "Book a call";
 
 // Cal.com. `link` is the public booking path, so the button can point at

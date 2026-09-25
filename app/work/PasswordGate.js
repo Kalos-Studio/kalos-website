@@ -29,7 +29,7 @@ const PROMPT = "Enter password to access full case study.";
  * on the server, so the locked prose was never sent to the browser -- the layer
  * is not what is hiding it.
  */
-export default function PasswordGate({ slug }) {
+export default function PasswordGate({ slug, backHref }) {
   const [state, formAction, pending] = useActionState(unlockCaseStudy, {
     error: null,
   });
@@ -141,7 +141,7 @@ export default function PasswordGate({ slug }) {
             the one the masthead already offers, back to this study's own panel
             on the landing page. */}
         <Link
-          href={`/#case-${slug}`}
+          href={backHref}
           className="mt-2 inline-block text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
         >
           Back to Work

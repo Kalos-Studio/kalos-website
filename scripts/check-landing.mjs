@@ -4,31 +4,34 @@
  *     bun run dev                 # in another shell
  *     bun run check:landing
  *
- * There is no unit test suite here and there should not be one — almost nothing
+ * There is no unit test suite here and there should not be one -- almost nothing
  * on this page is a pure function. What can break is geometric, and geometry can
- * be measured: this drives a real browser, scrolls the page the way a reader
- * would, and asserts the two things that have actually gone wrong.
+ * be measured: this drives a real browser to each of the page's rest positions
+ * and asserts where things sit. check-scroll.mjs covers how the page gets there.
  *
- * Both assertions exist because the bug they catch shipped once:
+ * Rewritten for the redesign. The previous version guarded the old hero's
+ * handover (hero faded at every panel, the definition block never over an
+ * image); neither exists any more. What this one asserts:
  *
- *   RESTING     Landing on a case study must leave the hero fully faded and the
- *               panel dead centre. It rested at 0.26 opacity with the hero
- *               painted over the work, because the hero's handover and the first
- *               panel's snap point overlapped. Separately every panel sat 48px
- *               low, from a scroll-margin shifting the snap area.
+ *   PEEK        At the top, the first study's inset frame shows above the fold
+ *               -- that is the design's "more below" -- and the masthead is
+ *               hidden, per the wireframe's note.
  *
- *   CLEARANCE   Scrolling *through* the handover must never bring the definition
- *               block over a case study image. An earlier fix passed RESTING
- *               while leaving 11px of clearance mid-scroll — fine until the
- *               definition wrapped to another line.
+ *   BLEED       Resting on the first study, its frame has grown to the whole
+ *               stage (clip-path inset to zero) and its picture has zoomed back
+ *               out to scale 1. A frame that stops short of full bleed at its
+ *               own stop is the bug this effect is most likely to have, since
+ *               progress is measured against that stop.
  *
- * Run across several viewports on purpose. Both bugs were invisible at some
- * window sizes and obvious at others; the tall/portrait case in particular
- * failed when every laptop size passed.
+ *   PANELS      Every other study, at its stop, spans the full width with its
+ *               middle on the window's middle, and from lg fills the window.
  *
- * Uses the installed Google Chrome via `channel: "chrome"` rather than
- * downloading Playwright's own Chromium — nothing here needs a pinned build, and
- * it keeps a ~300MB download out of the project.
+ *   OVERFLOW    Nothing scrolls sideways. A full-bleed panel inside a gutter is
+ *               the classic way to get 15px of horizontal scroll.
+ *
+ * Run across several viewports on purpose: below lg the panels are 16:9 strips
+ * and the first study does not pin, so the two halves of the layout are
+ * different code paths.
  */
 
 import { chromium } from "playwright";
@@ -36,117 +39,96 @@ import { chromium } from "playwright";
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 
 const VIEWPORTS = [
-  [1515, 1070, "reported window"],
   [1440, 900, "13in laptop"],
   [1920, 1080, "design frame"],
   [1280, 720, "small laptop"],
   [1024, 1366, "tall / portrait"],
-  // Below lg the layout is structurally different -- the rail becomes a
-  // horizontal strip and the panels' 35svh runway does not apply -- and that is
-  // where the clearance invariant broke while every row above it passed. The
-  // header of this file already said both bugs it guards "were invisible at some
-  // window sizes and obvious at others"; the list did not act on it.
   [768, 1024, "tablet portrait"],
   [390, 844, "phone"],
 ];
 
-// A panel is "centred" if it is within this of the middle. Not zero: browsers
-// land on fractional pixels and device pixel ratios differ.
-const CENTRE_TOLERANCE = 2;
-// Below this the hero counts as gone.
-const FADED = 0.02;
-// The definition block must stay at least this clear of the first image.
-const MIN_CLEARANCE = 40;
+// Fractional pixels from snapping and device pixel ratios.
+const TOLERANCE = 2;
 
-async function restingStates(page) {
-  const slugs = await page.$$eval("nav a[href^='#case-']", (as) =>
-    as.map((a) => a.getAttribute("href").slice(1)),
-  );
-
-  let worstOpacity = 0;
-  let worstOffset = 0;
-  for (const slug of slugs) {
-    await page.click(`nav a[href="#${slug}"]`);
-    await page.waitForTimeout(700);
-    const s = await page.evaluate((id) => {
-      const el = document.getElementById(id);
-      const r = el.getBoundingClientRect();
-      return {
-        opacity: +getComputedStyle(document.querySelector("header")).opacity,
-        offset: Math.round(r.top + r.height / 2 - window.innerHeight / 2),
-      };
-    }, slug);
-    worstOpacity = Math.max(worstOpacity, s.opacity);
-    worstOffset = Math.max(worstOffset, Math.abs(s.offset));
-  }
-  return { count: slugs.length, worstOpacity, worstOffset };
-}
-
-async function clearance(page) {
-  return page.evaluate(async () => {
-    const header = document.querySelector("header");
-    const sentinel = document.querySelector('[aria-hidden="true"].h-0');
-    const block = sentinel?.nextElementSibling;
-    const panel = document.querySelector('[id^="case-"]');
-    if (!block || !panel) return null;
-
-    // Infinity means every sample was skipped, which is not the same as a large
-    // clearance -- and `Math.round(Infinity) >= MIN_CLEARANCE` is true, so this
-    // reported PASS having measured nothing. It is returned as null instead and
-    // the caller treats that as unmeasured.
-    let worst = Infinity;
-    let at = null;
-    let sampled = 0;
-    const limit = window.innerHeight * 2;
-
-    // Snapping off for the sweep, and restored below.
-    //
-    // The page snaps mandatorily, so every `scrollTo` below would be pulled to
-    // the nearest snap point and the sweep would sample two positions instead
-    // of a hundred and eighty. What is being measured here is the *layout*
-    // through the handover -- where the definition block sits relative to the
-    // first image at each offset -- which is a property of the page at that
-    // offset whether or not a reader can come to rest there.
-    const snapping = document.documentElement.style.scrollSnapType;
-    document.documentElement.style.scrollSnapType = "none";
-    for (let y = 0; y <= limit; y += 10) {
+// Everything measured in one pass through the page's stops.
+async function measure(page) {
+  return page.evaluate(async (TOLERANCE) => {
+    const wait = () => new Promise((r) => setTimeout(r, 250));
+    const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const go = async (y) => {
       window.scrollTo(0, y);
-      // Two frames: one for the scroll handler to run, one for it to paint.
-      await new Promise((r) =>
-        requestAnimationFrame(() => requestAnimationFrame(r)),
-      );
-      if (+getComputedStyle(header).opacity <= 0.01) continue;
-      sampled += 1;
-      const gap =
-        panel.getBoundingClientRect().top -
-        block.getBoundingClientRect().bottom;
-      if (gap < worst) {
-        worst = gap;
-        at = y;
-      }
+      await wait();
+      await frames();
+    };
+    document.documentElement.style.scrollSnapType = "none";
+
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const lg = vw >= 1024;
+    const header = document.querySelector("header");
+    const stops = [...document.querySelectorAll('[id^="case-"]')];
+    const stopOf = (el) => {
+      const r = el.getBoundingClientRect();
+      return r.top + window.scrollY + r.height / 2 - vh / 2;
+    };
+    const frame = document.querySelector("[data-vt-cover]");
+    const inset = () => {
+      const m = getComputedStyle(frame).clipPath.match(/inset\(([^)]*)\)/);
+      return m ? m[1].split(/\s+/).map(parseFloat) : [0, 0, 0, 0];
+    };
+    const scale = () => {
+      const t = getComputedStyle(frame.querySelector("img")).transform;
+      return t === "none" ? 1 : new DOMMatrix(t).a;
+    };
+
+    const out = { count: stops.length, problems: [] };
+    const bad = (msg) => out.problems.push(msg);
+
+    await go(0);
+    const [top] = inset();
+    const frameTop = frame.getBoundingClientRect().top + top;
+    if (!(frameTop < vh - 24)) bad(`first study does not peek (frame top ${Math.round(frameTop)} of ${vh})`);
+    if (+getComputedStyle(header).opacity > 0.01) bad("masthead visible on the hero");
+
+    await go(stopOf(stops[0]));
+    const edges = inset();
+    if (edges.some((e) => Math.abs(e) > TOLERANCE)) bad(`first study not full bleed at its stop (inset ${edges.map(Math.round).join(" ")})`);
+    if (Math.abs(scale() - 1) > 0.01) bad(`first study still zoomed at its stop (scale ${scale().toFixed(3)})`);
+    const fr = frame.getBoundingClientRect();
+    if (Math.abs(fr.width - vw) > TOLERANCE) bad(`first study ${Math.round(fr.width)} wide, window ${vw}`);
+    // The masthead fades in over --duration-settle; read it once it has. From
+    // lg only: below that the first study is a 16:9 strip centred in the
+    // window, so at its stop the foot of the hero is still on screen and the
+    // masthead is right to stay hidden -- "past the hero" has not happened.
+    await new Promise((r) => setTimeout(r, 700));
+    if (lg && +getComputedStyle(header).opacity < 0.99) bad("masthead hidden past the hero");
+
+    for (const el of stops.slice(1)) {
+      await go(stopOf(el));
+      const r = el.getBoundingClientRect();
+      if (Math.abs(r.width - vw) > TOLERANCE) bad(`${el.id} ${Math.round(r.width)} wide, window ${vw}`);
+      if (Math.abs(r.top + r.height / 2 - vh / 2) > TOLERANCE) bad(`${el.id} off centre`);
+      if (lg && Math.abs(r.height - vh) > TOLERANCE) bad(`${el.id} ${Math.round(r.height)} tall, window ${vh}`);
     }
-    window.scrollTo(0, 0);
-    document.documentElement.style.scrollSnapType = snapping;
-    if (!sampled || worst === Infinity) return null;
-    return { gap: Math.round(worst), at };
-  });
+
+    if (document.documentElement.scrollWidth > vw) bad(`scrolls sideways (${document.documentElement.scrollWidth} > ${vw})`);
+    return out;
+  }, TOLERANCE);
 }
 
-const browser = await chromium.launch({ channel: "chrome" });
+// Installed Chrome when there is one, Playwright's own Chromium when not.
+const browser = await chromium
+  .launch(process.env.CHROME === "0" ? {} : { channel: "chrome" })
+  .catch(() => chromium.launch());
 let failed = false;
 
-// Warm the server before measuring anything.
-//
-// Against `next dev` the first request compiles the route, which can take longer
-// than any sane per-check timeout — and the cost lands on whichever viewport
-// happens to go first, so runs failed at the top of the list and passed at the
-// bottom for no reason to do with the page. One throwaway request pays that cost
-// once, outside the results.
+// Warm the server first. Against `next dev` the first request compiles the
+// route, and that cost used to land on whichever viewport went first.
 {
   const warm = await browser.newPage();
   try {
     await warm.goto(BASE, { waitUntil: "domcontentloaded" });
-    await warm.waitForSelector("nav a[href^='#case-']", { timeout: 90000 });
+    await warm.waitForSelector('[id^="case-"]', { timeout: 90000 });
   } catch {
     console.log(`Could not reach ${BASE}. Is \`bun run dev\` running?`);
     await browser.close();
@@ -160,37 +142,23 @@ for (const [width, height, label] of VIEWPORTS) {
   const page = await browser.newPage({ viewport: { width, height } });
   try {
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
-    // Wait for the things being measured, not for the network. `networkidle` is
-    // unreliable against a dev server (HMR keeps a socket open) and it says
-    // nothing about whether React has hydrated — an earlier version of this
-    // passed four viewports by measuring a page that had not rendered yet.
-    await page.waitForSelector("nav a[href^='#case-']", { timeout: 15000 });
-    await page.waitForSelector('[id^="case-"]', { timeout: 15000 });
+    // Wait for what is measured, not for the network: an earlier version passed
+    // four viewports by measuring a page that had not hydrated.
+    await page.waitForSelector("[data-vt-cover] img", { timeout: 15000 });
     await page.evaluate(() => document.fonts.ready);
 
-    const gap = await clearance(page);
-    const rest = await restingStates(page);
-
-    // Vacuous passes are the failure mode to guard hardest against: a run that
-    // finds no pills asserts nothing, and reported PASS on four viewports here
-    // before this existed.
-    const measured = rest.count > 0 && gap !== null;
-    const ok =
-      measured &&
-      rest.worstOpacity < FADED &&
-      rest.worstOffset <= CENTRE_TOLERANCE &&
-      gap.gap >= MIN_CLEARANCE;
+    const m = await measure(page);
+    // A run that found nothing asserted nothing, and that is a failure.
+    const ok = m.count >= 4 && m.problems.length === 0;
     if (!ok) failed = true;
-
     console.log(
-      `${ok ? "PASS" : "FAIL"}  ${String(`${width}x${height}`).padEnd(10)} ${label.padEnd(17)} ` +
-        `panels ${rest.count}  hero ${rest.worstOpacity.toFixed(2)}  ` +
-        `off-centre ${rest.worstOffset}px  clearance ${gap ? `${gap.gap}px` : "NOT MEASURED"}` +
-        (measured ? "" : "   <- measured nothing"),
+      `${ok ? "PASS" : "FAIL"}  ${`${width}x${height}`.padEnd(10)} ${label.padEnd(17)} stops ${m.count}` +
+        (m.count >= 4 ? "" : "   <- measured nothing"),
     );
+    for (const p of m.problems) console.log(`      ${p}`);
   } catch (error) {
     failed = true;
-    console.log(`FAIL  ${width}x${height} ${label} — ${error.message.split("\n")[0]}`);
+    console.log(`FAIL  ${width}x${height} ${label} -- ${error.message.split("\n")[0]}`);
   } finally {
     await page.close();
   }
@@ -199,8 +167,7 @@ for (const [width, height, label] of VIEWPORTS) {
 await browser.close();
 
 if (failed) {
-  console.log("\nA check failed. Both assertions guard bugs that shipped once;");
-  console.log("see the comment at the top of this file for what each one means.");
+  console.log("\nA check failed. See the comment at the top of this file.");
   process.exit(1);
 }
 console.log("\nAll viewports pass.");

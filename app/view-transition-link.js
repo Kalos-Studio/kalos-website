@@ -103,7 +103,7 @@ function waitForTarget(name, source, { centreInView = false, ticket } = {}) {
       // in late exactly as they did before, which is the current behaviour and
       // an acceptable floor.
       if (el) {
-        const panel = el.closest("li");
+        const panel = el.closest("article");
         for (const sibling of [
           panel?.previousElementSibling,
           panel?.nextElementSibling,

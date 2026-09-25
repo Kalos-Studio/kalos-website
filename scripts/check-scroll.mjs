@@ -111,7 +111,11 @@ const THROW = [1200, 6000];
 // to the stop it started from rather than be left partway.
 const HOLD = [200, 800];
 
-const browser = await chromium.launch({ channel: "chrome" });
+// Installed Chrome when there is one, Playwright's own Chromium when there is
+// not (`bunx playwright install chromium`). CHROME=0 forces the latter.
+const browser = await chromium
+  .launch(process.env.CHROME === "0" ? {} : { channel: "chrome" })
+  .catch(() => chromium.launch());
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 
 // The checks arrive holding a key to the case studies.
@@ -178,8 +182,15 @@ const distanceToStop = async () => {
   return Math.round(Math.min(...list.map((stop) => Math.abs(stop - y))));
 };
 
+// How much of the hero is on screen, 0 to 1. It was the hero's opacity when the
+// hero faded out over a hold; the redesign's hero simply scrolls away, so what
+// "gone" means now is off the screen.
 const heroOpacity = () =>
-  page.evaluate(() => +getComputedStyle(document.querySelector("header")).opacity);
+  page.evaluate(() => {
+    const r = document.getElementById("top").getBoundingClientRect();
+    const seen = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0);
+    return Math.max(0, Math.round((seen / r.height) * 100) / 100);
+  });
 
 const scrollY = () => page.evaluate(() => Math.round(window.scrollY));
 
@@ -218,7 +229,7 @@ const load = async (url = BASE) => {
 try {
   await load();
   const order = (await panels()).map((p) => p.id);
-  if (order.length < 5) throw new Error(`only ${order.length} panels found`);
+  if (order.length < 4) throw new Error(`only ${order.length} panels found`);
 
   // --- ONEVIEW -----------------------------------------------------------
   const goto = async (target) => {
@@ -427,7 +438,7 @@ try {
   );
 
   // --- RETURN ------------------------------------------------------------
-  for (const slug of ["my-heb-app", "echocare", "vital-energy"]) {
+  for (const slug of ["mara", "echocare", "priority-ambulance-transfer"]) {
     await page.goto(`${BASE}/work/${slug}`, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(`a[href="/#case-${slug}"]`, { timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);

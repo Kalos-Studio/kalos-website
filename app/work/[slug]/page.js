@@ -5,7 +5,7 @@ import CaseStudyBody from "../CaseStudyBody";
 import PasswordGate from "../PasswordGate";
 import { Mark } from "../../lockup";
 import ViewTransitionLink from "../../view-transition-link";
-import { caseStudies, workPageTitle } from "../data";
+import { caseStudies, onLanding, workPageTitle } from "../data";
 import BookACall from "../../(landing)/book-a-call";
 import { closer } from "../../(landing)/content";
 import { isUnlocked } from "@/lib/work-lock";
@@ -99,6 +99,13 @@ export default async function CaseStudyPage({ params }) {
   const cover = { ...cs.cover, ...cs.landingCover };
   const vtName = `cover-${cs.slug}`;
 
+  // Where "back" goes. A study with a panel on the landing page returns to it;
+  // one without goes to the top, and its hero is a plain link, because the
+  // morph would wait for a panel that is not there and hold the page for
+  // view-transition-link's whole timeout before giving up.
+  const backHref = onLanding(cs.slug) ? `/#case-${cs.slug}` : "/";
+  const HeroLink = onLanding(cs.slug) ? ViewTransitionLink : Link;
+
   // The gate, and it stops at the prose. Everything a visitor was shown on the
   // landing page -- the cover, the title, the summary line -- is still here,
   // because hiding those would mean the panel they clicked led to a wall and
@@ -138,7 +145,7 @@ export default async function CaseStudyPage({ params }) {
             is HashTarget's, in app/(landing); an anchor alone would top-align
             it. */}
         <Link
-          href={`/#case-${cs.slug}`}
+          href={backHref}
           className="text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
         >
           Back to Work
@@ -190,10 +197,9 @@ export default async function CaseStudyPage({ params }) {
           clicks the picture gets. `#case-<slug>` rather than `#work` so it
           returns to this study's panel rather than the top of the list, which
           is also what gives the morph somewhere on screen to land. */}
-      <ViewTransitionLink
-        href={`/#case-${cs.slug}`}
-        vtName={vtName}
-        centreInView
+      <HeroLink
+        href={backHref}
+        {...(HeroLink === ViewTransitionLink ? { vtName, centreInView: true } : {})}
         className="block cursor-pointer"
         aria-label={`Back to the work, at ${cs.title}`}
       >
@@ -217,7 +223,7 @@ export default async function CaseStudyPage({ params }) {
             "data-vt-cover": "",
           }}
         />
-      </ViewTransitionLink>
+      </HeroLink>
 
       {/* One column, the full width of the page's own. The prose caps itself at
           a reading measure inside it (see .work-prose in work.css) while figures
@@ -228,7 +234,7 @@ export default async function CaseStudyPage({ params }) {
         {unlocked ? (
           <CaseStudyBody blocks={cs.body} />
         ) : (
-          <PasswordGate slug={cs.slug} />
+          <PasswordGate slug={cs.slug} backHref={backHref} />
         )}
       </div>
 
