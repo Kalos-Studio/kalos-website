@@ -99,11 +99,16 @@ and in what order. The rest keep their pages, and their "Back to Work" goes to
 the top of the landing page because there is no panel to return to (`onLanding`).
 
 - **`masthead.js`** — the lockup, fixed top left, hidden until the hero has left
-  the screen (the wireframe's note). `mix-blend-difference` lets one white
-  lockup read on the white hero and on dark panels without swapping colours.
+  the screen (the wireframe's note). White on a black fade over the work, black
+  with no fade over the closer. It was `mix-blend-difference`, which turned into
+  a patchwork of inverted colours over the MARA collage.
 - **`reveal.js`** — the first study. An inset frame peeks over the fold, then
   grows to full bleed while the picture inside zooms out (the Venice / Collins
-  move). **The geometry is derived, not tuned:** progress is scroll position over
+  move). **Transforms only, on a ScrollTimeline** — the compositor runs it off
+  the scroll position, so it cannot lag a frame behind the sticky stage the way
+  a scroll listener did. It was `clip-path` from a listener and it stuttered;
+  read the top of the file before bringing either back. **The geometry is
+  derived, not tuned:** progress is scroll position over
   the distance to that study's own snap stop, so it is exactly full bleed where
   the page comes to rest. The stop is a plain block at the foot of the runway,
   not the sticky stage, because a sticky element's snap position moves with the

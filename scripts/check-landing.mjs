@@ -18,8 +18,8 @@
  *               hidden, per the wireframe's note.
  *
  *   BLEED       Resting on the first study, its frame has grown to the whole
- *               stage (clip-path inset to zero) and its picture has zoomed back
- *               out to scale 1. A frame that stops short of full bleed at its
+ *               stage (frame transform at identity) and its picture has zoomed
+ *               back out to scale 1. A frame that stops short of full bleed at its
  *               own stop is the bug this effect is most likely to have, since
  *               progress is measured against that stop.
  *
@@ -72,28 +72,30 @@ async function measure(page) {
       return r.top + window.scrollY + r.height / 2 - vh / 2;
     };
     const frame = document.querySelector("[data-vt-cover]");
-    const inset = () => {
-      const m = getComputedStyle(frame).clipPath.match(/inset\(([^)]*)\)/);
-      return m ? m[1].split(/\s+/).map(parseFloat) : [0, 0, 0, 0];
+    // The frame grows by a (non-uniform) scale and the picture inside carries
+    // the inverse times the zoom -- see reveal.js. So "full bleed" is the frame
+    // at identity, and "zoomed back out" is the picture at identity too.
+    const matrix = (el) => {
+      const t = getComputedStyle(el).transform;
+      return t === "none" ? new DOMMatrix() : new DOMMatrix(t);
     };
-    const scale = () => {
-      const t = getComputedStyle(frame.querySelector("img")).transform;
-      return t === "none" ? 1 : new DOMMatrix(t).a;
-    };
+    const identity = (m) =>
+      Math.abs(m.a - 1) < 0.005 && Math.abs(m.d - 1) < 0.005 &&
+      Math.abs(m.e) < TOLERANCE && Math.abs(m.f) < TOLERANCE;
 
     const out = { count: stops.length, problems: [] };
     const bad = (msg) => out.problems.push(msg);
 
     await go(0);
-    const [top] = inset();
-    const frameTop = frame.getBoundingClientRect().top + top;
+    const frameTop = frame.getBoundingClientRect().top;
     if (!(frameTop < vh - 24)) bad(`first study does not peek (frame top ${Math.round(frameTop)} of ${vh})`);
     if (+getComputedStyle(header).opacity > 0.01) bad("masthead visible on the hero");
 
     await go(stopOf(stops[0]));
-    const edges = inset();
-    if (edges.some((e) => Math.abs(e) > TOLERANCE)) bad(`first study not full bleed at its stop (inset ${edges.map(Math.round).join(" ")})`);
-    if (Math.abs(scale() - 1) > 0.01) bad(`first study still zoomed at its stop (scale ${scale().toFixed(3)})`);
+    const fm = matrix(frame);
+    const im = matrix(frame.querySelector("img"));
+    if (!identity(fm)) bad(`first study not full bleed at its stop (scale ${fm.a.toFixed(3)} x ${fm.d.toFixed(3)})`);
+    if (!identity(im)) bad(`first study still zoomed at its stop (scale ${im.a.toFixed(3)})`);
     const fr = frame.getBoundingClientRect();
     if (Math.abs(fr.width - vw) > TOLERANCE) bad(`first study ${Math.round(fr.width)} wide, window ${vw}`);
     // The masthead fades in over --duration-settle; read it once it has. From

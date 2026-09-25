@@ -11,27 +11,47 @@ import Lockup from "../lockup";
  * the hero already has the mark in the middle of it, and a second one in the
  * corner would be the name said twice on the first screen.
  *
- * An IntersectionObserver on the hero rather than a scroll listener, because the
- * question is binary -- is any of the hero still on screen -- and the browser
- * answers it without anything running per frame.
+ * Over the work it is white on a black fade. It was one white lockup under
+ * `mix-blend-difference`, which is correct on flat grounds and falls apart on a
+ * photograph: over MARA's collage it inverted each colour behind it and came
+ * out a patchwork of teal, orange and grey. The fade gives it a ground of its
+ * own whatever is behind it.
  *
- * `mix-blend-difference` with white is what lets one lockup sit on everything
- * below it: white on the white hero and closer inverts to black, and over the
- * dark case study panels it stays white. The alternative was reading which panel
- * is behind the header and swapping colour, which is a scroll listener doing
- * what a blend mode does for free.
+ * Over the closer the fade goes and the lockup turns black. A black gradient
+ * across the top of a white page is a smudge, not a backdrop.
+ *
+ * IntersectionObservers rather than a scroll listener: both questions are
+ * binary, and the browser answers them without anything running per frame.
  */
 export default function Masthead({ heroId }) {
   const [shown, setShown] = useState(false);
+  const [onWork, setOnWork] = useState(true);
 
   useEffect(() => {
     const hero = document.getElementById(heroId);
-    if (!hero) return;
-    const observer = new IntersectionObserver(([entry]) =>
+    const closer = document.getElementById("connect");
+    if (!hero || !closer) return;
+
+    const heroObserver = new IntersectionObserver(([entry]) =>
       setShown(!entry.isIntersecting),
     );
-    observer.observe(hero);
-    return () => observer.disconnect();
+    heroObserver.observe(hero);
+
+    // Is the closer under the masthead? The root is shrunk to the top 10% of
+    // the window, which is about where the lockup sits. The closer rather than
+    // the work section, because resting on the closer puts the work's bottom
+    // edge exactly on the window's top, and an edge touching the root counts
+    // as intersecting.
+    const closerObserver = new IntersectionObserver(
+      ([entry]) => setOnWork(!entry.isIntersecting),
+      { rootMargin: "0px 0px -90% 0px" },
+    );
+    closerObserver.observe(closer);
+
+    return () => {
+      heroObserver.disconnect();
+      closerObserver.disconnect();
+    };
   }, [heroId]);
 
   // Back to the top rather than a navigation, since this is the page it would
@@ -45,23 +65,45 @@ export default function Masthead({ heroId }) {
     history.replaceState(null, "", "/");
   };
 
+  const fade = "duration-[var(--duration-settle)] ease-brand";
+
   return (
     <header
       className={
-        "pointer-events-none fixed inset-x-0 top-0 z-10 px-5 py-4 text-white mix-blend-difference " +
-        "transition duration-[var(--duration-settle)] ease-brand sm:px-8 lg:px-12 lg:py-6 " +
-        (shown ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0")
+        "pointer-events-none fixed inset-x-0 top-0 z-10 transition " +
+        fade +
+        (shown ? " opacity-100" : " opacity-0")
       }
     >
-      <Link
-        href="/"
-        onClick={toTop}
-        aria-label="Kalos, back to top"
-        tabIndex={shown ? 0 : -1}
-        className={"inline-block " + (shown ? "pointer-events-auto" : "")}
+      {/* The fade. Taller than the bar so it dissolves into the picture rather
+          than ending in an edge; three stops because a straight two-stop ramp
+          reads as a band. */}
+      <div
+        aria-hidden="true"
+        className={
+          "absolute inset-x-0 top-0 h-28 bg-linear-to-b from-black/60 via-black/25 to-transparent transition-opacity lg:h-36 " +
+          fade +
+          (onWork ? " opacity-100" : " opacity-0")
+        }
+      />
+      <div
+        className={
+          "relative px-5 py-4 transition sm:px-8 lg:px-12 lg:py-6 " +
+          fade +
+          (shown ? " translate-y-0" : " -translate-y-2") +
+          (onWork ? " text-white" : " text-black")
+        }
       >
-        <Lockup className="h-6 w-auto lg:h-7" />
-      </Link>
+        <Link
+          href="/"
+          onClick={toTop}
+          aria-label="Kalos, back to top"
+          tabIndex={shown ? 0 : -1}
+          className={"inline-block " + (shown ? "pointer-events-auto" : "")}
+        >
+          <Lockup className="h-6 w-auto lg:h-7" />
+        </Link>
+      </div>
     </header>
   );
 }
