@@ -291,6 +291,14 @@ const allWork = [
         src: "/work/echocare/trip-tracking-monitor.jpg",
         alt: "An EchoCare trip detail view with live GPS tracking on a desktop monitor, set on a dark ribbed plinth",
       },
+      // The old cover, kept as the last image. A product screenshot, so it
+      // takes the screen treatment the two above do not.
+      {
+        type: "image",
+        src: "/work/echocare/login.jpg",
+        screenshot: true,
+        alt: "The EchoCare login screen, \"The help you need, when you need it,\" with an animated network of service icons",
+      },
     ],
   },
   // PLACEHOLDER COPY. Every string below is a stand-in until the real write-up
