@@ -235,19 +235,13 @@ const allWork = [
     summary:
       "B2B SaaS dispatch platform for emergency medical services and non-emergent medical transport operations.",
     role: "Product Design, Design Systems",
+    // The stage render, on the landing panel and the case study hero alike. It
+    // replaced a pair: the login screen for the hero and the trip tracking view
+    // for the panel, which meant the study opened on a different picture from
+    // the one clicked. One image now, as everywhere else.
     cover: {
-      src: "/work/echocare/cover.jpg",
-      alt: "The EchoCare login screen, \"The help you need, when you need it,\" with an animated network of service icons",
-      cardPosition: "left center",
-    },
-    // The login screen is the right opening image for the case study and the
-    // wrong one for the landing panel: half of it is an empty sign-in form, and
-    // at panel size that reads as a screenshot of nothing. The trip tracking
-    // view shows the product doing its job.
-    landingCover: {
-      src: "/work/echocare/trip-tracking.jpg",
-      alt: "An EchoCare trip detail view with live GPS tracking, route, and a dispatch tracking timeline",
-      cardPosition: "center",
+      src: "/work/echocare/stage.jpg",
+      alt: "The EchoCare wordmark lit up on a wall-sized screen in a dark hall, with people silhouetted in front of it",
     },
     body: [
       {
@@ -283,6 +277,19 @@ const allWork = [
       {
         type: "paragraph",
         text: "The last part of the work is the part nobody puts on a portfolio and everybody needs. We sat between product and engineering translating operational requirements into patterns that could actually ship, and we checked the marketing against the software. When a claim on the website and the behaviour of the platform disagree, the platform is not the thing that gets fixed first, and someone has to be willing to say so.",
+      },
+      // Photographic renders rather than screenshots, so no `screenshot` flag:
+      // the screen in each is already inside its own frame, and a radius and
+      // shadow would be drawn around the room rather than the device.
+      {
+        type: "image",
+        src: "/work/echocare/dispatch-wall.jpg",
+        alt: "The EchoCare dispatch board on a large wall-mounted screen in a concrete-walled room",
+      },
+      {
+        type: "image",
+        src: "/work/echocare/trip-tracking-monitor.jpg",
+        alt: "An EchoCare trip detail view with live GPS tracking on a desktop monitor, set on a dark ribbed plinth",
       },
     ],
   },
