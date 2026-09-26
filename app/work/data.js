@@ -189,10 +189,19 @@ const allWork = [
     summary:
       "Texas-based medical transport company providing ambulance and wheelchair transport across the greater Houston area and beyond.",
     role: "Brand Strategy, Brand Identity, Fleet Livery, Web Design, Development",
+    // The homepage hero without the site's nav bar over it, so it reads as a
+    // picture of the brand rather than a screenshot of a website -- and the
+    // masthead's lockup no longer lands on Priority's own logo in the corner.
     cover: {
-      src: "/work/priority-ambulance-transfer/cover.jpg",
-      alt: "The Priority Ambulance Transfer homepage hero, \"When every minute matters, we're already moving.\"",
-      cardPosition: "left center",
+      // Not cover.jpg: that name was the old picture, and the image optimizer
+      // and browsers cache by URL, so reusing it kept serving the old one.
+      src: "/work/priority-ambulance-transfer/on-the-road.jpg",
+      alt: "A Priority Ambulance Transfer van on an open road at sunset, under the line \"When every minute matters, we're already moving.\"",
+      // 1.89:1, wider than most windows, so full bleed crops the sides and a
+      // centred crop cut the first letter off every line of the headline.
+      // Weighted left: the type keeps a margin and the van loses some bumper,
+      // which reads as a crop where a clipped word reads as a mistake.
+      cardPosition: "15% center",
     },
     body: [
       {
@@ -224,6 +233,14 @@ const allWork = [
       {
         type: "paragraph",
         text: "Priority went to market with one identity across the fleet, the site, and every piece of paper a partner would see before ever booking a transport. Holding the brand, the strategy and the build under one roof is what made the phased plan possible at all: there were no vendors to align, so the schedule was a decision rather than a negotiation.",
+      },
+      // The old cover, the homepage hero with its nav bar, kept as the last
+      // image the way EchoCare's was.
+      {
+        type: "image",
+        src: "/work/priority-ambulance-transfer/website-hero.jpg",
+        screenshot: true,
+        alt: "The Priority Ambulance Transfer homepage hero, \"When every minute matters, we're already moving.\"",
       },
     ],
   },
