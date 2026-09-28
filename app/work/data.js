@@ -61,6 +61,10 @@
 //                               // important content near the top (like a nav
 //                               // bar) may need to anchor lower to avoid
 //                               // slicing through it. Card crop is unaffected.
+//     mobilePosition: "50% center", // optional -- where the landing page
+//                               // anchors this cover on a narrow (portrait)
+//                               // window, where it is cropped hardest. Put it
+//                               // on the subject. Falls back to cardPosition.
 //     cardPosition: "center",  // optional CSS object-position for the
 //                               // listing card and "more case studies"
 //                               // thumbnail, both cropped to 16:10. An image
@@ -202,6 +206,14 @@ const allWork = [
       // Weighted left: the type keeps a margin and the van loses some bumper,
       // which reads as a crop where a clipped word reads as a mistake.
       cardPosition: "15% center",
+      // On a phone the headline cannot survive any crop, so the crop goes to
+      // the van's cab and grille (x 1420 to 1910 of 2000). A portrait export
+      // of this cover would do better than either.
+      //
+      // Note what a percentage means here: it lines up that point of the
+      // picture with the same point of the window, so it is not the centre of
+      // what is shown. 78% put the window over the van's side; 92% is the cab.
+      mobilePosition: "92% center",
     },
     body: [
       {
@@ -259,6 +271,8 @@ const allWork = [
     cover: {
       src: "/work/echocare/stage.jpg",
       alt: "The EchoCare wordmark lit up on a wall-sized screen in a dark hall, with people silhouetted in front of it",
+      // On a phone, centred on the wordmark (x 760 to 1240 of 2000).
+      mobilePosition: "50% center",
     },
     body: [
       {
@@ -331,6 +345,9 @@ const allWork = [
     cover: {
       src: "/work/young-muslims/cover.jpg",
       alt: "A Young Muslims poster on a subway platform, \"For the youth. By the youth.\", over a group of young women embracing, with a train blurring past behind",
+      // On a phone, the poster (x 710 to 1220 of 2000), which is portrait
+      // already and fills a phone almost exactly.
+      mobilePosition: "48% center",
     },
     body: [
       {

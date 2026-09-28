@@ -1,36 +1,44 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef } from "react";
 import CoverImage from "../work/CoverImage";
 import ViewTransitionLink from "../view-transition-link";
 
 /**
- * The work, on one full-window stage.
- *
- * Two movements, one after the other, on the same stage:
+ * The work: the first study grows out from under the hero, and every study
+ * after it slides up over the one before like a sheet laid on a stack.
  *
  *   1. THE REVEAL. The first study opens as an inset picture peeking over the
  *      fold and grows to full bleed as the page scrolls -- the Venice / Collins
  *      move. Most of this note is about it.
- *   2. THE FADES. Once it is full bleed the stage pins, and every study after
- *      it fades in over the one before, settling from a slight zoom, one per
- *      snap stop.
+ *   2. THE STACK. Each study is a full-window sheet, sticky at the top of the
+ *      window. The next one scrolls up over it, and as it is covered the sheet
+ *      underneath recedes: it scales down a little, dims, and takes on the
+ *      inset frame's rounded corners, so it becomes a card on the white page.
  *
- * Why the second is a fade on a pinned stage rather than panels scrolling past.
- * The panels were full-bleed blocks stacked down the page, and unless the
- * window was exactly the picture's shape you saw the one above or below at the
- * edges -- and between two stops you always saw the edge between two pictures
- * sliding past. A pinned stage is exactly one window whatever the window is,
- * so there are no neighbours to see, and a fade has no edge.
+ * What the stack replaced, both built and both rejected:
  *
- * The fit rule for those covers, since the stage is whatever shape the window
- * is: on a landscape window (5:4 and wider) the cover fills it, cropped around
- * its `cardPosition`. On anything narrower -- a phone, a portrait tablet -- a
- * crop would keep a third of a 16:9 picture and cut Priority's headline in
- * half, so the whole picture is shown instead, over a blurred, enlarged copy of
- * itself that fills the window. Full bleed either way, and nothing important
- * is ever cut. A CSS media query decides, so there is no measuring.
+ *   - Full-bleed panels scrolling past. Unless the window was exactly the
+ *     picture's shape you saw the neighbour at its edges, and between stops the
+ *     edge between two pictures slid by with nothing to say what it was.
+ *   - A pinned stage cross-fading between covers with a settle zoom. Mid-fade
+ *     two unrelated photographs made a double exposure -- two logos over each
+ *     other -- and it read as a slideshow. On narrow windows each cover sat
+ *     whole over a blurred copy of itself, which says "this does not fit" in
+ *     the one place the work should look deliberate.
+ *
+ * A sheet has an edge on purpose. It is a physical object arriving over
+ * another, never a blend, and the recede is the same vocabulary as the hero's
+ * inset frame -- rounded, on white -- run the other way.
+ *
+ * The fit: every sheet is object-cover, full bleed, always. What decides the
+ * crop is where it is anchored: `cardPosition` on a landscape window and
+ * `mobilePosition` on a narrow one (both in data.js), so a phone crops into
+ * the part of the picture that matters rather than its middle. A CSS media
+ * query picks between them, so there is nothing to measure.
+ *
+ * The stack is plain `position: sticky`, so without JavaScript it still
+ * stacks; only the recede needs the script.
  *
  * The first study (the reveal):
  *
@@ -84,30 +92,35 @@ import ViewTransitionLink from "../view-transition-link";
  * snap area in page.js does the snapping. It is a separate block because
  * paged-scroll.js, HashTarget and check-scroll.mjs look it up by id.
  *
- * The rest (the fades):
+ * The stack:
  *
- * The stage is sticky, so it scrolls in flow until its top reaches the window's
- * -- which is exactly when the reveal completes, so the reveal never knew the
- * difference -- and then holds for one window per study after the first. Each
- * of those studies has its own `#case-<slug>` stop block, a window tall, laid
- * down the runway in order, and its layer fades in across the scroll from the
- * stop before it to its own. Same compositor path as the reveal: opacity and
- * transform on a ScrollTimeline.
+ * Every sheet, the first study's stage included, is `sticky top-0` and a
+ * window tall, one after another in the same section. So each sheet scrolls up
+ * in flow and sticks, and the next scrolls up over it. The first study's stage
+ * sticks exactly when the reveal completes, so the reveal never knew the
+ * difference. Each later study has a `#case-<slug>` stop block a window apart
+ * down the runway, which is exactly where its sheet sticks.
  *
- * Only the layer on top may be clicked. They are stacked, so an invisible layer
- * above the visible one would take its clicks; the others are `inert`, set from
- * a scroll listener that only acts when the current study changes. That is the
- * one thing here decided on the main thread, and it is not visual.
+ * A sheet recedes across the scroll from its own stop to the next one's, which
+ * is precisely the time the next sheet takes to cover it. Scale and the dimming
+ * layer's opacity are compositor properties on the same ScrollTimeline as the
+ * reveal; the corner radius is painted, and is small enough that a frame of lag
+ * on it does not show.
+ *
+ * There is nothing to arbitrate for clicks: at a stop the next sheet is still
+ * wholly below the window, so the sheet on screen is the topmost thing there.
  */
 
-// The zoom a fading-in cover settles from.
-const SETTLE_ZOOM = 1.06;
+// How far a covered sheet recedes, and how dark it goes. Enough to read as
+// pushed back, not so much that it reads as disabled.
+const RECEDE_SCALE = 0.92;
+const RECEDE_DIM = 0.45;
 
-// Landscape enough to crop to fill is `[@media(min-aspect-ratio:5/4)]:`, see
-// the fit rule above. Written out in full in each class list rather than kept
-// in a constant: Tailwind finds classes by scanning the source for them, so a
-// class assembled from a variable at runtime is never generated. That shipped
-// once here, and every cover showed whole on a laptop with blurred bands.
+// `[@media(min-aspect-ratio:5/4)]:` is a landscape window, where a cover is
+// anchored at `cardPosition` rather than `mobilePosition`. Written out in full
+// in each class list rather than kept in a constant: Tailwind finds classes by
+// scanning the source for them, so a class assembled from a variable at
+// runtime is never generated. That shipped once here.
 
 // How far the picture starts zoomed in, relative to just covering the frame.
 const ZOOM = 1.35;
@@ -187,24 +200,38 @@ function pose(s, g) {
   };
 }
 
+// What the browser should fetch for a full-window cover. On a landscape
+// window the picture is about the window's width. On a portrait one it is
+// cropped to fill the height, which puts it at up to four times the window's
+// width -- and `100vw` there fetched a file a quarter of the size it was drawn
+// at, so every phone crop was soft. The media condition is the same line the
+// anchors switch on.
+const COVER_SIZES = "(max-aspect-ratio: 5/4) 400vw, 100vw";
+
+// The corner a receded sheet takes on: the inset frame's own, so the card it
+// becomes is the frame the hero drew.
+const cornerOf = (W) => W * (W >= 1024 ? INSET.lg : INSET.sm) * RADIUS;
+
 export default function Stage({ first, rest }) {
   const stageRef = useRef(null);
   const frameRef = useRef(null);
   const stopRef = useRef(null);
-  const layerRefs = useRef([]);
-  const layerStopRefs = useRef([]);
-  const hitRefs = useRef([]);
+  const sheetRefs = useRef([]);
+  const dimRefs = useRef([]);
+  const sheetStopRefs = useRef([]);
 
   useEffect(() => {
     const stage = stageRef.current;
     const frame = frameRef.current;
     const stop = stopRef.current;
     const image = frame?.querySelector("img");
-    const layers = layerRefs.current.slice(0, rest.length);
-    const layerStops = layerStopRefs.current.slice(0, rest.length);
-    const hits = hitRefs.current.slice(0, rest.length + 1);
+    // Every card in the stack, the first study's stage first, and the layer
+    // that dims each.
+    const cards = [stage, ...sheetRefs.current.slice(0, rest.length)];
+    const dims = dimRefs.current.slice(0, rest.length + 1);
+    const sheetStops = sheetStopRefs.current.slice(0, rest.length);
     if (!stage || !frame || !stop || !image) return;
-    if (layers.some((l) => !l) || layerStops.some((l) => !l)) return;
+    if ([...cards, ...dims, ...sheetStops].some((el) => !el)) return;
 
     frame.style.transformOrigin = "0 0";
     image.style.transformOrigin = "0 0";
@@ -217,6 +244,10 @@ export default function Stage({ first, rest }) {
       const r = stop.getBoundingClientRect();
       const section = stage.parentElement.getBoundingClientRect();
       const end = r.top + window.scrollY + r.height / 2 - window.innerHeight / 2;
+      const at = (el) => el.getBoundingClientRect().top + window.scrollY;
+      // Where each card is on screen by itself: the reveal's end, then each
+      // later study's stop. Card k recedes from its own to the next.
+      const stops = [end, ...sheetStops.map(at)];
       return {
         W: stage.clientWidth,
         H: stage.clientHeight,
@@ -224,22 +255,29 @@ export default function Stage({ first, rest }) {
         // The scroll that centres the stop, i.e. the section filling the
         // window: see the note at the top of the file.
         end,
-        // Each later study's stop, and so the scroll range its fade plays
-        // across: from the stop before it to its own.
-        fades: layerStops.map((el, i, all) => {
-          const at = el.getBoundingClientRect().top + window.scrollY;
-          const from =
-            i === 0 ? end : all[i - 1].getBoundingClientRect().top + window.scrollY;
-          return { from, to: at };
-        }),
+        recedes: stops.slice(0, -1).map((from, k) => ({ from, to: stops[k + 1] })),
       };
     };
 
-    // A layer's opacity and zoom at scroll s.
-    const fadeAt = (s, { from, to }, still) => {
+    // Card k's recede at scroll s: none at its own stop, all of it by the
+    // next, when the next sheet has covered it.
+    const recedeAt = (s, { from, to }, W) => {
       const t = clamp01((s - from) / (to - from));
-      const z = still ? 1 : lerp(SETTLE_ZOOM, 1, t);
-      return { opacity: t, transform: `scale(${z})` };
+      return {
+        card: {
+          transform: `scale(${lerp(1, RECEDE_SCALE, t)})`,
+          borderRadius: `${lerp(0, cornerOf(W), t)}px`,
+        },
+        dim: { opacity: lerp(0, RECEDE_DIM, t) },
+      };
+    };
+
+    // The frame is invisible in the server's HTML and until the first pose
+    // is on it. Without this, a reload painted the collage full bleed -- the
+    // untransformed box -- and it snapped into its inset frame when the script
+    // arrived. It fades in instead, once, in place.
+    const reveal = () => {
+      frame.style.opacity = "1";
     };
 
     let animations = [];
@@ -249,10 +287,11 @@ export default function Stage({ first, rest }) {
       frame.style.transform = "";
       frame.style.borderRadius = "";
       image.style.transform = "";
-      for (const layer of layers) {
-        layer.style.opacity = "";
-        layer.style.transform = "";
-      }
+      cards.forEach((el, k) => {
+        el.style.transform = "";
+        el.style.borderRadius = "";
+        dims[k].style.opacity = "";
+      });
     };
 
     // Compositor path. Keyframe offsets are fractions of the whole document's
@@ -264,65 +303,57 @@ export default function Stage({ first, rest }) {
     // where the frame's bottom stops needing to be held down. `start` is
     // sampled exactly in case the end ever moves past it again.
     //
-    // Under reduced motion the reveal is left at full bleed and the fades lose
-    // their zoom, but the fades stay: which study is showing is content, not
-    // motion, and without them the stage would only ever show the first.
+    // Under reduced motion there is no reveal (the frame sits at full bleed)
+    // and no recede: the sheets still stack, which is layout, not animation.
     const build = () => {
       clear();
       const g = geometry();
       const max = root.scrollHeight - root.clientHeight;
-      if (g.end <= 0 || max <= 0) return;
+      if (g.end <= 0 || max <= 0 || reduced.matches) return reveal();
       const timeline = new window.ScrollTimeline({ source: root, axis: "block" });
       const options = { timeline, fill: "both", easing: "linear" };
 
-      if (!reduced.matches) {
-        const scrolls = [];
-        for (let i = 0; i <= STEPS; i++) scrolls.push((i / STEPS) * g.end);
-        if (g.start > 0 && g.start < g.end) scrolls.push(g.start);
-        scrolls.sort((a, b) => a - b);
+      const scrolls = [];
+      for (let i = 0; i <= STEPS; i++) scrolls.push((i / STEPS) * g.end);
+      if (g.start > 0 && g.start < g.end) scrolls.push(g.start);
+      scrolls.sort((a, b) => a - b);
 
-        const frameFrames = [];
-        const imageFrames = [];
-        // The radius rides along with the frame's transform. It is not a
-        // compositor property, so it is the one value here painted on the main
-        // thread; a frame's lag on a corner a few pixels across is invisible,
-        // where the same lag on the frame's edges was the stutter.
-        for (const s of scrolls) {
-          const { frame: f, radius, image: i } = pose(s, g);
-          frameFrames.push({ offset: s / max, transform: f, borderRadius: radius });
-          imageFrames.push({ offset: s / max, transform: i });
-        }
-        const last = pose(g.end, g);
-        frameFrames.push({ offset: 1, transform: last.frame, borderRadius: last.radius });
-        imageFrames.push({ offset: 1, transform: last.image });
-
-        animations.push(
-          frame.animate(frameFrames, options),
-          image.animate(imageFrames, options),
-        );
+      const frameFrames = [];
+      const imageFrames = [];
+      // The radius rides along with the frame's transform. It is not a
+      // compositor property, so it is the one value here painted on the main
+      // thread; a frame's lag on a corner a few pixels across is invisible,
+      // where the same lag on the frame's edges was the stutter.
+      for (const s of scrolls) {
+        const { frame: f, radius, image: i } = pose(s, g);
+        frameFrames.push({ offset: s / max, transform: f, borderRadius: radius });
+        imageFrames.push({ offset: s / max, transform: i });
       }
+      const last = pose(g.end, g);
+      frameFrames.push({ offset: 1, transform: last.frame, borderRadius: last.radius });
+      imageFrames.push({ offset: 1, transform: last.image });
+      animations.push(
+        frame.animate(frameFrames, options),
+        image.animate(imageFrames, options),
+      );
 
       // Explicit ends at 0 and 1, because a keyframe list that starts past
-      // offset 0 interpolates from the element's own style before it -- which
-      // for the transform is no zoom, so the layer would zoom *in* on the way
-      // to its fade and back out again.
-      layers.forEach((layer, i) => {
-        const range = g.fades[i];
-        const still = reduced.matches;
-        const a = fadeAt(range.from, range, still);
-        const b = fadeAt(range.to, range, still);
+      // offset 0 interpolates from the element's own style before it.
+      g.recedes.forEach((range, k) => {
+        const a = recedeAt(range.from, range, g.W);
+        const b = recedeAt(range.to, range, g.W);
+        const ends = (x, y) => [
+          { offset: 0, ...x },
+          { offset: range.from / max, ...x },
+          { offset: range.to / max, ...y },
+          { offset: 1, ...y },
+        ];
         animations.push(
-          layer.animate(
-            [
-              { offset: 0, ...a },
-              { offset: range.from / max, ...a },
-              { offset: range.to / max, ...b },
-              { offset: 1, ...b },
-            ],
-            options,
-          ),
+          cards[k].animate(ends(a.card, b.card), options),
+          dims[k].animate(ends(a.dim, b.dim), options),
         );
       });
+      reveal();
     };
 
     // Fallback path, for browsers without ScrollTimeline.
@@ -330,57 +361,28 @@ export default function Stage({ first, rest }) {
     const draw = () => {
       raf = 0;
       const g = geometry();
-      if (g.end <= 0) return clear();
-      const s = window.scrollY;
-      if (reduced.matches) {
-        frame.style.transform = "";
-        frame.style.borderRadius = "";
-        image.style.transform = "";
-      } else {
-        const { frame: f, radius, image: i } = pose(s, g);
-        frame.style.transform = f;
-        frame.style.borderRadius = radius;
-        image.style.transform = i;
+      if (g.end <= 0 || reduced.matches) {
+        clear();
+        return reveal();
       }
-      layers.forEach((layer, i) => {
-        const { opacity, transform } = fadeAt(s, g.fades[i], reduced.matches);
-        layer.style.opacity = String(opacity);
-        layer.style.transform = transform;
+      const s = window.scrollY;
+      const { frame: f, radius, image: i } = pose(s, g);
+      frame.style.transform = f;
+      frame.style.borderRadius = radius;
+      image.style.transform = i;
+      g.recedes.forEach((range, k) => {
+        const { card, dim } = recedeAt(s, range, g.W);
+        cards[k].style.transform = card.transform;
+        cards[k].style.borderRadius = card.borderRadius;
+        dims[k].style.opacity = String(dim.opacity);
       });
+      reveal();
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(draw);
     };
 
-    // Which study is on top, so only it can be clicked or focused. The study
-    // whose stop is nearest the current scroll: past the midpoint of a fade the
-    // incoming picture is the one mostly showing.
-    let current = -1;
-    const pick = () => {
-      const g = geometry();
-      const s = window.scrollY;
-      const stops = [g.end, ...g.fades.map((f) => f.to)];
-      let best = 0;
-      stops.forEach((at, i) => {
-        if (Math.abs(at - s) < Math.abs(stops[best] - s)) best = i;
-      });
-      if (best === current) return;
-      current = best;
-      hits.forEach((el, i) => {
-        if (el) el.inert = i !== best;
-      });
-    };
-
-    const refresh = () => {
-      if (compositor) build();
-      else schedule();
-      pick();
-    };
-    const onScroll = () => {
-      if (!compositor) schedule();
-      pick();
-    };
-
+    const refresh = compositor ? build : schedule;
     refresh();
     // Anything that changes the stage or the document's length moves the
     // offsets: a resize, the font landing, an image above settling.
@@ -388,115 +390,111 @@ export default function Stage({ first, rest }) {
     resize.observe(stage);
     resize.observe(document.body);
     reduced.addEventListener("change", refresh);
-    window.addEventListener("scroll", onScroll, { passive: true });
+    if (!compositor) window.addEventListener("scroll", schedule, { passive: true });
 
     return () => {
       cancelAnimationFrame(raf);
       resize.disconnect();
       reduced.removeEventListener("change", refresh);
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", schedule);
       clear();
     };
   }, [rest.length]);
 
   const firstName = `cover-${first.slug}`;
 
+  // The dimming layer every card carries. Black at an opacity the recede
+  // animates, over the picture and under nothing.
+  const dim = (k) => (
+    <div
+      ref={(el) => {
+        dimRefs.current[k] = el;
+      }}
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 bg-black opacity-0"
+    />
+  );
+
+  // A cover's two anchors, as custom properties the image reads from its class
+  // list. On the box rather than the <img>, because CoverImage owns the <img>'s
+  // style and a variable inherits.
+  const anchors = (cover) => ({
+    "--pos": cover.cardPosition ?? "center",
+    "--pos-narrow": cover.mobilePosition ?? cover.cardPosition ?? "center",
+  });
+
   return (
-    // One window for the reveal plus one per later study -- the stage is held
-    // for all of those after the first. In flow until then, so the reveal's
-    // frame scrolls up with the page exactly as it did.
-    //
-    // `id="work"` because /work redirects to /#work.
-    <section
-      id="work"
-      className="relative"
-      style={{ height: `${(1 + rest.length) * 100}svh` }}
-    >
+    // One window for the reveal plus one per later study. `id="work"` because
+    // /work redirects to /#work.
+    <section id="work" className="relative">
+      {/* Without a script the frame would never be shown: see `reveal`. */}
+      <noscript>
+        <style>{`[data-reveal-frame]{opacity:1!important}`}</style>
+      </noscript>
+
       <div
         ref={stageRef}
-        className="sticky top-0 h-svh w-full overflow-hidden"
+        className="sticky top-0 h-svh w-full overflow-hidden will-change-transform"
       >
-        {/* The first study, in the reveal. No ground on the stage: around the
-            inset frame it is the page's own white showing through. */}
-        <div ref={(el) => {
-            hitRefs.current[0] = el;
-          }} className="absolute inset-0">
-          <ViewTransitionLink
-            href={`/work/${first.slug}`}
-            vtName={firstName}
-            aria-label={first.title}
-            className="block h-full w-full"
-          >
-            <CoverImage
-              cover={first.cover}
-              className="absolute inset-0 overflow-hidden will-change-transform"
-              imageClassName="object-cover will-change-transform"
-              sizes="100vw"
-              priority
-              containerProps={{
-                ref: frameRef,
-                style: { viewTransitionName: firstName },
-                "data-vt-cover": "",
-                "data-vt-target": firstName,
-                "data-vt-stop": `case-${first.slug}`,
-              }}
-            />
-          </ViewTransitionLink>
-        </div>
-
-        {rest.map((cs, i) => {
-          const cover = { ...cs.cover, ...cs.landingCover };
-          const vtName = `cover-${cs.slug}`;
-          return (
-            // The layer is what fades and zooms. Starts transparent, so a
-            // study is never flashed before the script has placed it.
-            <div
-              key={cs.slug}
-              ref={(el) => {
-                layerRefs.current[i] = el;
-                hitRefs.current[i + 1] = el;
-              }}
-              className="absolute inset-0 opacity-0 will-change-[opacity,transform]"
-            >
-              <ViewTransitionLink
-                href={`/work/${cs.slug}`}
-                vtName={vtName}
-                aria-label={cs.title}
-                className="absolute inset-0 block"
-              >
-                {/* The ambient ground for a narrow window: the same picture,
-                    enlarged, blurred and dimmed, filling what the whole picture
-                    in front of it does not. Hidden where the cover fills the
-                    window by itself. Decorative, so no alt; the request is
-                    shared with the cover in front, same file, same sizes. */}
-                {cover.src && (
-                  <Image
-                    src={cover.src}
-                    alt=""
-                    aria-hidden="true"
-                    fill
-                    sizes="100vw"
-                    className="scale-125 object-cover blur-3xl brightness-75 saturate-150 [@media(min-aspect-ratio:5/4)]:hidden"
-                  />
-                )}
-                <CoverImage
-                  cover={cover}
-                  className="absolute inset-0"
-                  imageClassName="object-contain [@media(min-aspect-ratio:5/4)]:object-cover"
-                  objectPosition={cover.cardPosition}
-                  sizes="100vw"
-                  containerProps={{
-                    style: { viewTransitionName: vtName },
-                    "data-vt-cover": "",
-                    "data-vt-target": vtName,
-                    "data-vt-stop": `case-${cs.slug}`,
-                  }}
-                />
-              </ViewTransitionLink>
-            </div>
-          );
-        })}
+        <ViewTransitionLink
+          href={`/work/${first.slug}`}
+          vtName={firstName}
+          aria-label={first.title}
+          className="block h-full w-full"
+        >
+          <CoverImage
+            cover={first.cover}
+            className="absolute inset-0 overflow-hidden opacity-0 transition-opacity duration-[var(--duration-settle)] ease-brand will-change-transform"
+            imageClassName="object-cover will-change-transform"
+            sizes={COVER_SIZES}
+            priority
+            containerProps={{
+              ref: frameRef,
+              style: { viewTransitionName: firstName },
+              "data-reveal-frame": "",
+              "data-vt-cover": "",
+              "data-vt-target": firstName,
+              "data-vt-stop": `case-${first.slug}`,
+            }}
+          />
+        </ViewTransitionLink>
+        {dim(0)}
       </div>
+
+      {rest.map((cs, i) => {
+        const cover = { ...cs.cover, ...cs.landingCover };
+        const vtName = `cover-${cs.slug}`;
+        return (
+          <div
+            key={cs.slug}
+            ref={(el) => {
+              sheetRefs.current[i] = el;
+            }}
+            className="sticky top-0 h-svh w-full overflow-hidden will-change-transform"
+          >
+            <ViewTransitionLink
+              href={`/work/${cs.slug}`}
+              vtName={vtName}
+              aria-label={cs.title}
+              className="block h-full w-full"
+            >
+              <CoverImage
+                cover={cover}
+                className="absolute inset-0"
+                imageClassName="object-cover [object-position:var(--pos-narrow)] [@media(min-aspect-ratio:5/4)]:[object-position:var(--pos)]"
+                sizes={COVER_SIZES}
+                containerProps={{
+                  style: { viewTransitionName: vtName, ...anchors(cover) },
+                  "data-vt-cover": "",
+                  "data-vt-target": vtName,
+                  "data-vt-stop": `case-${cs.slug}`,
+                }}
+              />
+            </ViewTransitionLink>
+            {dim(i + 1)}
+          </div>
+        );
+      })}
 
       {/* Where the reveal completes. See the note at the top of the file. */}
       <div
@@ -505,13 +503,14 @@ export default function Stage({ first, rest }) {
         className="pointer-events-none absolute inset-x-0 top-0 h-svh"
       />
 
-      {/* One stop per later study, a window apart down the runway. snap-start,
-          which for a block the window's height is also its centre. */}
+      {/* One stop per later study, a window apart down the runway -- exactly
+          where its sheet sticks. snap-start, which for a block the window's
+          height is also its centre. */}
       {rest.map((cs, i) => (
         <div
           key={cs.slug}
           ref={(el) => {
-            layerStopRefs.current[i] = el;
+            sheetStopRefs.current[i] = el;
           }}
           id={`case-${cs.slug}`}
           className="pointer-events-none absolute inset-x-0 h-svh snap-always snap-start"

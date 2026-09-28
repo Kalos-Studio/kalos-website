@@ -4,8 +4,7 @@ Next.js 15 (App Router) portfolio site. Two areas:
 
 - **`/`** — the landing page, in `app/(landing)/`. It *is* the portfolio: a hero
   of the mark and one line, the first case study growing out from under it to
-  full bleed, three more fading in over it on the same pinned stage, and the
-  closer.
+  full bleed, three more sliding up over it as a stack, and the closer.
 - **`/work/<slug>`** — the case studies themselves. There is no `/work` index;
   that URL permanently redirects to `/#work` (see `next.config.mjs`), because a
   second list of the same projects would only drift from the first.
@@ -113,18 +112,26 @@ the top of the landing page because there is no panel to return to (`onLanding`)
   the compositor runs it off the scroll position. It was `clip-path` from a
   scroll listener, which repainted every frame and lagged the scroll by one; read
   the top of the file before bringing either back.
-- **`stage.js`**, second movement — once the first study is full bleed the
-  stage pins (sticky), and each later study fades in over the one before,
-  settling from a slight zoom, one per snap stop. They used to be full-bleed
-  panels scrolling past, which showed neighbours at the edges whenever the
-  window was not the picture's shape. The stage is always exactly one window.
-  - **Fit:** 5:4 and wider, a cover fills the window around its `cardPosition`;
-    narrower, it shows whole over a blurred copy of itself. Decided by an
-    `[@media(min-aspect-ratio:5/4)]:` variant **written out in full** in each
-    class list — Tailwind only generates classes it finds literally in source,
-    and a variant kept in a JS constant silently generated nothing.
-  - **Only the top layer is live.** The others are `inert`, or an invisible
-    layer above would take the clicks.
+- **`stage.js`**, second movement — every study is a full-window sheet,
+  `sticky top-0`, and each slides up over the one before. As a sheet is covered
+  it recedes: scales to 0.92, dims, and takes on the inset frame's rounded
+  corners, becoming a card on the white page. Plain sticky, so it stacks without
+  JavaScript; only the recede is animated. Two versions were built and cut, and
+  the file says why: full-bleed panels scrolling past (neighbours showing at the
+  edges) and a pinned stage cross-fading covers (double exposures mid-fade, and
+  a blurred copy of each cover filling narrow windows).
+  - **Fit:** every cover is object-cover, always. A landscape window (5:4 and
+    wider) anchors it at `cardPosition`, a narrow one at `mobilePosition`, both
+    in `data.js`. A percentage there lines up that point of the picture with
+    the same point of the window; it is not the centre of what shows.
+  - **The variant is written out in full** in each class list,
+    `[@media(min-aspect-ratio:5/4)]:` — Tailwind only generates classes it
+    finds literally in source, and one kept in a JS constant generated nothing.
+  - **`sizes` says 400vw on a portrait window,** because a cover cropped to a
+    phone's height is drawn about four times the window's width. `100vw` there
+    fetched a file a quarter of the size and every phone crop was soft.
+  - The reveal's frame is invisible until the script has posed it, then fades
+    in. It used to paint full bleed on reload and snap into its inset frame.
   - A stage cover carries `data-vt-stop`, its stop block's id, and the morph
     back from a case study centres *that*: scrolling a sticky element into view
     lands wherever it happens to be stuck.
@@ -354,8 +361,8 @@ modified keys are handed back, and that "Back to Work" lands on its own panel.
 `scripts/check-landing.mjs` drives a real browser across six viewports and
 asserts that the first study peeks over the fold with the masthead hidden, that
 it is exactly full bleed and unzoomed at its own stop, that at every other stop
-the stage is exactly the window with that study fully faded in and the only one
-clickable, and that nothing scrolls sideways. Both
+that study's sheet is exactly the window, unreceded, with nothing of the next
+showing and its own link under the pointer, and that nothing scrolls sideways. Both
 scripts use the installed Google Chrome and fall back to Playwright's Chromium
 (`bunx playwright install chromium`) when there is none.
 

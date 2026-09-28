@@ -23,9 +23,15 @@
  *               own stop is the bug this effect is most likely to have, since
  *               progress is measured against that stop.
  *
- *   STAGE       Every other study, at its stop: the pinned stage is exactly the
- *               window (so nothing of a neighbour can show), that study's layer
- *               is fully faded in, and it is the only layer that can be clicked.
+ *   STACK       Every other study, at its stop: its sheet is exactly the window
+ *               and not receded at all, the next sheet has not started to show,
+ *               and what is under the pointer in the middle of the window is
+ *               that study's link. A sheet that sticks a few pixels off its stop
+ *               shows a sliver of the one beneath, which is the bug this guards.
+ *
+ *   ARRIVAL     The first study's frame is invisible at first paint and shown
+ *               once posed. It used to paint full bleed and then snap into its
+ *               inset frame when the script arrived.
  *
  *   OVERFLOW    Nothing scrolls sideways. A full-bleed panel inside a gutter is
  *               the classic way to get 15px of horizontal scroll.
@@ -88,6 +94,7 @@ async function measure(page) {
     const bad = (msg) => out.problems.push(msg);
 
     await go(0);
+    if (+getComputedStyle(frame).opacity < 0.99) bad("first study's frame never shown");
     const frameTop = frame.getBoundingClientRect().top;
     if (!(frameTop < vh - 24)) bad(`first study does not peek (frame top ${Math.round(frameTop)} of ${vh})`);
     if (+getComputedStyle(header).opacity > 0.01) bad("masthead visible on the hero");
@@ -106,18 +113,21 @@ async function measure(page) {
     await new Promise((r) => setTimeout(r, 700));
     if (lg && +getComputedStyle(header).opacity < 0.99) bad("masthead hidden past the hero");
 
-    const stage = document.querySelector("#work > div");
-    const layers = [...stage.children];
+    // The stage and every sheet after it, in order: the section's sticky
+    // children.
+    const sheets = [...document.querySelectorAll("#work > div.sticky")];
     for (const [i, el] of stops.slice(1).entries()) {
       await go(stopOf(el));
-      const r = stage.getBoundingClientRect();
+      const sheet = sheets[i + 1];
+      const r = sheet.getBoundingClientRect();
       if (Math.abs(r.top) > TOLERANCE || Math.abs(r.height - vh) > TOLERANCE || Math.abs(r.width - vw) > TOLERANCE)
-        bad(`${el.id}: stage ${Math.round(r.width)}x${Math.round(r.height)} at ${Math.round(r.top)}, window ${vw}x${vh}`);
-      const layer = layers[i + 1];
-      const opacity = +getComputedStyle(layer).opacity;
-      if (opacity < 0.99) bad(`${el.id}: its layer at opacity ${opacity.toFixed(2)}`);
-      const live = layers.filter((l) => !l.inert);
-      if (live.length !== 1 || live[0] !== layer) bad(`${el.id}: ${live.length} clickable layers, or the wrong one`);
+        bad(`${el.id}: sheet ${Math.round(r.width)}x${Math.round(r.height)} at ${Math.round(r.top)}, window ${vw}x${vh}`);
+      const t = getComputedStyle(sheet).transform;
+      if (t !== "none" && Math.abs(new DOMMatrix(t).a - 1) > 0.002) bad(`${el.id}: its sheet is receded at its own stop`);
+      const next = sheets[i + 2];
+      if (next && next.getBoundingClientRect().top < vh - TOLERANCE) bad(`${el.id}: the next sheet shows`);
+      const hit = document.elementFromPoint(vw / 2, vh / 2)?.closest("a");
+      if (!hit || !sheet.contains(hit)) bad(`${el.id}: the middle of the window is not its link`);
     }
 
     if (document.documentElement.scrollWidth > vw) bad(`scrolls sideways (${document.documentElement.scrollWidth} > ${vw})`);
@@ -154,8 +164,16 @@ for (const [width, height, label] of VIEWPORTS) {
     // Wait for what is measured, not for the network: an earlier version passed
     // four viewports by measuring a page that had not hydrated.
     await page.waitForSelector("[data-vt-cover] img", { timeout: 15000 });
-    // Hydrated: the stage's animations exist and the layers have been marked.
-    await page.waitForFunction(() => document.getAnimations().length > 0, null, { timeout: 15000 });
+    // Hydrated and posed: the first study's frame has finished fading in,
+    // which it only starts once the script has placed it. Waiting on the
+    // animations alone read it mid-fade.
+    await page
+      .waitForFunction(
+        () => getComputedStyle(document.querySelector("[data-reveal-frame]")).opacity === "1",
+        null,
+        { timeout: 15000 },
+      )
+      .catch(() => {});
     await page.evaluate(() => document.fonts.ready);
 
     const m = await measure(page);
