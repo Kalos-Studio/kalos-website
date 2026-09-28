@@ -130,6 +130,15 @@ async function measure(page) {
       if (!hit || !sheet.contains(hit)) bad(`${el.id}: the middle of the window is not its link`);
     }
 
+    // A jump straight from the top to the last study, the way "Back to Work"
+    // arrives. The masthead's observer used to miss it -- it went from below
+    // its strip to above it without ever crossing into it -- and stayed hidden.
+    await go(0);
+    await new Promise((r) => setTimeout(r, 700));
+    await go(stopOf(stops[stops.length - 1]));
+    await new Promise((r) => setTimeout(r, 700));
+    if (+getComputedStyle(header).opacity < 0.99) bad("masthead hidden after a jump to the last study");
+
     if (document.documentElement.scrollWidth > vw) bad(`scrolls sideways (${document.documentElement.scrollWidth} > ${vw})`);
     return out;
   }, TOLERANCE);

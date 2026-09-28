@@ -39,12 +39,19 @@ export default function Masthead({ revealStopId }) {
     // arriving there sat on white with its gradient drawn on nothing.
     //
     // The expansion completes when the reveal's stop block reaches the top of
-    // the window, so that is what is watched, against a 1% strip at the top.
-    // Shown while it is there, and once it has gone above.
+    // the window, so that is what is watched: is it at, or anywhere above, the
+    // top 1% of the window.
+    //
+    // The root is that strip *extended upwards without limit*, not the strip
+    // alone. An observer only reports a change of state, and with the bare
+    // strip a jump straight past it -- "Back to Work" landing on the last
+    // study -- went from "below the strip" to "above the strip", which is not
+    // intersecting both times, so nothing fired and the lockup stayed hidden.
+    // With the root reaching up forever, above counts as inside, and any jump
+    // across the line is a change the observer reports.
     const heroObserver = new IntersectionObserver(
-      ([entry]) =>
-        setShown(entry.isIntersecting || entry.boundingClientRect.top < 0),
-      { rootMargin: "0px 0px -99% 0px" },
+      ([entry]) => setShown(entry.isIntersecting),
+      { rootMargin: "1000000px 0px -99% 0px" },
     );
     heroObserver.observe(reveal);
 

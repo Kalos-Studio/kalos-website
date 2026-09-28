@@ -193,27 +193,17 @@ const allWork = [
     summary:
       "Texas-based medical transport company providing ambulance and wheelchair transport across the greater Houston area and beyond.",
     role: "Brand Strategy, Brand Identity, Fleet Livery, Web Design, Development",
-    // The homepage hero without the site's nav bar over it, so it reads as a
-    // picture of the brand rather than a screenshot of a website -- and the
-    // masthead's lockup no longer lands on Priority's own logo in the corner.
+    // The photograph itself, with no website over it: no nav bar, no
+    // headline. Earlier covers were screenshots of the homepage hero, whose
+    // baked-in headline no crop could keep on a phone.
     cover: {
-      // Not cover.jpg: that name was the old picture, and the image optimizer
-      // and browsers cache by URL, so reusing it kept serving the old one.
-      src: "/work/priority-ambulance-transfer/on-the-road.jpg",
-      alt: "A Priority Ambulance Transfer van on an open road at sunset, under the line \"When every minute matters, we're already moving.\"",
-      // 1.89:1, wider than most windows, so full bleed crops the sides and a
-      // centred crop cut the first letter off every line of the headline.
-      // Weighted left: the type keeps a margin and the van loses some bumper,
-      // which reads as a crop where a clipped word reads as a mistake.
-      cardPosition: "15% center",
-      // On a phone the headline cannot survive any crop, so the crop goes to
-      // the van's cab and grille (x 1420 to 1910 of 2000). A portrait export
-      // of this cover would do better than either.
-      //
-      // Note what a percentage means here: it lines up that point of the
-      // picture with the same point of the window, so it is not the centre of
-      // what is shown. 78% put the window over the van's side; 92% is the cab.
-      mobilePosition: "92% center",
+      src: "/work/priority-ambulance-transfer/van-at-sunset.jpg",
+      alt: "A Priority Ambulance Transfer van on an open road through golden fields at sunset",
+      // 1.6:1, so a landscape window loses at most a sliver top and bottom.
+      // On a phone, the van (x 1130 to 1785 of 2000). A percentage lines up
+      // that point of the picture with the same point of the window, so it is
+      // not the centre of what shows: 82% puts the window on the van.
+      mobilePosition: "82% center",
     },
     body: [
       {
