@@ -61,6 +61,10 @@
 //                               // important content near the top (like a nav
 //                               // bar) may need to anchor lower to avoid
 //                               // slicing through it. Card crop is unaffected.
+//     mobilePosition: "50% center", // optional -- where the landing page
+//                               // anchors this cover on a narrow (portrait)
+//                               // window, where it is cropped hardest. Put it
+//                               // on the subject. Falls back to cardPosition.
 //     cardPosition: "center",  // optional CSS object-position for the
 //                               // listing card and "more case studies"
 //                               // thumbnail, both cropped to 16:10. An image
@@ -189,10 +193,12 @@ const allWork = [
     summary:
       "Texas-based medical transport company providing ambulance and wheelchair transport across the greater Houston area and beyond.",
     role: "Brand Strategy, Brand Identity, Fleet Livery, Web Design, Development",
+    // Every landing cover is cover.jpg in its study's folder, and each has
+    // its subject centred with room around it, so a crop to any window keeps
+    // it and none needs a focal point.
     cover: {
       src: "/work/priority-ambulance-transfer/cover.jpg",
-      alt: "The Priority Ambulance Transfer homepage hero, \"When every minute matters, we're already moving.\"",
-      cardPosition: "left center",
+      alt: "A Priority Ambulance Transfer van on an open road through golden fields at sunset",
     },
     body: [
       {
@@ -225,6 +231,14 @@ const allWork = [
         type: "paragraph",
         text: "Priority went to market with one identity across the fleet, the site, and every piece of paper a partner would see before ever booking a transport. Holding the brand, the strategy and the build under one roof is what made the phased plan possible at all: there were no vendors to align, so the schedule was a decision rather than a negotiation.",
       },
+      // The old cover, the homepage hero with its nav bar, kept as the last
+      // image the way EchoCare's was.
+      {
+        type: "image",
+        src: "/work/priority-ambulance-transfer/website-hero.jpg",
+        screenshot: true,
+        alt: "The Priority Ambulance Transfer homepage hero, \"When every minute matters, we're already moving.\"",
+      },
     ],
   },
   {
@@ -235,19 +249,13 @@ const allWork = [
     summary:
       "B2B SaaS dispatch platform for emergency medical services and non-emergent medical transport operations.",
     role: "Product Design, Design Systems",
+    // The stage render, on the landing panel and the case study hero alike. It
+    // replaced a pair: the login screen for the hero and the trip tracking view
+    // for the panel, which meant the study opened on a different picture from
+    // the one clicked. One image now, as everywhere else.
     cover: {
       src: "/work/echocare/cover.jpg",
-      alt: "The EchoCare login screen, \"The help you need, when you need it,\" with an animated network of service icons",
-      cardPosition: "left center",
-    },
-    // The login screen is the right opening image for the case study and the
-    // wrong one for the landing panel: half of it is an empty sign-in form, and
-    // at panel size that reads as a screenshot of nothing. The trip tracking
-    // view shows the product doing its job.
-    landingCover: {
-      src: "/work/echocare/trip-tracking.jpg",
-      alt: "An EchoCare trip detail view with live GPS tracking, route, and a dispatch tracking timeline",
-      cardPosition: "center",
+      alt: "The EchoCare wordmark lit up on a wall-sized screen in a dark hall, with people silhouetted in front of it",
     },
     body: [
       {
@@ -283,6 +291,56 @@ const allWork = [
       {
         type: "paragraph",
         text: "The last part of the work is the part nobody puts on a portfolio and everybody needs. We sat between product and engineering translating operational requirements into patterns that could actually ship, and we checked the marketing against the software. When a claim on the website and the behaviour of the platform disagree, the platform is not the thing that gets fixed first, and someone has to be willing to say so.",
+      },
+      // Photographic renders rather than screenshots, so no `screenshot` flag:
+      // the screen in each is already inside its own frame, and a radius and
+      // shadow would be drawn around the room rather than the device.
+      {
+        type: "image",
+        src: "/work/echocare/dispatch-wall.jpg",
+        alt: "The EchoCare dispatch board on a large wall-mounted screen in a concrete-walled room",
+      },
+      {
+        type: "image",
+        src: "/work/echocare/trip-tracking-monitor.jpg",
+        alt: "An EchoCare trip detail view with live GPS tracking on a desktop monitor, set on a dark ribbed plinth",
+      },
+      // The old cover, kept as the last image. A product screenshot, so it
+      // takes the screen treatment the two above do not.
+      {
+        type: "image",
+        src: "/work/echocare/login.jpg",
+        screenshot: true,
+        alt: "The EchoCare login screen, \"The help you need, when you need it,\" with an animated network of service icons",
+      },
+    ],
+  },
+  // PLACEHOLDER COPY. Every string below is a stand-in until the real write-up
+  // arrives, which is why it has no logo and no `open` flag: the gate keeps
+  // the body private. The cover is real.
+  {
+    slug: "young-muslims",
+    title: "Young Muslims",
+    shortName: "Young Muslims",
+    summary:
+      "Placeholder summary. A nonprofit for young Muslims, and the brand that lets it speak to them in their own voice.",
+    role: "Brand Strategy, Brand Identity, Brand Application",
+    cover: {
+      src: "/work/young-muslims/cover.jpg",
+      alt: "A Young Muslims poster on a subway platform, \"For the youth. By the youth.\", over a group of young women embracing, with a train blurring past behind",
+    },
+    body: [
+      {
+        type: "paragraph",
+        text: "Placeholder paragraph. Who Young Muslims are, who they serve, and what they needed when they came to us.",
+      },
+      {
+        type: "paragraph",
+        text: "Placeholder paragraph. What we built: the brand foundation, the identity, and how it shows up in the world.",
+      },
+      {
+        type: "paragraph",
+        text: "Placeholder paragraph. What changed for the organisation once it had a brand that looked like the people it is for.",
       },
     ],
   },
@@ -640,4 +698,22 @@ const allWork = [
 export const caseStudies = allWork.filter((cs) => !cs.placeholder);
 
 export const workRail = allWork;
+
+// The landing page shows four studies, not all of them, and in its own order:
+// the redesign's wireframe opens on MARA's collage (the one that grows to full
+// bleed) and then runs EchoCare, Young Muslims, Priority. A list of slugs
+// rather than a flag on each entry, because the order is part of the decision
+// and a flag would leave it to array position, which is already spoken for by
+// `workRail` above.
+//
+// The studies left off still have their pages. What they lose is a panel to
+// return to, so their "Back to Work" goes to the top of the landing page
+// instead -- see `onLanding`, which both exits on a case study read.
+const LANDING = ["mara", "echocare", "young-muslims", "priority-ambulance-transfer"];
+
+export const landingWork = LANDING.map((slug) =>
+  caseStudies.find((cs) => cs.slug === slug),
+);
+
+export const onLanding = (slug) => LANDING.includes(slug);
 

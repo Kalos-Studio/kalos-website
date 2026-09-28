@@ -3,8 +3,9 @@
 Next.js 15 (App Router) portfolio site. Two areas:
 
 - **`/`** — the landing page, in `app/(landing)/`. It *is* the portfolio: a hero
-  that hands over to a masthead as you scroll, then the case studies as a run of
-  full-width panels with a pill rail indexing them.
+  of the mark and one line, the first case study growing out from under it to
+  full bleed, three more as full-bleed panels that dissolve into each other,
+  and the closer.
 - **`/work/<slug>`** — the case studies themselves. There is no `/work` index;
   that URL permanently redirects to `/#work` (see `next.config.mjs`), because a
   second list of the same projects would only drift from the first.
@@ -87,29 +88,75 @@ Two specific rules that must never come back:
 - Put shared values in `@theme` rather than repeating them across files.
 - Arbitrary values (`w-[347px]`) are fine when the number is a ratio from the
   wireframe — but say which ratio in a comment. `aspect-[1195/681]` is the case
-  study frame; `lg:pt-[35svh]` is sized to give the hero's handover room.
+  study frame; `lg:h-[82svh]` on the hero leaves the first study 18% of the window to peek.
 - Order utilities structure → box → type → colour → state. Past roughly a dozen,
   extract a component.
 - Don't `@apply` in a stylesheet to recreate a component.
 
 ## The landing page
 
-Read the comments in `app/(landing)/hero.js` before changing it. The scroll
-choreography is three beats — the block rises with the page, catches at the top
-and is *held* there while everything fades, and the symbol alone flies into the
-masthead — and most of the non-obvious lines record a specific failure.
+Four studies, not all of them: `landingWork` in `app/work/data.js` names which
+and in what order. The rest keep their pages, and their "Back to Work" goes to
+the top of the landing page because there is no panel to return to (`onLanding`).
 
-The rule that matters: **the geometry is derived, not tuned.** The hold ends when
-the first case study panel's top would reach the held block's bottom, less a
-clearance. Picking that length by eye produced a version that measured 11px of
-clearance mid-scroll — fine until the definition wrapped to another line. If you
-change the hero's height or the panel offset, run `bun run check:landing` rather
-than trusting your eye.
+- **`masthead.js`** — the lockup, fixed top left, hidden until the first study
+  reaches full bleed (the wireframe says "after the hero"; before that there is
+  white at the top of the window). White on a soft black fade in the corner over
+  the work, black with no fade over the closer. It was `mix-blend-difference`,
+  which turned into a patchwork of inverted colours over the MARA collage.
+- **`stage.js`**, first movement — the first study. An inset frame with rounded corners peeks
+  over the fold, then grows to full bleed while the picture inside zooms out
+  (the Venice / Collins move). Its top edge is in flow, so the gap under Book a
+  call never changes; its bottom is held to the window's bottom, so no white
+  shows under it. Those two rules fix the timing: it is full bleed exactly when
+  its top reaches the window's top. **Transforms only, on a ScrollTimeline** —
+  the compositor runs it off the scroll position. It was `clip-path` from a
+  scroll listener, which repainted every frame and lagged the scroll by one; read
+  the top of the file before bringing either back.
+- **`stage.js`**, the panels — every later study is a full-bleed panel in
+  flow, one snap stop each, and where two meet they **dissolve** rather than
+  meet at an edge: each panel's top is a soft gradient mask (eased, 12svh) and
+  it overlaps the panel before by that much. Each panel is a window plus a fade
+  zone above and below (124svh), centred at rest, so both zones sit just
+  outside the window and every stop shows one clean picture; one zone would let
+  the next panel's fade reach the bottom of the window at rest. The last panel
+  also dissolves out into the closer's white. No script at all.
+  - **Snap to the window-sized block inside each panel, never the panel.** A
+    snap area taller than the window makes every position where it covers the
+    window valid, so snapping the 124svh article landed flicks one fade zone
+    short, with the dissolve across the top of the window.
+  - Two versions were built in between and cut, and the file says why: a
+    pinned stage cross-fading whole covers (double exposures, and a blurred
+    copy of each cover filling narrow windows), and sticky sheets receding into
+    rounded cards.
+  - **Covers are cropped a little larger** to fill the fade zones. Every landing
+    cover is `cover.jpg` in its study's folder with its subject centred and room
+    around it for this. `cardPosition` / `mobilePosition` in `data.js` still
+    anchor a crop if a future cover needs it; a percentage there lines up that
+    point of the picture with the same point of the window.
+  - **The variant is written out in full** in each class list,
+    `[@media(min-aspect-ratio:5/4)]:` — Tailwind only generates classes it
+    finds literally in source, and one kept in a JS constant generated nothing.
+  - **`sizes` says 400vw on a portrait window,** because a cover cropped to a
+    phone's height is drawn about four times the window's width.
+  - **Replacing an image under the same name,** clear the dev server's cache
+    (stop it, `rm -rf .next`): its optimizer kept serving the old WebP/AVIF
+    while a plain JPEG request came back fresh.
+  - The reveal's frame is invisible until the script has posed it, then fades
+    in. It used to paint full bleed on reload and snap into its inset frame.
+  - A stage cover carries `data-vt-stop`, its stop block's id, and the morph
+    back from a case study centres *that*.
+- **The top of the page scrolls freely.** An empty snap area in `page.js` spans
+  the hero plus one window, and a snap area taller than the window makes every
+  position where it covers the window valid. So the reveal can be watched and
+  scrubbed, and the stops begin at full bleed. An absolute block rather than a
+  wrapper, because the stage is taller than the free range.
 
 **The wheel is the browser's.** "One gesture, one view" is CSS: `scroll-snap-type:
 y mandatory` on `<html>` in `app/layout.js`, with `snap-always snap-center` on
-every case study, `snap-always snap-start` on the closer, and `snap-always
-snap-start` on the hero's `<header>` — that last one is load-bearing, because
+every `#case-<slug>` after the first, `snap-always snap-start` on the closer, and
+`snap-always snap-start` on the hero-and-reveal wrapper — that last one is
+load-bearing, because
 without a snap point at the top of the document the page can never come back to
 rest on the hero.
 
@@ -129,7 +176,7 @@ Measured under real phased gestures: a gentle, normal or firm flick moves exactl
 one view in both directions, a five-pixel flick moves exactly one view (there is
 no dead zone at the bottom of the range, which every hand-rolled version had), a
 drag whose fingers stop before they lift moves nothing, and any gesture from the
-last panel crosses the 1026px gap onto the closer. A deliberately *hard* throw
+last panel crosses onto the closer. A deliberately *hard* throw
 travels two views, and about four at 12000px/s: `scroll-snap-stop: always` is
 declared on every panel and Chrome does not honour it for compositor flings.
 That is left alone — correcting the landing afterwards is a visible snap back,
@@ -141,8 +188,8 @@ nearest, so the page is put straight back and the press does nothing. `Home`,
 `End`, space, every modified key and typing are handed to the browser.
 
 `app/lockup.js` holds the Kalos mark and wordmark as vector paths, in three
-exports: the full `Lockup`, and `Mark` / `Wordmark` separately so the hero can
-fly one and fade the other. **Never re-export the logo from Figma** — these paths
+exports: the full `Lockup` (the masthead), and `Mark` / `Wordmark` separately
+(the hero sets the mark alone). **Never re-export the logo from Figma** — these paths
 are the only copy in the repo.
 
 ## The case study page
@@ -322,12 +369,13 @@ stop and crosses the gap to the closer, that the hero and the foot of the
 document stay reachable, that arrow and page keys land centred, that typing and
 modified keys are handed back, and that "Back to Work" lands on its own panel.
 
-`scripts/check-landing.mjs` drives real Chrome across five viewports and asserts
-the two things that have actually gone wrong: that landing on a case study leaves
-the hero fully faded and the panel centred, and that scrolling *through* the
-handover never brings the definition block over an image. Both guard bugs that
-shipped. It uses the installed Google Chrome via `channel: "chrome"`, so there is
-no browser to download.
+`scripts/check-landing.mjs` drives a real browser across six viewports and
+asserts that the first study peeks over the fold with the masthead hidden, that
+it is exactly full bleed and unzoomed at its own stop, that at every other stop
+both of that panel's fade zones sit outside the window with nothing of the next
+showing and its own link under the pointer, and that nothing scrolls sideways. Both
+scripts use the installed Google Chrome and fall back to Playwright's Chromium
+(`bunx playwright install chromium`) when there is none.
 
 Beyond that:
 
@@ -352,7 +400,7 @@ Beyond that:
   comment in a codebase that leans this hard on them is worse than a missing one.
 - Respect `prefers-reduced-motion` in anything that animates.
 - Scroll-driven work writes to the DOM in a `requestAnimationFrame`, not through
-  React state. See `hero.js` and `work-rail.js`.
+  React state. See `stage.js`.
 - No em dashes in shipping copy. Nothing enforces it; it is a brand preference.
 
 ## Git
