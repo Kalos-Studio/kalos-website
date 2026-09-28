@@ -4,7 +4,8 @@ Next.js 15 (App Router) portfolio site. Two areas:
 
 - **`/`** — the landing page, in `app/(landing)/`. It *is* the portfolio: a hero
   of the mark and one line, the first case study growing out from under it to
-  full bleed, three more sliding up over it as a stack, and the closer.
+  full bleed, three more as full-bleed panels that dissolve into each other,
+  and the closer.
 - **`/work/<slug>`** — the case studies themselves. There is no `/work` index;
   that URL permanently redirects to `/#work` (see `next.config.mjs`), because a
   second list of the same projects would only drift from the first.
@@ -112,29 +113,39 @@ the top of the landing page because there is no panel to return to (`onLanding`)
   the compositor runs it off the scroll position. It was `clip-path` from a
   scroll listener, which repainted every frame and lagged the scroll by one; read
   the top of the file before bringing either back.
-- **`stage.js`**, second movement — every study is a full-window sheet,
-  `sticky top-0`, and each slides up over the one before. As a sheet is covered
-  it recedes: scales to 0.92, dims, and takes on the inset frame's rounded
-  corners, becoming a card on the white page. Plain sticky, so it stacks without
-  JavaScript; only the recede is animated. Two versions were built and cut, and
-  the file says why: full-bleed panels scrolling past (neighbours showing at the
-  edges) and a pinned stage cross-fading covers (double exposures mid-fade, and
-  a blurred copy of each cover filling narrow windows).
-  - **Fit:** every cover is object-cover, always. A landscape window (5:4 and
-    wider) anchors it at `cardPosition`, a narrow one at `mobilePosition`, both
-    in `data.js`. A percentage there lines up that point of the picture with
-    the same point of the window; it is not the centre of what shows.
+- **`stage.js`**, the panels — every later study is a full-bleed panel in
+  flow, one snap stop each, and where two meet they **dissolve** rather than
+  meet at an edge: each panel's top is a soft gradient mask (eased, 12svh) and
+  it overlaps the panel before by that much. Each panel is a window plus a fade
+  zone above and below (124svh), centred at rest, so both zones sit just
+  outside the window and every stop shows one clean picture; one zone would let
+  the next panel's fade reach the bottom of the window at rest. The last panel
+  also dissolves out into the closer's white. No script at all.
+  - **Snap to the window-sized block inside each panel, never the panel.** A
+    snap area taller than the window makes every position where it covers the
+    window valid, so snapping the 124svh article landed flicks one fade zone
+    short, with the dissolve across the top of the window.
+  - Two versions were built in between and cut, and the file says why: a
+    pinned stage cross-fading whole covers (double exposures, and a blurred
+    copy of each cover filling narrow windows), and sticky sheets receding into
+    rounded cards.
+  - **Covers are cropped a little larger** to fill the fade zones. Every landing
+    cover is `cover.jpg` in its study's folder with its subject centred and room
+    around it for this. `cardPosition` / `mobilePosition` in `data.js` still
+    anchor a crop if a future cover needs it; a percentage there lines up that
+    point of the picture with the same point of the window.
   - **The variant is written out in full** in each class list,
     `[@media(min-aspect-ratio:5/4)]:` — Tailwind only generates classes it
     finds literally in source, and one kept in a JS constant generated nothing.
   - **`sizes` says 400vw on a portrait window,** because a cover cropped to a
-    phone's height is drawn about four times the window's width. `100vw` there
-    fetched a file a quarter of the size and every phone crop was soft.
+    phone's height is drawn about four times the window's width.
+  - **Replacing an image under the same name,** clear the dev server's cache
+    (stop it, `rm -rf .next`): its optimizer kept serving the old WebP/AVIF
+    while a plain JPEG request came back fresh.
   - The reveal's frame is invisible until the script has posed it, then fades
     in. It used to paint full bleed on reload and snap into its inset frame.
   - A stage cover carries `data-vt-stop`, its stop block's id, and the morph
-    back from a case study centres *that*: scrolling a sticky element into view
-    lands wherever it happens to be stuck.
+    back from a case study centres *that*.
 - **The top of the page scrolls freely.** An empty snap area in `page.js` spans
   the hero plus one window, and a snap area taller than the window makes every
   position where it covers the window valid. So the reveal can be watched and
@@ -361,7 +372,7 @@ modified keys are handed back, and that "Back to Work" lands on its own panel.
 `scripts/check-landing.mjs` drives a real browser across six viewports and
 asserts that the first study peeks over the fold with the masthead hidden, that
 it is exactly full bleed and unzoomed at its own stop, that at every other stop
-that study's sheet is exactly the window, unreceded, with nothing of the next
+both of that panel's fade zones sit outside the window with nothing of the next
 showing and its own link under the pointer, and that nothing scrolls sideways. Both
 scripts use the installed Google Chrome and fall back to Playwright's Chromium
 (`bunx playwright install chromium`) when there is none.

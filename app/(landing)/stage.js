@@ -6,39 +6,46 @@ import ViewTransitionLink from "../view-transition-link";
 
 /**
  * The work: the first study grows out from under the hero, and every study
- * after it slides up over the one before like a sheet laid on a stack.
+ * after it is a full-bleed panel that scrolls up and dissolves into the one
+ * before it.
  *
  *   1. THE REVEAL. The first study opens as an inset picture peeking over the
  *      fold and grows to full bleed as the page scrolls -- the Venice / Collins
  *      move. Most of this note is about it.
- *   2. THE STACK. Each study is a full-window sheet, sticky at the top of the
- *      window. The next one scrolls up over it, and as it is covered the sheet
- *      underneath recedes: it scales down a little, dims, and takes on the
- *      inset frame's rounded corners, so it becomes a card on the white page.
+ *   2. THE PANELS. Each later study is a full-bleed panel in flow, one snap
+ *      stop each. Where two meet there is no edge: the lower panel's top is a
+ *      soft gradient mask, and it overlaps the panel above by that much, so the
+ *      boundary sliding up the window is one picture dissolving into the next.
  *
- * What the stack replaced, both built and both rejected:
+ * The panels are the version that shipped first, with the edge taken away. Two
+ * replacements were built in between and cut: a pinned stage cross-fading
+ * whole covers (a double exposure mid-fade, and a blurred copy of each cover
+ * filling narrow windows), and sticky sheets receding into rounded cards (too
+ * much ceremony). The dissolve keeps what was right about the panels -- the
+ * page simply scrolls -- and removes the one thing wrong with them.
  *
- *   - Full-bleed panels scrolling past. Unless the window was exactly the
- *     picture's shape you saw the neighbour at its edges, and between stops the
- *     edge between two pictures slid by with nothing to say what it was.
- *   - A pinned stage cross-fading between covers with a settle zoom. Mid-fade
- *     two unrelated photographs made a double exposure -- two logos over each
- *     other -- and it read as a slideshow. On narrow windows each cover sat
- *     whole over a blurred copy of itself, which says "this does not fit" in
- *     the one place the work should look deliberate.
+ * The geometry of the dissolve. A panel is a window plus a fade zone above
+ * and below it (FADE), and it overlaps the panel before by one fade zone. Its
+ * own top fade is therefore laid over the previous panel's bottom zone, which
+ * is picture, so the blend is picture into picture. And at rest -- snapped to
+ * its centre -- the window shows exactly its middle: both fade zones sit just
+ * outside the window, so every stop is one clean picture, full bleed. Two
+ * zones rather than one is what that takes: with one, the next panel's fade
+ * would reach into the bottom of the window at rest.
  *
- * A sheet has an edge on purpose. It is a physical object arriving over
- * another, never a blend, and the recede is the same vocabulary as the hero's
- * inset frame -- rounded, on white -- run the other way.
+ * The price is that a cover is cropped to fill a window and a half-zone more
+ * than the window, so it is drawn a little larger. Every landing cover has its
+ * subject centred with room around it for exactly this.
  *
- * The fit: every sheet is object-cover, full bleed, always. What decides the
- * crop is where it is anchored: `cardPosition` on a landscape window and
- * `mobilePosition` on a narrow one (both in data.js), so a phone crops into
- * the part of the picture that matters rather than its middle. A CSS media
- * query picks between them, so there is nothing to measure.
+ * The last panel fades out at its foot as well, into the page's white, which
+ * is the closer's ground: the work ends on a dissolve, not a line.
  *
- * The stack is plain `position: sticky`, so without JavaScript it still
- * stacks; only the recede needs the script.
+ * The fit: every cover is object-cover, full bleed, anchored at `cardPosition`
+ * on a landscape window and `mobilePosition` on a narrow one (both in data.js,
+ * both centre by default). A CSS media query picks, so nothing is measured.
+ *
+ * Nothing about the panels is scripted. The masks are static, so it is all
+ * layout, and it works without JavaScript.
  *
  * The first study (the reveal):
  *
@@ -92,35 +99,43 @@ import ViewTransitionLink from "../view-transition-link";
  * snap area in page.js does the snapping. It is a separate block because
  * paged-scroll.js, HashTarget and check-scroll.mjs look it up by id.
  *
- * The stack:
+ * The stage is sticky, and its section is a fade zone taller than it, so once
+ * the reveal completes it holds for exactly the scroll the next study's fade
+ * takes to rise over it -- the blend always lands on picture, not on page.
  *
- * Every sheet, the first study's stage included, is `sticky top-0` and a
- * window tall, one after another in the same section. So each sheet scrolls up
- * in flow and sticks, and the next scrolls up over it. The first study's stage
- * sticks exactly when the reveal completes, so the reveal never knew the
- * difference. Each later study has a `#case-<slug>` stop block a window apart
- * down the runway, which is exactly where its sheet sticks.
- *
- * A sheet recedes across the scroll from its own stop to the next one's, which
- * is precisely the time the next sheet takes to cover it. Scale and the dimming
- * layer's opacity are compositor properties on the same ScrollTimeline as the
- * reveal; the corner radius is painted, and is small enough that a frame of lag
- * on it does not show.
- *
- * There is nothing to arbitrate for clicks: at a stop the next sheet is still
- * wholly below the window, so the sheet on screen is the topmost thing there.
  */
-
-// How far a covered sheet recedes, and how dark it goes. Enough to read as
-// pushed back, not so much that it reads as disabled.
-const RECEDE_SCALE = 0.92;
-const RECEDE_DIM = 0.45;
 
 // `[@media(min-aspect-ratio:5/4)]:` is a landscape window, where a cover is
 // anchored at `cardPosition` rather than `mobilePosition`. Written out in full
 // in each class list rather than kept in a constant: Tailwind finds classes by
 // scanning the source for them, so a class assembled from a variable at
-// runtime is never generated. That shipped once here.
+// runtime is never generated. That shipped once here. The fade zone's 12svh is
+// written out in the classes below for the same reason, and must match FADE.
+
+// The fade zone, where one panel dissolves into the next: 12% of the window.
+// Enough that the boundary reads as a dissolve rather than a soft line, small
+// enough that the extra crop it costs a cover stays modest.
+//
+// Eased rather than linear. A straight ramp shows a band where it starts and
+// ends; these are smoothstep samples, so the blend has no visible start.
+const FADE = "12svh";
+const EASE = [
+  [0, 0],
+  [0.2, 0.1],
+  [0.4, 0.35],
+  [0.6, 0.65],
+  [0.8, 0.9],
+  [1, 1],
+];
+const rampIn = EASE.map(([t, a]) => `rgb(0 0 0 / ${a}) calc(${FADE} * ${t})`).join(", ");
+const rampOut = [...EASE]
+  .reverse()
+  .map(([t, a]) => `rgb(0 0 0 / ${a}) calc(100% - ${FADE} * ${t})`)
+  .join(", ");
+// A panel's mask: transparent at its very top, solid from one zone down.
+const MASK = `linear-gradient(to bottom, ${rampIn})`;
+// The last panel's, which also dissolves out at its foot into the closer.
+const MASK_LAST = `linear-gradient(to bottom, ${rampIn}, ${rampOut})`;
 
 // How far the picture starts zoomed in, relative to just covering the frame.
 const ZOOM = 1.35;
@@ -200,38 +215,24 @@ function pose(s, g) {
   };
 }
 
-// What the browser should fetch for a full-window cover. On a landscape
-// window the picture is about the window's width. On a portrait one it is
-// cropped to fill the height, which puts it at up to four times the window's
-// width -- and `100vw` there fetched a file a quarter of the size it was drawn
-// at, so every phone crop was soft. The media condition is the same line the
-// anchors switch on.
-const COVER_SIZES = "(max-aspect-ratio: 5/4) 400vw, 100vw";
-
-// The corner a receded sheet takes on: the inset frame's own, so the card it
-// becomes is the frame the hero drew.
-const cornerOf = (W) => W * (W >= 1024 ? INSET.lg : INSET.sm) * RADIUS;
+// What the browser should fetch for a cover. On a landscape window a panel
+// is drawn about 1.3 windows wide once it is cropped to its fade zones. On a
+// portrait one it is cropped to fill the height, which puts it at up to four
+// times the window's width -- and `100vw` there fetched a file a quarter of
+// the size it was drawn at, so every phone crop was soft.
+const COVER_SIZES = "(max-aspect-ratio: 5/4) 400vw, 130vw";
 
 export default function Stage({ first, rest }) {
   const stageRef = useRef(null);
   const frameRef = useRef(null);
   const stopRef = useRef(null);
-  const sheetRefs = useRef([]);
-  const dimRefs = useRef([]);
-  const sheetStopRefs = useRef([]);
 
   useEffect(() => {
     const stage = stageRef.current;
     const frame = frameRef.current;
     const stop = stopRef.current;
     const image = frame?.querySelector("img");
-    // Every card in the stack, the first study's stage first, and the layer
-    // that dims each.
-    const cards = [stage, ...sheetRefs.current.slice(0, rest.length)];
-    const dims = dimRefs.current.slice(0, rest.length + 1);
-    const sheetStops = sheetStopRefs.current.slice(0, rest.length);
     if (!stage || !frame || !stop || !image) return;
-    if ([...cards, ...dims, ...sheetStops].some((el) => !el)) return;
 
     frame.style.transformOrigin = "0 0";
     image.style.transformOrigin = "0 0";
@@ -243,32 +244,13 @@ export default function Stage({ first, rest }) {
     const geometry = () => {
       const r = stop.getBoundingClientRect();
       const section = stage.parentElement.getBoundingClientRect();
-      const end = r.top + window.scrollY + r.height / 2 - window.innerHeight / 2;
-      const at = (el) => el.getBoundingClientRect().top + window.scrollY;
-      // Where each card is on screen by itself: the reveal's end, then each
-      // later study's stop. Card k recedes from its own to the next.
-      const stops = [end, ...sheetStops.map(at)];
       return {
         W: stage.clientWidth,
         H: stage.clientHeight,
         start: section.top + window.scrollY,
-        // The scroll that centres the stop, i.e. the section filling the
+        // The scroll that centres the stop, i.e. the stage filling the
         // window: see the note at the top of the file.
-        end,
-        recedes: stops.slice(0, -1).map((from, k) => ({ from, to: stops[k + 1] })),
-      };
-    };
-
-    // Card k's recede at scroll s: none at its own stop, all of it by the
-    // next, when the next sheet has covered it.
-    const recedeAt = (s, { from, to }, W) => {
-      const t = clamp01((s - from) / (to - from));
-      return {
-        card: {
-          transform: `scale(${lerp(1, RECEDE_SCALE, t)})`,
-          borderRadius: `${lerp(0, cornerOf(W), t)}px`,
-        },
-        dim: { opacity: lerp(0, RECEDE_DIM, t) },
+        end: r.top + window.scrollY + r.height / 2 - window.innerHeight / 2,
       };
     };
 
@@ -287,11 +269,6 @@ export default function Stage({ first, rest }) {
       frame.style.transform = "";
       frame.style.borderRadius = "";
       image.style.transform = "";
-      cards.forEach((el, k) => {
-        el.style.transform = "";
-        el.style.borderRadius = "";
-        dims[k].style.opacity = "";
-      });
     };
 
     // Compositor path. Keyframe offsets are fractions of the whole document's
@@ -302,16 +279,12 @@ export default function Stage({ first, rest }) {
     // linear in scroll: the inverse scale is a quotient, and there are kinks
     // where the frame's bottom stops needing to be held down. `start` is
     // sampled exactly in case the end ever moves past it again.
-    //
-    // Under reduced motion there is no reveal (the frame sits at full bleed)
-    // and no recede: the sheets still stack, which is layout, not animation.
     const build = () => {
       clear();
+      if (reduced.matches) return reveal();
       const g = geometry();
       const max = root.scrollHeight - root.clientHeight;
-      if (g.end <= 0 || max <= 0 || reduced.matches) return reveal();
-      const timeline = new window.ScrollTimeline({ source: root, axis: "block" });
-      const options = { timeline, fill: "both", easing: "linear" };
+      if (g.end <= 0 || max <= 0) return reveal();
 
       const scrolls = [];
       for (let i = 0; i <= STEPS; i++) scrolls.push((i / STEPS) * g.end);
@@ -332,27 +305,13 @@ export default function Stage({ first, rest }) {
       const last = pose(g.end, g);
       frameFrames.push({ offset: 1, transform: last.frame, borderRadius: last.radius });
       imageFrames.push({ offset: 1, transform: last.image });
-      animations.push(
+
+      const timeline = new window.ScrollTimeline({ source: root, axis: "block" });
+      const options = { timeline, fill: "both", easing: "linear" };
+      animations = [
         frame.animate(frameFrames, options),
         image.animate(imageFrames, options),
-      );
-
-      // Explicit ends at 0 and 1, because a keyframe list that starts past
-      // offset 0 interpolates from the element's own style before it.
-      g.recedes.forEach((range, k) => {
-        const a = recedeAt(range.from, range, g.W);
-        const b = recedeAt(range.to, range, g.W);
-        const ends = (x, y) => [
-          { offset: 0, ...x },
-          { offset: range.from / max, ...x },
-          { offset: range.to / max, ...y },
-          { offset: 1, ...y },
-        ];
-        animations.push(
-          cards[k].animate(ends(a.card, b.card), options),
-          dims[k].animate(ends(a.dim, b.dim), options),
-        );
-      });
+      ];
       reveal();
     };
 
@@ -361,21 +320,14 @@ export default function Stage({ first, rest }) {
     const draw = () => {
       raf = 0;
       const g = geometry();
-      if (g.end <= 0 || reduced.matches) {
+      if (reduced.matches || g.end <= 0) {
         clear();
         return reveal();
       }
-      const s = window.scrollY;
-      const { frame: f, radius, image: i } = pose(s, g);
+      const { frame: f, radius, image: i } = pose(window.scrollY, g);
       frame.style.transform = f;
       frame.style.borderRadius = radius;
       image.style.transform = i;
-      g.recedes.forEach((range, k) => {
-        const { card, dim } = recedeAt(s, range, g.W);
-        cards[k].style.transform = card.transform;
-        cards[k].style.borderRadius = card.borderRadius;
-        dims[k].style.opacity = String(dim.opacity);
-      });
       reveal();
     };
     const schedule = () => {
@@ -399,21 +351,9 @@ export default function Stage({ first, rest }) {
       window.removeEventListener("scroll", schedule);
       clear();
     };
-  }, [rest.length]);
+  }, []);
 
   const firstName = `cover-${first.slug}`;
-
-  // The dimming layer every card carries. Black at an opacity the recede
-  // animates, over the picture and under nothing.
-  const dim = (k) => (
-    <div
-      ref={(el) => {
-        dimRefs.current[k] = el;
-      }}
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 bg-black opacity-0"
-    />
-  );
 
   // A cover's two anchors, as custom properties the image reads from its class
   // list. On the box rather than the <img>, because CoverImage owns the <img>'s
@@ -424,63 +364,81 @@ export default function Stage({ first, rest }) {
   });
 
   return (
-    // One window for the reveal plus one per later study. `id="work"` because
-    // /work redirects to /#work.
-    <section id="work" className="relative">
-      {/* Without a script the frame would never be shown: see `reveal`. */}
-      <noscript>
-        <style>{`[data-reveal-frame]{opacity:1!important}`}</style>
-      </noscript>
+    <>
+      {/* A window for the reveal, plus one fade zone for the stage to hold
+          while the next study dissolves in over it. `id="work"` because /work
+          redirects to /#work. */}
+      <section id="work" className="relative h-[112svh]">
+        {/* Without a script the frame would never be shown: see `reveal`. */}
+        <noscript>
+          <style>{`[data-reveal-frame]{opacity:1!important}`}</style>
+        </noscript>
 
-      <div
-        ref={stageRef}
-        className="sticky top-0 h-svh w-full overflow-hidden will-change-transform"
-      >
-        <ViewTransitionLink
-          href={`/work/${first.slug}`}
-          vtName={firstName}
-          aria-label={first.title}
-          className="block h-full w-full"
-        >
-          <CoverImage
-            cover={first.cover}
-            className="absolute inset-0 overflow-hidden opacity-0 transition-opacity duration-[var(--duration-settle)] ease-brand will-change-transform"
-            imageClassName="object-cover will-change-transform"
-            sizes={COVER_SIZES}
-            priority
-            containerProps={{
-              ref: frameRef,
-              style: { viewTransitionName: firstName },
-              "data-reveal-frame": "",
-              "data-vt-cover": "",
-              "data-vt-target": firstName,
-              "data-vt-stop": `case-${first.slug}`,
-            }}
-          />
-        </ViewTransitionLink>
-        {dim(0)}
-      </div>
+        <div ref={stageRef} className="sticky top-0 h-svh w-full overflow-hidden">
+          <ViewTransitionLink
+            href={`/work/${first.slug}`}
+            vtName={firstName}
+            aria-label={first.title}
+            className="block h-full w-full"
+          >
+            <CoverImage
+              cover={first.cover}
+              className="absolute inset-0 overflow-hidden opacity-0 transition-opacity duration-[var(--duration-settle)] ease-brand will-change-transform"
+              imageClassName="object-cover will-change-transform"
+              sizes={COVER_SIZES}
+              priority
+              containerProps={{
+                ref: frameRef,
+                style: { viewTransitionName: firstName },
+                "data-reveal-frame": "",
+                "data-vt-cover": "",
+                "data-vt-target": firstName,
+                "data-vt-stop": `case-${first.slug}`,
+              }}
+            />
+          </ViewTransitionLink>
+        </div>
+
+        {/* Where the reveal completes. See the note at the top of the file. */}
+        <div
+          ref={stopRef}
+          id={`case-${first.slug}`}
+          className="pointer-events-none absolute inset-x-0 top-0 h-svh"
+        />
+      </section>
 
       {rest.map((cs, i) => {
         const cover = { ...cs.cover, ...cs.landingCover };
         const vtName = `cover-${cs.slug}`;
+        const last = i === rest.length - 1;
         return (
-          <div
+          // A window plus a fade zone above and below (124svh = 100 + 2 x 12),
+          // pulled up one zone over the panel before (-12svh). At rest the
+          // window is exactly its middle. See the note at the top of the file.
+          //
+          // The snap point is not the article. A snap area taller than the
+          // window makes every position where it covers the window valid, so
+          // snapping to the article landed a flick at its top -- one fade zone
+          // short, with the dissolve showing across the top of the window. The
+          // block inside is exactly the window, exactly where the panel rests.
+          <article
             key={cs.slug}
-            ref={(el) => {
-              sheetRefs.current[i] = el;
+            id={`case-${cs.slug}`}
+            className="relative -mt-[12svh] h-[124svh]"
+            style={{
+              maskImage: last ? MASK_LAST : MASK,
+              WebkitMaskImage: last ? MASK_LAST : MASK,
             }}
-            className="sticky top-0 h-svh w-full overflow-hidden will-change-transform"
           >
             <ViewTransitionLink
               href={`/work/${cs.slug}`}
               vtName={vtName}
               aria-label={cs.title}
-              className="block h-full w-full"
+              className="absolute inset-0 block"
             >
               <CoverImage
                 cover={cover}
-                className="absolute inset-0"
+                className="absolute inset-0 overflow-hidden"
                 imageClassName="object-cover [object-position:var(--pos-narrow)] [@media(min-aspect-ratio:5/4)]:[object-position:var(--pos)]"
                 sizes={COVER_SIZES}
                 containerProps={{
@@ -491,32 +449,13 @@ export default function Stage({ first, rest }) {
                 }}
               />
             </ViewTransitionLink>
-            {dim(i + 1)}
-          </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-[12svh] h-svh snap-always snap-start"
+            />
+          </article>
         );
       })}
-
-      {/* Where the reveal completes. See the note at the top of the file. */}
-      <div
-        ref={stopRef}
-        id={`case-${first.slug}`}
-        className="pointer-events-none absolute inset-x-0 top-0 h-svh"
-      />
-
-      {/* One stop per later study, a window apart down the runway -- exactly
-          where its sheet sticks. snap-start, which for a block the window's
-          height is also its centre. */}
-      {rest.map((cs, i) => (
-        <div
-          key={cs.slug}
-          ref={(el) => {
-            sheetStopRefs.current[i] = el;
-          }}
-          id={`case-${cs.slug}`}
-          className="pointer-events-none absolute inset-x-0 h-svh snap-always snap-start"
-          style={{ top: `${(i + 1) * 100}svh` }}
-        />
-      ))}
-    </section>
+    </>
   );
 }

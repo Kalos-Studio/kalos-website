@@ -193,17 +193,12 @@ const allWork = [
     summary:
       "Texas-based medical transport company providing ambulance and wheelchair transport across the greater Houston area and beyond.",
     role: "Brand Strategy, Brand Identity, Fleet Livery, Web Design, Development",
-    // The photograph itself, with no website over it: no nav bar, no
-    // headline. Earlier covers were screenshots of the homepage hero, whose
-    // baked-in headline no crop could keep on a phone.
+    // Every landing cover is cover.jpg in its study's folder, and each has
+    // its subject centred with room around it, so a crop to any window keeps
+    // it and none needs a focal point.
     cover: {
-      src: "/work/priority-ambulance-transfer/van-at-sunset.jpg",
+      src: "/work/priority-ambulance-transfer/cover.jpg",
       alt: "A Priority Ambulance Transfer van on an open road through golden fields at sunset",
-      // 1.6:1, so a landscape window loses at most a sliver top and bottom.
-      // On a phone, the van (x 1130 to 1785 of 2000). A percentage lines up
-      // that point of the picture with the same point of the window, so it is
-      // not the centre of what shows: 82% puts the window on the van.
-      mobilePosition: "82% center",
     },
     body: [
       {
@@ -259,10 +254,8 @@ const allWork = [
     // for the panel, which meant the study opened on a different picture from
     // the one clicked. One image now, as everywhere else.
     cover: {
-      src: "/work/echocare/stage.jpg",
+      src: "/work/echocare/cover.jpg",
       alt: "The EchoCare wordmark lit up on a wall-sized screen in a dark hall, with people silhouetted in front of it",
-      // On a phone, centred on the wordmark (x 760 to 1240 of 2000).
-      mobilePosition: "50% center",
     },
     body: [
       {
@@ -335,9 +328,6 @@ const allWork = [
     cover: {
       src: "/work/young-muslims/cover.jpg",
       alt: "A Young Muslims poster on a subway platform, \"For the youth. By the youth.\", over a group of young women embracing, with a train blurring past behind",
-      // On a phone, the poster (x 710 to 1220 of 2000), which is portrait
-      // already and fills a phone almost exactly.
-      mobilePosition: "48% center",
     },
     body: [
       {

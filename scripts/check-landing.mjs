@@ -23,11 +23,14 @@
  *               own stop is the bug this effect is most likely to have, since
  *               progress is measured against that stop.
  *
- *   STACK       Every other study, at its stop: its sheet is exactly the window
- *               and not receded at all, the next sheet has not started to show,
- *               and what is under the pointer in the middle of the window is
- *               that study's link. A sheet that sticks a few pixels off its stop
- *               shows a sliver of the one beneath, which is the bug this guards.
+ *   PANELS      Every other study, at its stop: both of its fade zones sit
+ *               outside the window, so what shows is solid picture edge to
+ *               edge; the next panel's fade has not reached the window; and
+ *               what is under the pointer in the middle of the window is that
+ *               study's link. A panel resting a few pixels off shows the start
+ *               of a dissolve at the top or bottom, which is the bug this
+ *               guards. At the first study's stop, likewise, nothing of the
+ *               second may show.
  *
  *   ARRIVAL     The first study's frame is invisible at first paint and shown
  *               once posed. It used to paint full bleed and then snap into its
@@ -113,21 +116,22 @@ async function measure(page) {
     await new Promise((r) => setTimeout(r, 700));
     if (lg && +getComputedStyle(header).opacity < 0.99) bad("masthead hidden past the hero");
 
-    // The stage and every sheet after it, in order: the section's sticky
-    // children.
-    const sheets = [...document.querySelectorAll("#work > div.sticky")];
-    for (const [i, el] of stops.slice(1).entries()) {
+    // The panels after the first study, and the fade zone they share with
+    // their neighbours: 12svh, as in stage.js.
+    const panels = stops.slice(1);
+    const fade = vh * 0.12;
+    await go(stopOf(stops[0]));
+    if (panels[0].getBoundingClientRect().top < vh - TOLERANCE) bad(`${stops[0].id}: the next panel shows`);
+    for (const [i, el] of panels.entries()) {
       await go(stopOf(el));
-      const sheet = sheets[i + 1];
-      const r = sheet.getBoundingClientRect();
-      if (Math.abs(r.top) > TOLERANCE || Math.abs(r.height - vh) > TOLERANCE || Math.abs(r.width - vw) > TOLERANCE)
-        bad(`${el.id}: sheet ${Math.round(r.width)}x${Math.round(r.height)} at ${Math.round(r.top)}, window ${vw}x${vh}`);
-      const t = getComputedStyle(sheet).transform;
-      if (t !== "none" && Math.abs(new DOMMatrix(t).a - 1) > 0.002) bad(`${el.id}: its sheet is receded at its own stop`);
-      const next = sheets[i + 2];
-      if (next && next.getBoundingClientRect().top < vh - TOLERANCE) bad(`${el.id}: the next sheet shows`);
+      const r = el.getBoundingClientRect();
+      if (Math.abs(r.width - vw) > TOLERANCE) bad(`${el.id}: ${Math.round(r.width)} wide, window ${vw}`);
+      if (r.top + fade > TOLERANCE || r.bottom - fade < vh - TOLERANCE)
+        bad(`${el.id}: a fade zone reaches into the window (top ${Math.round(r.top)}, bottom ${Math.round(r.bottom)})`);
+      const next = panels[i + 1];
+      if (next && next.getBoundingClientRect().top < vh - TOLERANCE) bad(`${el.id}: the next panel shows`);
       const hit = document.elementFromPoint(vw / 2, vh / 2)?.closest("a");
-      if (!hit || !sheet.contains(hit)) bad(`${el.id}: the middle of the window is not its link`);
+      if (!hit || !el.contains(hit)) bad(`${el.id}: the middle of the window is not its link`);
     }
 
     // A jump straight from the top to the last study, the way "Back to Work"
