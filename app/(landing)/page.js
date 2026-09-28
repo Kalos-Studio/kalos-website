@@ -1,17 +1,16 @@
-import CoverImage from "../work/CoverImage";
-import ViewTransitionLink from "../view-transition-link";
 import { Mark } from "../lockup";
 import { landingWork } from "../work/data";
 import BookACall from "./book-a-call";
 import PagedScroll from "./paged-scroll";
 import HashTarget from "./hash-target";
 import Masthead from "./masthead";
-import Reveal from "./reveal";
+import Stage from "./stage";
 import { closer, positioning } from "./content";
 
 // The landing page, from the redesign wireframe: a hero that is the mark and
 // one line, the first case study growing out from under it to full bleed, the
-// rest as full-bleed panels one after another, and the closer.
+// rest fading in one after another on the same full-window stage, and the
+// closer. The stage is stage.js.
 //
 // What went, and why it is not coming back as part of this: the pill rail, the
 // definition block and the hero's fly-the-mark handover. The wireframe has none
@@ -49,22 +48,32 @@ export default function LandingPage() {
 
           What does is the spec's rule for a snap area larger than the window:
           every position at which it covers the window is a valid snap
-          position. This wrapper is exactly the hero plus the runway, so the
+          position. The area below is exactly the hero plus one window, so the
           positions it covers run from the top of the page to the scroll at
           which the reveal completes -- free scrolling across all of it, a hard
           stop at each end, and the same geometry that times the animation
           bounds the freedom. `snap-always` so a fling from the hero cannot fly
-          past full bleed onto EchoCare.
+          past full bleed onto the next study.
+
+          An empty absolute block rather than a wrapper, since the stage after
+          the hero is taller than the free range (it holds for every study) and
+          a wrapper around both would make all of it free.
 
           It is also the top snap stop, which the hero used to carry itself:
           without one the top of the document is unreachable under mandatory
           snapping. */}
-      <div className="snap-always snap-start">
+      <div className="relative">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[calc(200svh-6rem)] snap-always snap-start lg:h-[182svh]"
+        />
+
         {/* Short of a full window on purpose: the first study's inset frame
             sits under it and peeks over the fold, which is what says there is
             more below. 18% of the window from lg; below that a fixed 6rem,
             since a fraction of a phone's height is either nothing or most of
-            the frame. */}
+            the frame. The snap area above is this height plus 100svh, so the
+            two change together. */}
         <section
           id={HERO_ID}
           className="flex h-[calc(100svh-6rem)] flex-col items-center justify-center gap-10 px-5 text-center lg:h-[82svh] lg:gap-14"
@@ -87,50 +96,8 @@ export default function LandingPage() {
           />
         </section>
 
-        <Reveal cs={first} />
+        <Stage first={first} rest={rest} />
       </div>
-
-      <section aria-label="More work">
-        {/* The panels, edge to edge and touching, as the wireframe stacks them.
-            A full window each from lg, and each one a stop, so a flick moves
-            exactly one picture. Below lg they are 16:9 strips: a landscape
-            picture cropped to a portrait phone keeps a sliver of the middle,
-            which for Priority is half a headline.
-
-            snap-center rather than start, which is the same place when a panel
-            is the window's height and the right one when it is a strip. */}
-        {rest.map((cs) => {
-          const cover = { ...cs.cover, ...cs.landingCover };
-          const vtName = `cover-${cs.slug}`;
-          return (
-            <article
-              key={cs.slug}
-              id={`case-${cs.slug}`}
-              className="snap-always snap-center"
-            >
-              <ViewTransitionLink
-                href={`/work/${cs.slug}`}
-                vtName={vtName}
-                aria-label={cs.title}
-                className="block"
-              >
-                <CoverImage
-                  cover={cover}
-                  className="relative aspect-video w-full overflow-hidden bg-surface lg:aspect-auto lg:h-svh"
-                  imageClassName="object-cover"
-                  objectPosition={cover.cardPosition}
-                  sizes="100vw"
-                  containerProps={{
-                    style: { viewTransitionName: vtName },
-                    "data-vt-cover": "",
-                    "data-vt-target": vtName,
-                  }}
-                />
-              </ViewTransitionLink>
-            </article>
-          );
-        })}
-      </section>
 
       {/* --- Closer --------------------------------------------------------
           A full window and a stop of its own, snap-start. It carried snap-end

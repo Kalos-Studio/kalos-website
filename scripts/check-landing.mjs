@@ -23,8 +23,9 @@
  *               own stop is the bug this effect is most likely to have, since
  *               progress is measured against that stop.
  *
- *   PANELS      Every other study, at its stop, spans the full width with its
- *               middle on the window's middle, and from lg fills the window.
+ *   STAGE       Every other study, at its stop: the pinned stage is exactly the
+ *               window (so nothing of a neighbour can show), that study's layer
+ *               is fully faded in, and it is the only layer that can be clicked.
  *
  *   OVERFLOW    Nothing scrolls sideways. A full-bleed panel inside a gutter is
  *               the classic way to get 15px of horizontal scroll.
@@ -73,7 +74,7 @@ async function measure(page) {
     };
     const frame = document.querySelector("[data-vt-cover]");
     // The frame grows by a (non-uniform) scale and the picture inside carries
-    // the inverse times the zoom -- see reveal.js. So "full bleed" is the frame
+    // the inverse times the zoom -- see stage.js. So "full bleed" is the frame
     // at identity, and "zoomed back out" is the picture at identity too.
     const matrix = (el) => {
       const t = getComputedStyle(el).transform;
@@ -105,12 +106,18 @@ async function measure(page) {
     await new Promise((r) => setTimeout(r, 700));
     if (lg && +getComputedStyle(header).opacity < 0.99) bad("masthead hidden past the hero");
 
-    for (const el of stops.slice(1)) {
+    const stage = document.querySelector("#work > div");
+    const layers = [...stage.children];
+    for (const [i, el] of stops.slice(1).entries()) {
       await go(stopOf(el));
-      const r = el.getBoundingClientRect();
-      if (Math.abs(r.width - vw) > TOLERANCE) bad(`${el.id} ${Math.round(r.width)} wide, window ${vw}`);
-      if (Math.abs(r.top + r.height / 2 - vh / 2) > TOLERANCE) bad(`${el.id} off centre`);
-      if (lg && Math.abs(r.height - vh) > TOLERANCE) bad(`${el.id} ${Math.round(r.height)} tall, window ${vh}`);
+      const r = stage.getBoundingClientRect();
+      if (Math.abs(r.top) > TOLERANCE || Math.abs(r.height - vh) > TOLERANCE || Math.abs(r.width - vw) > TOLERANCE)
+        bad(`${el.id}: stage ${Math.round(r.width)}x${Math.round(r.height)} at ${Math.round(r.top)}, window ${vw}x${vh}`);
+      const layer = layers[i + 1];
+      const opacity = +getComputedStyle(layer).opacity;
+      if (opacity < 0.99) bad(`${el.id}: its layer at opacity ${opacity.toFixed(2)}`);
+      const live = layers.filter((l) => !l.inert);
+      if (live.length !== 1 || live[0] !== layer) bad(`${el.id}: ${live.length} clickable layers, or the wrong one`);
     }
 
     if (document.documentElement.scrollWidth > vw) bad(`scrolls sideways (${document.documentElement.scrollWidth} > ${vw})`);
@@ -147,6 +154,8 @@ for (const [width, height, label] of VIEWPORTS) {
     // Wait for what is measured, not for the network: an earlier version passed
     // four viewports by measuring a page that had not hydrated.
     await page.waitForSelector("[data-vt-cover] img", { timeout: 15000 });
+    // Hydrated: the stage's animations exist and the layers have been marked.
+    await page.waitForFunction(() => document.getAnimations().length > 0, null, { timeout: 15000 });
     await page.evaluate(() => document.fonts.ready);
 
     const m = await measure(page);

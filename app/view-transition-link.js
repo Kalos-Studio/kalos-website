@@ -85,8 +85,14 @@ function waitForTarget(name, source, { centreInView = false, ticket } = {}) {
       // wherever that panel happens to sit, which is often off screen, and the
       // page then scrolls to it afterwards. Instant, because a smooth scroll
       // would still be moving when the new state is captured.
+      //
+      // A cover on the landing page's stage names its stop block in
+      // data-vt-stop, and that is what gets centred. The cover itself sits in
+      // a sticky stage, and scrolling a sticky element into view lands wherever
+      // it happens to be stuck, not at its study.
       if (centreInView && el) {
-        el.scrollIntoView({ block: "center", behavior: "instant" });
+        const stop = el.dataset.vtStop && document.getElementById(el.dataset.vtStop);
+        (stop || el).scrollIntoView({ block: "center", behavior: "instant" });
       }
 
       // Start the panels either side of the target loading, without waiting for

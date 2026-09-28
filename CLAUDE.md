@@ -4,7 +4,8 @@ Next.js 15 (App Router) portfolio site. Two areas:
 
 - **`/`** — the landing page, in `app/(landing)/`. It *is* the portfolio: a hero
   of the mark and one line, the first case study growing out from under it to
-  full bleed, three more as full-bleed panels, and the closer.
+  full bleed, three more fading in over it on the same pinned stage, and the
+  closer.
 - **`/work/<slug>`** — the case studies themselves. There is no `/work` index;
   that URL permanently redirects to `/#work` (see `next.config.mjs`), because a
   second list of the same projects would only drift from the first.
@@ -103,7 +104,7 @@ the top of the landing page because there is no panel to return to (`onLanding`)
   white at the top of the window). White on a soft black fade in the corner over
   the work, black with no fade over the closer. It was `mix-blend-difference`,
   which turned into a patchwork of inverted colours over the MARA collage.
-- **`reveal.js`** — the first study. An inset frame with rounded corners peeks
+- **`stage.js`**, first movement — the first study. An inset frame with rounded corners peeks
   over the fold, then grows to full bleed while the picture inside zooms out
   (the Venice / Collins move). Its top edge is in flow, so the gap under Book a
   call never changes; its bottom is held to the window's bottom, so no white
@@ -112,12 +113,26 @@ the top of the landing page because there is no panel to return to (`onLanding`)
   the compositor runs it off the scroll position. It was `clip-path` from a
   scroll listener, which repainted every frame and lagged the scroll by one; read
   the top of the file before bringing either back.
-- **The top of the page scrolls freely.** The hero and the reveal share one snap
-  area in `page.js`, exactly as long as the expansion, and a snap area taller
-  than the window makes every position where it covers the window valid. So the
-  reveal can be watched and scrubbed, and the stops begin at full bleed.
-- Below lg the other panels are 16:9 strips rather than full windows: a
-  landscape picture cropped to a portrait phone loses what made it worth showing.
+- **`stage.js`**, second movement — once the first study is full bleed the
+  stage pins (sticky), and each later study fades in over the one before,
+  settling from a slight zoom, one per snap stop. They used to be full-bleed
+  panels scrolling past, which showed neighbours at the edges whenever the
+  window was not the picture's shape. The stage is always exactly one window.
+  - **Fit:** 5:4 and wider, a cover fills the window around its `cardPosition`;
+    narrower, it shows whole over a blurred copy of itself. Decided by an
+    `[@media(min-aspect-ratio:5/4)]:` variant **written out in full** in each
+    class list — Tailwind only generates classes it finds literally in source,
+    and a variant kept in a JS constant silently generated nothing.
+  - **Only the top layer is live.** The others are `inert`, or an invisible
+    layer above would take the clicks.
+  - A stage cover carries `data-vt-stop`, its stop block's id, and the morph
+    back from a case study centres *that*: scrolling a sticky element into view
+    lands wherever it happens to be stuck.
+- **The top of the page scrolls freely.** An empty snap area in `page.js` spans
+  the hero plus one window, and a snap area taller than the window makes every
+  position where it covers the window valid. So the reveal can be watched and
+  scrubbed, and the stops begin at full bleed. An absolute block rather than a
+  wrapper, because the stage is taller than the free range.
 
 **The wheel is the browser's.** "One gesture, one view" is CSS: `scroll-snap-type:
 y mandatory` on `<html>` in `app/layout.js`, with `snap-always snap-center` on
@@ -338,8 +353,9 @@ modified keys are handed back, and that "Back to Work" lands on its own panel.
 
 `scripts/check-landing.mjs` drives a real browser across six viewports and
 asserts that the first study peeks over the fold with the masthead hidden, that
-it is exactly full bleed and unzoomed at its own stop, that every other panel is
-full width and centred at its stop, and that nothing scrolls sideways. Both
+it is exactly full bleed and unzoomed at its own stop, that at every other stop
+the stage is exactly the window with that study fully faded in and the only one
+clickable, and that nothing scrolls sideways. Both
 scripts use the installed Google Chrome and fall back to Playwright's Chromium
 (`bunx playwright install chromium`) when there is none.
 
@@ -366,7 +382,7 @@ Beyond that:
   comment in a codebase that leans this hard on them is worse than a missing one.
 - Respect `prefers-reduced-motion` in anything that animates.
 - Scroll-driven work writes to the DOM in a `requestAnimationFrame`, not through
-  React state. See `reveal.js`.
+  React state. See `stage.js`.
 - No em dashes in shipping copy. Nothing enforces it; it is a brand preference.
 
 ## Git
