@@ -24,8 +24,8 @@
  *               progress is measured against that stop.
  *
  *   PANELS      Every other study, at its stop: both of its fade zones sit
- *               outside the window, so what shows is solid picture edge to
- *               edge; the next panel's fade has not reached the window; and
+ *               outside the window, so nothing of a dissolve shows at rest;
+ *               the next panel has not reached the window; and
  *               what is under the pointer in the middle of the window is that
  *               study's link. A panel resting a few pixels off shows the start
  *               of a dissolve at the top or bottom, which is the bug this
@@ -116,22 +116,31 @@ async function measure(page) {
     await new Promise((r) => setTimeout(r, 700));
     if (lg && +getComputedStyle(header).opacity < 0.99) bad("masthead hidden past the hero");
 
-    // The panels after the first study, and the fade zone they share with
-    // their neighbours: 12svh, as in stage.js.
-    const panels = stops.slice(1);
-    const fade = vh * 0.12;
+    // The stops after the first study are window-sized blocks inside their
+    // panels. A panel's top fade zone is however far it is pulled up over the
+    // one before (its negative margin: 40svh for the first, 12svh after), and
+    // its bottom zone is the standard 12svh, as in stage.js.
+    const stopsAfter = stops.slice(1);
+    const fadeBottom = vh * 0.12;
     await go(stopOf(stops[0]));
-    if (panels[0].getBoundingClientRect().top < vh - TOLERANCE) bad(`${stops[0].id}: the next panel shows`);
-    for (const [i, el] of panels.entries()) {
+    const firstPanel = stopsAfter[0].parentElement;
+    const firstFade = -parseFloat(getComputedStyle(firstPanel).marginTop);
+    if (firstPanel.getBoundingClientRect().top + firstFade < vh - TOLERANCE) bad(`${stops[0].id}: the next panel shows`);
+    for (const [i, el] of stopsAfter.entries()) {
       await go(stopOf(el));
-      const r = el.getBoundingClientRect();
+      const panel = el.parentElement;
+      const fadeTop = -parseFloat(getComputedStyle(panel).marginTop);
+      const r = panel.getBoundingClientRect();
       if (Math.abs(r.width - vw) > TOLERANCE) bad(`${el.id}: ${Math.round(r.width)} wide, window ${vw}`);
-      if (r.top + fade > TOLERANCE || r.bottom - fade < vh - TOLERANCE)
+      if (r.top + fadeTop > TOLERANCE || r.bottom - fadeBottom < vh - TOLERANCE)
         bad(`${el.id}: a fade zone reaches into the window (top ${Math.round(r.top)}, bottom ${Math.round(r.bottom)})`);
-      const next = panels[i + 1];
-      if (next && next.getBoundingClientRect().top < vh - TOLERANCE) bad(`${el.id}: the next panel shows`);
+      const next = stopsAfter[i + 1]?.parentElement;
+      if (next) {
+        const nextFade = -parseFloat(getComputedStyle(next).marginTop);
+        if (next.getBoundingClientRect().top + nextFade < vh - TOLERANCE) bad(`${el.id}: the next panel's picture shows`);
+      }
       const hit = document.elementFromPoint(vw / 2, vh / 2)?.closest("a");
-      if (!hit || !el.contains(hit)) bad(`${el.id}: the middle of the window is not its link`);
+      if (!hit || !panel.contains(hit)) bad(`${el.id}: the middle of the window is not its link`);
     }
 
     // A jump straight from the top to the last study, the way "Back to Work"

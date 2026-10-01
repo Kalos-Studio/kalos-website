@@ -25,24 +25,35 @@ import ViewTransitionLink from "../view-transition-link";
  * page simply scrolls -- and removes the one thing wrong with them.
  *
  * The geometry of the dissolve. A panel is a window plus a fade zone above
- * and below it (FADE), and it overlaps the panel before by one fade zone. Its
- * own top fade is therefore laid over the previous panel's bottom zone, which
- * is picture, so the blend is picture into picture. And at rest -- snapped to
- * its centre -- the window shows exactly its middle: both fade zones sit just
- * outside the window, so every stop is one clean picture, full bleed. Two
- * zones rather than one is what that takes: with one, the next panel's fade
- * would reach into the bottom of the window at rest.
+ * and below it, and it overlaps the panel before by its top zone. Its top fade
+ * is therefore laid over the previous panel's bottom zone, so the blend is
+ * picture into picture. At rest the window is exactly the part between the two
+ * zones -- the stop is a window-sized block there -- so every stop is one clean
+ * picture. Two zones rather than one is what that takes: with one, the next
+ * panel's fade would reach into the bottom of the window at rest.
  *
- * The price is that a cover is cropped to fill a window and a half-zone more
- * than the window, so it is drawn a little larger. Every landing cover has its
- * subject centred with room around it for exactly this.
+ * The zones are FADE deep, except the first dissolve, which is FIRST_FADE: the
+ * collage is bright and EchoCare nearly black, and over the standard depth one
+ * cut to the other.
  *
- * The last panel fades out at its foot as well, into the page's white, which
+ * The ground. Every panel's background is a colour field from its cover's own
+ * top-edge colour to its bottom-edge colour (`ground` in data.js, measured off
+ * the file). It is what the extra depth of the first dissolve is made of, and
+ * it is what a narrow window sees around the picture:
+ *
+ * The fit. On a landscape window (5:4 and wider) the cover fills the panel,
+ * cropped around `cardPosition`, a little larger than the window to fill the
+ * fade zones -- every landing cover has its subject centred with room around
+ * it for this. On a narrow window it does not fill: it is drawn NARROW.height
+ * tall across the middle of the window, around `mobilePosition`, and its top
+ * and bottom dissolve into the ground. Filling a phone's height with these
+ * landscape pictures kept a quarter of their width and read as zoomed in;
+ * this keeps about a third, and only the picture's outermost edges dissolve. It is
+ * not the blurred copy that was cut: the ground is flat colour taken from the
+ * picture's own edges, so the picture appears to continue into it.
+ *
+ * The last panel fades out at its foot as well, into the page's black, which
  * is the closer's ground: the work ends on a dissolve, not a line.
- *
- * The fit: every cover is object-cover, full bleed, anchored at `cardPosition`
- * on a landscape window and `mobilePosition` on a narrow one (both in data.js,
- * both centre by default). A CSS media query picks, so nothing is measured.
  *
  * Nothing about the panels is scripted. The masks are static, so it is all
  * layout, and it works without JavaScript.
@@ -105,37 +116,50 @@ import ViewTransitionLink from "../view-transition-link";
  *
  */
 
-// `[@media(min-aspect-ratio:5/4)]:` is a landscape window, where a cover is
-// anchored at `cardPosition` rather than `mobilePosition`. Written out in full
-// in each class list rather than kept in a constant: Tailwind finds classes by
-// scanning the source for them, so a class assembled from a variable at
-// runtime is never generated. That shipped once here. The fade zone's 12svh is
-// written out in the classes below for the same reason, and must match FADE.
+// `[@media(min-aspect-ratio:5/4)]:` is a landscape window. Written out in
+// full in each class list rather than kept in a constant: Tailwind finds
+// classes by scanning the source for them, so a class assembled from a
+// variable at runtime is never generated. That shipped once here. Lengths that
+// vary per panel are inline styles and custom properties for the same reason.
 
-// The fade zone, where one panel dissolves into the next: 12% of the window.
-// Enough that the boundary reads as a dissolve rather than a soft line, small
-// enough that the extra crop it costs a cover stays modest.
+// The fade zone between two panels, in svh: how far a panel is pulled up
+// over the one before. The zones are picture -- the cover is drawn over the
+// whole panel -- so a dissolve is always picture into picture.
 //
-// Eased rather than linear. A straight ramp shows a band where it starts and
-// ends; these are smoothstep samples, so the blend has no visible start.
-const FADE = "12svh";
-const EASE = [
-  [0, 0],
-  [0.2, 0.1],
-  [0.4, 0.35],
-  [0.6, 0.65],
-  [0.8, 0.9],
-  [1, 1],
-];
-const rampIn = EASE.map(([t, a]) => `rgb(0 0 0 / ${a}) calc(${FADE} * ${t})`).join(", ");
-const rampOut = [...EASE]
-  .reverse()
-  .map(([t, a]) => `rgb(0 0 0 / ${a}) calc(100% - ${FADE} * ${t})`)
-  .join(", ");
-// A panel's mask: transparent at its very top, solid from one zone down.
-const MASK = `linear-gradient(to bottom, ${rampIn})`;
-// The last panel's, which also dissolves out at its foot into the closer.
-const MASK_LAST = `linear-gradient(to bottom, ${rampIn}, ${rampOut})`;
+// Tried and cut: 40svh zones filled with a flat "ground" colour measured off
+// each cover's edges, with the picture shrunk to the window. The change was
+// more gradual, but mid-scroll a third of the window was a flat band of
+// colour between the two pictures, and on a phone it hid real picture at
+// rest. Picture into picture, as first built, read better.
+const FADE = 12;
+
+// The first dissolve is deeper, because it is the hardest: the reveal's
+// collage is bright and EchoCare nearly black, and over 12svh the one cut to
+// the other. The extra depth sits above EchoCare's picture and is filled with
+// its top-edge colour (`ground` in data.js) -- which for EchoCare is the black
+// of the hall the picture starts in, so it reads as the picture continuing
+// upward, not as a band. It costs the cover no crop. If the order ever puts a
+// cover here whose top is not dark, revisit this rather than keep it.
+const FIRST_FADE = 30;
+
+// Eased rather than linear, and finely. A straight ramp shows a band where
+// it starts and ends; smoothstep has no visible start. And sampled at 24
+// points, because a gradient between samples is linear, and over a 40svh
+// dissolve of flat colour six samples showed their kinks as faint bands.
+const EASE = Array.from({ length: 25 }, (_, i) => {
+  const t = i / 24;
+  return [t, Math.round(t * t * (3 - 2 * t) * 1000) / 1000];
+});
+const rampIn = (at) => EASE.map(([t, a]) => `rgb(0 0 0 / ${a}) ${at(t)}`).join(", ");
+const rampOut = (at) =>
+  [...EASE].reverse().map(([t, a]) => `rgb(0 0 0 / ${a}) ${at(t)}`).join(", ");
+
+// A panel's mask: transparent at its very top, solid `fade` svh down. The
+// last panel's also dissolves out at its foot, into the closer's black.
+const panelMask = (fade, last) =>
+  `linear-gradient(to bottom, ${rampIn((t) => `${fade * t}svh`)}${
+    last ? ", " + rampOut((t) => `calc(100% - ${FADE * t}svh)`) : ""
+  })`;
 
 // How far the picture starts zoomed in, relative to just covering the frame.
 const ZOOM = 1.35;
@@ -215,11 +239,11 @@ function pose(s, g) {
   };
 }
 
-// What the browser should fetch for a cover. On a landscape window a panel
-// is drawn about 1.3 windows wide once it is cropped to its fade zones. On a
-// portrait one it is cropped to fill the height, which puts it at up to four
-// times the window's width -- and `100vw` there fetched a file a quarter of
-// the size it was drawn at, so every phone crop was soft.
+// What the browser should fetch for a cover. It is drawn over its whole panel,
+// a window and two fade zones tall, which on a landscape window is about 1.3
+// windows wide and on a portrait one up to four -- and `100vw` there once
+// fetched a file a quarter of the size it was drawn at, so every phone crop
+// was soft.
 const COVER_SIZES = "(max-aspect-ratio: 5/4) 400vw, 130vw";
 
 export default function Stage({ first, rest }) {
@@ -365,10 +389,14 @@ export default function Stage({ first, rest }) {
 
   return (
     <>
-      {/* A window for the reveal, plus one fade zone for the stage to hold
-          while the next study dissolves in over it. `id="work"` because /work
-          redirects to /#work. */}
-      <section id="work" className="relative h-[112svh]">
+      {/* A window for the reveal, plus the first fade zone for the stage to
+          hold while the next study dissolves in over it. `id="work"` because
+          /work redirects to /#work. */}
+      <section
+        id="work"
+        className="relative"
+        style={{ height: `${100 + FIRST_FADE}svh` }}
+      >
         {/* Without a script the frame would never be shown: see `reveal`. */}
         <noscript>
           <style>{`[data-reveal-frame]{opacity:1!important}`}</style>
@@ -411,23 +439,23 @@ export default function Stage({ first, rest }) {
         const cover = { ...cs.cover, ...cs.landingCover };
         const vtName = `cover-${cs.slug}`;
         const last = i === rest.length - 1;
+        // This panel's top fade zone: the one it dissolves in across.
+        const fade = i === 0 ? FIRST_FADE : FADE;
         return (
-          // A window plus a fade zone above and below (124svh = 100 + 2 x 12),
-          // pulled up one zone over the panel before (-12svh). At rest the
-          // window is exactly its middle. See the note at the top of the file.
-          //
-          // The snap point is not the article. A snap area taller than the
-          // window makes every position where it covers the window valid, so
-          // snapping to the article landed a flick at its top -- one fade zone
-          // short, with the dissolve showing across the top of the window. The
-          // block inside is exactly the window, exactly where the panel rests.
+          // A window with a fade zone above and below, pulled up over the panel
+          // before by its top zone. At rest the window is exactly the part
+          // between the two zones. See the note at the top of the file.
           <article
             key={cs.slug}
-            id={`case-${cs.slug}`}
-            className="relative -mt-[12svh] h-[124svh]"
+            className="relative"
             style={{
-              maskImage: last ? MASK_LAST : MASK,
-              WebkitMaskImage: last ? MASK_LAST : MASK,
+              marginTop: `-${fade}svh`,
+              height: `${fade + 100 + FADE}svh`,
+              maskImage: panelMask(fade, last),
+              WebkitMaskImage: panelMask(fade, last),
+              // Only the first dissolve's extra depth shows this; see
+              // FIRST_FADE.
+              background: cover.ground?.[0],
             }}
           >
             <ViewTransitionLink
@@ -438,20 +466,36 @@ export default function Stage({ first, rest }) {
             >
               <CoverImage
                 cover={cover}
-                className="absolute inset-0 overflow-hidden"
+                // The whole panel below any extra first-dissolve depth: the
+                // window and a standard fade zone either side.
+                className="absolute inset-x-0 bottom-0 overflow-hidden"
                 imageClassName="object-cover [object-position:var(--pos-narrow)] [@media(min-aspect-ratio:5/4)]:[object-position:var(--pos)]"
                 sizes={COVER_SIZES}
                 containerProps={{
-                  style: { viewTransitionName: vtName, ...anchors(cover) },
+                  style: {
+                    viewTransitionName: vtName,
+                    top: `${fade - FADE}svh`,
+                    ...anchors(cover),
+                  },
                   "data-vt-cover": "",
                   "data-vt-target": vtName,
                   "data-vt-stop": `case-${cs.slug}`,
                 }}
               />
             </ViewTransitionLink>
+
+            {/* The stop: exactly the window, exactly where the panel rests.
+                Not the article -- a snap area taller than the window makes
+                every position where it covers the window valid, and snapping
+                to the article landed flicks one fade zone short, with the
+                dissolve across the top of the window. The id is here too, so
+                HashTarget and the keyboard centre the resting window rather
+                than the article, whose centre is not it. */}
             <div
+              id={`case-${cs.slug}`}
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-[12svh] h-svh snap-always snap-start"
+              className="pointer-events-none absolute inset-x-0 h-svh snap-always snap-start"
+              style={{ top: `${fade}svh` }}
             />
           </article>
         );

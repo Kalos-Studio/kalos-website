@@ -61,6 +61,12 @@
 //                               // important content near the top (like a nav
 //                               // bar) may need to anchor lower to avoid
 //                               // slicing through it. Card crop is unaffected.
+//     ground: ["#top", "#bottom"], // the landing panel's colour field on a
+//                               // narrow window, where the cover is drawn
+//                               // smaller and dissolves into it: the mean
+//                               // colour of the picture's top and bottom 5%.
+//                               // Measure it (sharp's stats() on each band);
+//                               // a guessed colour shows as a seam.
 //     mobilePosition: "50% center", // optional -- where the landing page
 //                               // anchors this cover on a narrow (portrait)
 //                               // window, where it is cropped hardest. Put it
@@ -199,6 +205,7 @@ const allWork = [
     cover: {
       src: "/work/priority-ambulance-transfer/cover.jpg",
       alt: "A Priority Ambulance Transfer van on an open road through golden fields at sunset",
+      ground: ["#d4927b", "#6a3c17"],
     },
     body: [
       {
@@ -256,6 +263,7 @@ const allWork = [
     cover: {
       src: "/work/echocare/cover.jpg",
       alt: "The EchoCare wordmark lit up on a wall-sized screen in a dark hall, with people silhouetted in front of it",
+      ground: ["#000002", "#1a1a27"],
     },
     body: [
       {
@@ -328,6 +336,7 @@ const allWork = [
     cover: {
       src: "/work/young-muslims/cover.jpg",
       alt: "A Young Muslims poster on a subway platform, \"For the youth. By the youth.\", over a group of young women embracing, with a train blurring past behind",
+      ground: ["#28272c", "#ccc4c1"],
     },
     body: [
       {
