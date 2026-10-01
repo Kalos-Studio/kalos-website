@@ -11,14 +11,16 @@ import Lockup from "../lockup";
  * the hero already has the mark in the middle of it, and a second one in the
  * corner would be the name said twice on the first screen.
  *
- * Over the work it is white on a black fade in the top left corner. It was one white lockup under
+ * It is white everywhere, on a soft black fade in the top left corner over the
+ * work. It was one white lockup under
  * `mix-blend-difference`, which is correct on flat grounds and falls apart on a
  * photograph: over MARA's collage it inverted each colour behind it and came
  * out a patchwork of teal, orange and grey. The fade gives it a ground of its
  * own whatever is behind it.
  *
- * Over the closer the fade goes and the lockup turns black. A dark gradient
- * in the corner of a white page is a smudge, not a backdrop.
+ * Over the closer the fade goes: the closer is black, so there is nothing to
+ * separate the lockup from. It used to turn black there as well, when the
+ * page was white.
  *
  * IntersectionObservers rather than a scroll listener: both questions are
  * binary, and the browser answers them without anything running per frame.
@@ -121,7 +123,7 @@ export default function Masthead({ revealStopId }) {
           "relative px-5 py-4 transition sm:px-8 lg:px-12 lg:py-6 " +
           fade +
           (shown ? " translate-y-0" : " -translate-y-2") +
-          (onWork ? " text-white" : " text-black")
+          " text-white"
         }
       >
         <Link

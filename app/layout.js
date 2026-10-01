@@ -101,11 +101,10 @@ export const metadata = {
   },
 };
 
-// The browser chrome colour on mobile. White, because the landing page is the
-// page people arrive on and it is a light surface -- this was black for the
-// spotlight hero, which no longer exists.
+// The browser chrome colour on mobile: black, the page's own ground, so the
+// bar and the page read as one surface.
 export const viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({ children }) {
@@ -152,14 +151,15 @@ export default function RootLayout({ children }) {
       className={`${spaceGrotesk.variable} snap-y snap-mandatory`}
     >
       {/* The base ground, on utilities rather than an unlayered `html, body`
-          rule in globals.css -- see the note at the foot of that file. Light by
-          default because the landing page is the site's front door; /work
-          paints its own dark surface over this.
+          rule in globals.css -- see the note at the foot of that file. Dark:
+          white type on black, across the landing page and the case studies
+          alike, which inherit it.
 
-          Plain white/black on purpose: the page is being built in black and
-          white first, and moves onto the brand palette (Obsidian Black, Snow
-          White) once the layout is settled. */}
-      <body className="bg-white text-black antialiased">
+          It was white with black type, and was inverted in one pass. Plain
+          black and white rather than the brand's Obsidian Black and Snow
+          White, still, because the palette moves over in one pass of its own;
+          when it does, these two utilities are where it starts. */}
+      <body className="bg-black text-white antialiased">
         {children}
         {/* The Agentation annotation toolbar: click anything on the page, type
             a note, and it syncs to the coding agent. Development only.

@@ -63,14 +63,14 @@ export default function PasswordGate({ slug, backHref }) {
         // white and a dark wash would read as a different product's dialog.
         // The blur is what makes it a layer rather than a tint -- it says the
         // page is still there and is being held back.
-        "bg-white/70 backdrop-blur-md motion-safe:animate-gate-scrim"
+        "bg-black/70 backdrop-blur-md motion-safe:animate-gate-scrim"
       }
     >
       {/* Square and hairline black, which is the case study's own panel frame.
           The site has no cards and no elevation except under a screenshot, so a
           rounded, shadowed box here would be the one object on the page
           borrowed from somewhere else. */}
-      <div className="w-full max-w-[26rem] border border-black bg-white px-6 py-7 motion-safe:animate-gate-card sm:px-8 sm:py-9">
+      <div className="w-full max-w-[26rem] border border-white bg-black px-6 py-7 motion-safe:animate-gate-card sm:px-8 sm:py-9">
         <p id={labelId} className="text-lead tracking-tight">
           {PROMPT}
         </p>
@@ -97,10 +97,10 @@ export default function PasswordGate({ slug, backHref }) {
             autoFocus
             required
             className={
-              "h-11 w-full min-w-0 rounded-control border border-black/25 bg-transparent " +
+              "h-11 w-full min-w-0 rounded-control border border-white/25 bg-transparent " +
               "px-4 text-control tracking-tight placeholder:text-muted " +
               "transition-colors duration-[var(--duration-quick)] " +
-              "focus:border-black focus:outline-none lg:h-12"
+              "focus:border-white focus:outline-none lg:h-12"
             }
           />
 
@@ -112,9 +112,9 @@ export default function PasswordGate({ slug, backHref }) {
             disabled={pending}
             className={
               "inline-flex h-11 w-full items-center justify-center rounded-control " +
-              "border border-current bg-transparent px-7 text-control tracking-tight text-black " +
+              "border border-current bg-transparent px-7 text-control tracking-tight text-white " +
               "transition-colors duration-[var(--duration-quick)] " +
-              "hover:bg-black hover:text-white disabled:opacity-50 lg:h-12"
+              "hover:bg-white hover:text-black disabled:opacity-50 lg:h-12"
             }
           >
             {pending ? "Checking" : "Enter"}
@@ -142,7 +142,7 @@ export default function PasswordGate({ slug, backHref }) {
             on the landing page. */}
         <Link
           href={backHref}
-          className="mt-2 inline-block text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
+          className="mt-2 inline-block text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-white hover:underline"
         >
           Back to Work
         </Link>

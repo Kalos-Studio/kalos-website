@@ -125,7 +125,7 @@ export default async function CaseStudyPage({ params }) {
           full-width imagery. */}
       <div className="flex items-center justify-between gap-6 py-4 lg:py-6">
         <Link href="/" className="block shrink-0" aria-label="Kalos home">
-          <Mark className="h-7 w-auto text-black lg:h-9" />
+          <Mark className="h-7 w-auto text-white lg:h-9" />
         </Link>
 
         {/* The way back, and the only chrome on the page besides the symbol.
@@ -146,7 +146,7 @@ export default async function CaseStudyPage({ params }) {
             it. */}
         <Link
           href={backHref}
-          className="text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-black hover:underline"
+          className="text-control tracking-tight text-muted underline-offset-4 transition-colors hover:text-white hover:underline"
         >
           Back to Work
         </Link>

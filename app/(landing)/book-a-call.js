@@ -35,8 +35,8 @@ export default function BookACall({
 
   const treatment =
     variant === "filled"
-      ? "bg-black text-white hover:bg-transparent hover:text-black"
-      : "bg-transparent text-black hover:bg-black hover:text-white";
+      ? "bg-white text-black hover:bg-transparent hover:text-white"
+      : "bg-transparent text-white hover:bg-white hover:text-black";
 
   return (
     <a

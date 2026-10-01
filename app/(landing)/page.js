@@ -80,19 +80,21 @@ export default function LandingPage() {
         >
           {/* The wireframe draws the mark at 60 of 460, 13% of the width.
 
-              All three carry a soft shadow, the same one in three forms --
+              All three carry a soft glow, the same one in three forms --
               drop-shadow on the mark because it follows the shape rather than
-              the box, text-shadow on the line, box-shadow on the button. Low
-              and wide so it lifts them off the page rather than outlining
-              them. */}
-          <Mark className="h-auto w-[clamp(6rem,13vw,13rem)] drop-shadow-[0_12px_24px_rgb(4_4_6/0.22)]" />
-          <h1 className="max-w-[26ch] text-lead tracking-tight text-shadow-[0_4px_14px_rgb(4_4_6/0.18)]">
+              the box, text-shadow on the line, box-shadow on the button. It
+              was a dark drop shadow when the page was white; on black a shadow
+              is invisible, and a faint light halo is what lifts the same three
+              things off the ground. Kept very low so it reads as depth, not as
+              a neon edge. */}
+          <Mark className="h-auto w-[clamp(6rem,13vw,13rem)] drop-shadow-[0_12px_32px_rgb(255_255_255/0.14)]" />
+          <h1 className="max-w-[26ch] text-lead tracking-tight text-shadow-[0_4px_18px_rgb(255_255_255/0.16)]">
             {positioning}
           </h1>
           <BookACall
             variant="outline"
             size="sm"
-            className="shadow-[0_8px_20px_-6px_rgb(4_4_6/0.25)]"
+            className="shadow-[0_8px_24px_-6px_rgb(255_255_255/0.18)]"
           />
         </section>
 

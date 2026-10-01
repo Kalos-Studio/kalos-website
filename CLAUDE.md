@@ -50,9 +50,13 @@ shared is declared in `@theme` in `app/globals.css` and becomes a utility:
   and unused — the site is being built in black and white first and moves onto
   the palette in one pass. That is deliberate, not dead code to prune.
 - `--color-muted` is the one secondary text colour and `--color-surface` the one
-  grey plate. They do not resolve against `dark-silver`, and that is measured:
-  it is 2.38:1 on white, below what even large text needs, against 8.61:1 on
-  obsidian. It is a dark-ground colour and this site is light.
+  grey plate. **The site is dark** — white type on black, set on `<body>` in
+  `app/layout.js` — so muted is a light grey (8.3:1 on black) and surface a
+  step up from black. It was the other way round until the site was inverted;
+  every `text-black` / `bg-white` / dark shadow assumed a white page, and the
+  hero's drop shadows became a faint white glow because a shadow on black is
+  invisible. Muted sits within a shade of `dark-silver`, which is a dark-ground
+  colour by design, so it is the token that becomes it when the palette moves.
 - `--ease-brand` is the one easing curve, with `--duration-quick`, `-settle` and
   `-morph` beside it. Each duration is a kind of event, not a point on a scale.
 - `--radius-control` is a full round, shared by buttons and pills because they
@@ -101,8 +105,8 @@ the top of the landing page because there is no panel to return to (`onLanding`)
 
 - **`masthead.js`** — the lockup, fixed top left, hidden until the first study
   reaches full bleed (the wireframe says "after the hero"; before that there is
-  white at the top of the window). White on a soft black fade in the corner over
-  the work, black with no fade over the closer. It was `mix-blend-difference`,
+  plain page at the top of the window). White everywhere, on a soft black fade
+  in the corner over the work, no fade over the closer. It was `mix-blend-difference`,
   which turned into a patchwork of inverted colours over the MARA collage.
 - **`stage.js`**, first movement — the first study. An inset frame with rounded corners peeks
   over the fold, then grows to full bleed while the picture inside zooms out
@@ -115,16 +119,27 @@ the top of the landing page because there is no panel to return to (`onLanding`)
   the top of the file before bringing either back.
 - **`stage.js`**, the panels — every later study is a full-bleed panel in
   flow, one snap stop each, and where two meet they **dissolve** rather than
-  meet at an edge: each panel's top is a soft gradient mask (eased, 12svh) and
-  it overlaps the panel before by that much. Each panel is a window plus a fade
-  zone above and below (124svh), centred at rest, so both zones sit just
-  outside the window and every stop shows one clean picture; one zone would let
-  the next panel's fade reach the bottom of the window at rest. The last panel
-  also dissolves out into the closer's white. No script at all.
+  meet at an edge: each panel's top is a soft eased gradient mask and it
+  overlaps the panel before by that much (12svh; 30svh for MARA into EchoCare,
+  bright into near-black, the extra depth filled with EchoCare's own black top
+  edge). The zones are picture, so a dissolve is always picture into picture.
+  Each panel is a window plus a fade zone above and below, so at rest both
+  zones sit just outside the window and every stop shows one clean picture.
+  The last panel also dissolves out into the closer's black. No script at all.
+  - **Tried and cut:** deep 40svh zones of flat colour measured off each
+    cover's edges, with the picture shrunk on phones. A third of the window was
+    a flat band mid-scroll, and it hid real picture at rest. A real zoom-out on
+    phones needs squarer source images, not CSS: with 3:2 covers a full-height
+    phone crop can never show more than about 31% of the width.
   - **Snap to the window-sized block inside each panel, never the panel.** A
     snap area taller than the window makes every position where it covers the
-    window valid, so snapping the 124svh article landed flicks one fade zone
-    short, with the dissolve across the top of the window.
+    window valid, so snapping the article landed flicks one fade zone short,
+    with the dissolve across the top of the window. The `#case-` id is on that
+    block too, since the article's centre is not where it rests.
+  - **Ground** (`ground` in `data.js`): each cover's top- and bottom-edge
+    colour, measured with sharp's `stats()` on the top and bottom 5% -- crop to
+    a buffer first, `stats()` ignores `extract()` on the same pipeline. Only
+    the first dissolve's extra depth uses it now.
   - Two versions were built in between and cut, and the file says why: a
     pinned stage cross-fading whole covers (double exposures, and a blurred
     copy of each cover filling narrow windows), and sticky sheets receding into

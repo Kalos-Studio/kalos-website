@@ -30,7 +30,7 @@ import { booking } from "./content";
 const MODAL_CONFIG = {
   layout: "month_view",
   useSlotsViewOnSmallScreen: "true",
-  theme: "light",
+  theme: "dark",
 };
 
 export function useCalModal() {
@@ -49,12 +49,13 @@ export function useCalModal() {
       if (cancelled) return;
 
       cal("ui", {
-        theme: "light",
-        // Cal uses `cal-brand` for its own accents. Obsidian Black, so the
-        // booker's buttons match the page's rather than arriving in Cal's blue.
+        theme: "dark",
+        // Cal uses `cal-brand` for its own accents. White on the dark booker,
+        // so its buttons match the page's rather than arriving in Cal's blue.
+        // The light theme keeps black, for anywhere that still asks for it.
         cssVarsPerTheme: {
           light: { "cal-brand": "#040406" },
-          dark: { "cal-brand": "#040406" },
+          dark: { "cal-brand": "#ffffff" },
         },
         hideEventTypeDetails: false,
         layout: "month_view",
